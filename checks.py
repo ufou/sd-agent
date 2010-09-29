@@ -830,7 +830,14 @@ class checks:
 			
 				version = result[0].split('-') # Case 31237. Might include a description e.g. 4.1.26-log. See http://dev.mysql.com/doc/refman/4.1/en/information-functions.html#function_version
 				version = version[0].split('.')
-				self.mysqlVersion = version
+				
+				self.mysqlVersion = []
+				
+				# Make sure the version is only an int. Case 31647
+				for string in version:
+					number = re.match('([0-9]+)', string)
+					number = number.group(0)
+					self.mysqlVersion.append(number)
 			
 			self.checksLogger.debug('getMySQLStatus: getting Connections')
 			
