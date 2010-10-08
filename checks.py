@@ -1247,6 +1247,11 @@ class checks:
 			
 			# Requests per second
 			parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
+
+			if not parsed:
+				self.checksLogger.debug('getNginxStatus: could not parse response')
+				return False
+
 			requests = int(parsed.group(3))
 			
 			self.checksLogger.debug('getNginxStatus: parsed reqs')
