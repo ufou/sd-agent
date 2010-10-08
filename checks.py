@@ -58,6 +58,7 @@ class checks:
 		self.networkTrafficStore = {}
 		self.nginxRequestsStore = None
 		self.mongoDBStore = None
+		self.apacheTotalAccesses = None
 		self.plugins = None
 		self.topIndex = 0
 		self.os = None
@@ -123,10 +124,19 @@ class checks:
 			self.checksLogger.debug('getApacheStatus: parsed')
 			
 			try:
-				if apacheStatus['ReqPerSec'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
-					self.checksLogger.debug('getApacheStatus: completed, returning')
+				if apacheStatus['TotalAccesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
+					totalAccesses = float(apacheStatus['TotalAccesses'])
 					
-					return {'reqPerSec': apacheStatus['ReqPerSec'], 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
+					if self.apacheTotalAccesses is None:
+						reqPerSec = 0
+						self.checksLogger.debug('getApacheStatus: no cached total accesses, so storing for first time')
+					else:
+						self.checksLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
+						reqPerSec = (totalAccesses - self.apacheTotalAccesses) / 60
+						self.apacheTotalAccesses = totalAccesses
+					
+					self.checksLogger.debug('getApacheStatus: completed, returning')
+					return {'reqPerSec': reqPerSec, 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
 				
 				else:
 					self.checksLogger.debug('getApacheStatus: completed, status not available')
