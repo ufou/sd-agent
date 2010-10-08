@@ -643,25 +643,25 @@ class checks:
 	
 			# And then swap
 			lines = swapinfo.split('\n')
-			swapParts = re.findall(r'(\d+)', lines[1])
-			
+			swapUsed = 0
+			swapFree = 0
+
+			for index in range(1, len(lines)):
+				swapParts = re.findall(r'(\d+)', lines[index])
+				
+				if swapParts != None:
+					try:
+						swapUsed += int(swapParts[len(swapParts) - 3]) / 1024
+						swapFree += int(swapParts[len(swapParts) - 2]) / 1024
+					except IndexError, e:
+						pass
+
+			self.checksLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
+	
 			# Convert everything to MB
 			physUsed = int(physUsed) / 1024
 			physFree = int(physFree) / 1024
-			
-			if swapParts != None:
-				try:
-					swapUsed = int(swapParts[len(swapParts) - 3]) / 1024
-					swapFree = int(swapParts[len(swapParts) - 2]) / 1024
-				except IndexError, e:
-					swapUsed = 0
-					swapFree = 0
-			else:
-				swapUsed = 0
-				swapFree = 0
-	
-			self.checksLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
-	
+
 			return {'physUsed' : physUsed, 'physFree' : physFree, 'swapUsed' : swapUsed, 'swapFree' : swapFree, 'cached' : 'NULL'}
 			
 		elif sys.platform == 'darwin':
