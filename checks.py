@@ -645,14 +645,14 @@ class checks:
 			lines = swapinfo.split('\n')
 			swapParts = re.findall(r'(\d+)', lines[1])
 			
-			# Convert evrything to MB
+			# Convert everything to MB
 			physUsed = int(physUsed) / 1024
 			physFree = int(physFree) / 1024
 			
 			if swapParts != None:
 				try:
-					swapUsed = int(swapParts[3]) / 1024
-					swapFree = int(swapParts[4]) / 1024
+					swapUsed = int(swapParts[len(swapParts) - 3]) / 1024
+					swapFree = int(swapParts[len(swapParts) - 2]) / 1024
 				except IndexError, e:
 					swapUsed = 0
 					swapFree = 0
