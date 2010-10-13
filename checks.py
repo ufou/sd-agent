@@ -648,8 +648,17 @@ class checks:
 			# Convert evrything to MB
 			physUsed = int(physUsed) / 1024
 			physFree = int(physFree) / 1024
-			swapUsed = int(swapParts[3]) / 1024
-			swapFree = int(swapParts[4]) / 1024
+			
+			if swapParts != None:
+				try:
+					swapUsed = int(swapParts[3]) / 1024
+					swapFree = int(swapParts[4]) / 1024
+				except IndexError, e:
+					swapUsed = 0
+					swapFree = 0
+			else:
+				swapUsed = 0
+				swapFree = 0
 	
 			self.checksLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
 	
