@@ -1667,12 +1667,20 @@ class checks:
 		self.checksLogger.debug('getMountedLinuxProcFsLocation: attempting to fetch mounted partitions')
 		
 		# Lets check if the Linux like style procfs is mounted
-		mountedPartitions = subprocess.Popen(['mount'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
-		location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
+		try:
+			mountedPartitions = subprocess.Popen(['mount'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
+			location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
+			
+		except OSError, e:
+			self.checksLogger.debug('getMountedLinuxProcFsLocation: OS error: ' + str(e))
 		
 		# Linux like procfs file system is not mounted so we return False, else we return mount point location
 		if location == None:
-			return False
-
+			self.checksLogger.debug('getMountedLinuxProcFsLocation: none found so using /proc')
+			return '/proc' # Can't find anything so we might as well try this
+		
 		location = location.group(1)
+		
+		self.checksLogger.debug('getMountedLinuxProcFsLocation: using' + location)
+		
 		return location
