@@ -298,8 +298,14 @@ class checks:
 		
 		# Memory logging (case 27152)
 		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
-			mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-			self.checksLogger.debug('getDiskUsage: memory before Popen - ' + str(mem))
+			try:
+				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				self.checksLogger.debug('getDiskUsage: memory before Popen - ' + str(mem))
+			
+			except Exception, e:
+				import traceback
+				self.checksLogger.error('getDiskUsage: free -m exception = ' + traceback.format_exc())
+				return False
 		
 		# Get output from df
 		try:
@@ -309,7 +315,7 @@ class checks:
 			
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('getDiskUsage: exception = ' + traceback.format_exc())
+			self.checksLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
 			return False
 		
 		# Memory logging (case 27152)
