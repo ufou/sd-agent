@@ -58,6 +58,7 @@ class checks:
 		self.networkTrafficStore = {}
 		self.nginxRequestsStore = None
 		self.mongoDBStore = None
+		self.apacheTotalAccesses = None
 		self.plugins = None
 		self.topIndex = 0
 		self.os = None
@@ -123,10 +124,19 @@ class checks:
 			self.checksLogger.debug('getApacheStatus: parsed')
 			
 			try:
-				if apacheStatus['ReqPerSec'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
-					self.checksLogger.debug('getApacheStatus: completed, returning')
+				if apacheStatus['TotalAccesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
+					totalAccesses = float(apacheStatus['TotalAccesses'])
 					
-					return {'reqPerSec': apacheStatus['ReqPerSec'], 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
+					if self.apacheTotalAccesses is None:
+						reqPerSec = 0.0
+						self.checksLogger.debug('getApacheStatus: no cached total accesses, so storing for first time')
+					else:
+						self.checksLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
+						reqPerSec = (totalAccesses - self.apacheTotalAccesses) / 60
+						self.apacheTotalAccesses = totalAccesses
+					
+					self.checksLogger.debug('getApacheStatus: completed, returning')
+					return {'reqPerSec': reqPerSec, 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
 				
 				else:
 					self.checksLogger.debug('getApacheStatus: completed, status not available')
@@ -649,25 +659,25 @@ class checks:
 	
 			# And then swap
 			lines = swapinfo.split('\n')
-			swapParts = re.findall(r'(\d+)', lines[1])
-			
-			# Convert evrything to MB
-			physUsed = int(physUsed) / 1024
-			physFree = int(physFree) / 1024
-			
-			if swapParts != None:
-				try:
-					swapUsed = int(swapParts[3]) / 1024
-					swapFree = int(swapParts[4]) / 1024
-				except IndexError, e:
-					swapUsed = 0
-					swapFree = 0
-			else:
-				swapUsed = 0
-				swapFree = 0
-	
+			swapUsed = 0
+			swapFree = 0
+
+			for index in range(1, len(lines)):
+				swapParts = re.findall(r'(\d+)', lines[index])
+				
+				if swapParts != None:
+					try:
+						swapUsed += int(swapParts[len(swapParts) - 3]) / 1024
+						swapFree += int(swapParts[len(swapParts) - 2]) / 1024
+					except IndexError, e:
+						pass
+
 			self.checksLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
 	
+			# Convert everything to MB
+			physUsed = int(physUsed) / 1024
+			physFree = int(physFree) / 1024
+
 			return {'physUsed' : physUsed, 'physFree' : physFree, 'swapUsed' : swapUsed, 'swapFree' : swapFree, 'cached' : 'NULL'}
 			
 		elif sys.platform == 'darwin':
@@ -1253,6 +1263,11 @@ class checks:
 			
 			# Requests per second
 			parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
+
+			if not parsed:
+				self.checksLogger.debug('getNginxStatus: could not parse response')
+				return False
+
 			requests = int(parsed.group(3))
 			
 			self.checksLogger.debug('getNginxStatus: parsed reqs')
