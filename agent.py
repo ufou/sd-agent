@@ -14,7 +14,7 @@ agentConfig = {}
 agentConfig['debugMode'] = 0
 agentConfig['checkFreq'] = 60
 
-agentConfig['version'] = '1.9.1'
+agentConfig['version'] = '1.9.2'
 
 rawConfig = {}
 
