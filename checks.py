@@ -131,6 +131,7 @@ class checks:
 					
 					if self.apacheTotalAccesses is None:
 						reqPerSec = 0.0
+						self.apacheTotalAccesses = totalAccesses
 						self.checksLogger.debug('getApacheStatus: no cached total accesses, so storing for first time')
 					else:
 						self.checksLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
