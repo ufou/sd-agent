@@ -123,9 +123,31 @@ class checks:
 			
 			self.checksLogger.debug('getApacheStatus: parsed')
 			
+			totalAccesses = None
+			
 			try:
-				if apacheStatus['TotalAccesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
-					totalAccesses = float(apacheStatus['TotalAccesses'])
+				if apacheStatus['TotalAccesses'] != False:
+					totalAccesses = apacheStatus['TotalAccesses']
+			except IndexError:
+				self.checksLogger.debug('getApacheStatus: IndexError - TotalAccesses not present')
+				
+			except KeyError:
+				self.checksLogger.debug('getApacheStatus: KeyError - TotalAccesses not present')
+			
+			try:
+				if apacheStatus['Total Accesses'] != False:
+					totalAccesses = apacheStatus['Total Accesses']
+			except IndexError:
+				self.checksLogger.debug('getApacheStatus: IndexError - Total Accesses not present')
+				
+			except KeyError:
+				self.checksLogger.debug('getApacheStatus: KeyError - Total Accesses not present')
+					
+			try:
+				if totalAccesses != None and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
+					self.checksLogger.debug('getApacheStatus: totalAccesses, BusyWorkers and IdleWorkers set so proceeding')
+					
+					totalAccesses = float(totalAccesses)
 					
 					if self.apacheTotalAccesses is None:
 						reqPerSec = 0.0
@@ -145,10 +167,10 @@ class checks:
 				
 			# Stops the agent crashing if one of the apacheStatus elements isn't set (e.g. ExtendedStatus Off)	
 			except IndexError:
-				self.checksLogger.debug('getApacheStatus: IndexError - ReqPerSec, BusyWorkers or IdleWorkers not present')
+				self.checksLogger.debug('getApacheStatus: IndexError - TotalAccesses, BusyWorkers or IdleWorkers not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getApacheStatus: IndexError - KeyError, BusyWorkers or IdleWorkers not present')
+				self.checksLogger.debug('getApacheStatus: KeyError - KeyError, TotalAccesses, BusyWorkers or IdleWorkers not present')
 								
 				return False
 			
