@@ -127,6 +127,8 @@ class checks:
 				if apacheStatus['Total Accesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
 					totalAccesses = float(apacheStatus['Total Accesses'])
 					
+					self.checksLogger.debug('getApacheStatus: required mod_status keys found, proceeding')
+					
 					if self.apacheTotalAccesses is None:
 						reqPerSec = 0.0
 						self.checksLogger.debug('getApacheStatus: no cached total accesses, so storing for first time')
@@ -145,10 +147,10 @@ class checks:
 				
 			# Stops the agent crashing if one of the apacheStatus elements isn't set (e.g. ExtendedStatus Off)	
 			except IndexError:
-				self.checksLogger.debug('getApacheStatus: IndexError - ReqPerSec, BusyWorkers or IdleWorkers not present')
+				self.checksLogger.debug('getApacheStatus: IndexError - Total Accesses, BusyWorkers or IdleWorkers not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getApacheStatus: IndexError - KeyError, BusyWorkers or IdleWorkers not present')
+				self.checksLogger.debug('getApacheStatus: KeyError - Total Accesse, BusyWorkers or IdleWorkers not present')
 								
 				return False
 			
