@@ -62,6 +62,7 @@ class checks:
 		self.plugins = None
 		self.topIndex = 0
 		self.os = None
+		self.linuxProcFsLocation = None
 		
 		# Set global timeout to 15 seconds for all sockets (case 31033). Should be long enough
 		import socket
@@ -460,7 +461,7 @@ class checks:
 		self.checksLogger.debug('getLoadAvrgs: start')
 		
 		# If Linux like procfs system is present and mounted we use loadavg, else we use uptime
-		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != False):
+		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
 			
 			if sys.platform == 'linux2':
 				self.checksLogger.debug('getLoadAvrgs: linux2')
@@ -487,7 +488,7 @@ class checks:
 			
 			uptime = uptime[0] # readlines() provides a list but we want a string
 		
-		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == False:
+		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
 			self.checksLogger.debug('getLoadAvrgs: freebsd (uptime)')
 			
 			try:
@@ -532,7 +533,7 @@ class checks:
 		self.checksLogger.debug('getMemoryUsage: start')
 		
 		# If Linux like procfs system is present and mounted we use meminfo, else we use "native" mode (vmstat and swapinfo)
-		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != False):
+		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
 			
 			if sys.platform == 'linux2':
 				self.checksLogger.debug('getMemoryUsage: linux2')
@@ -629,7 +630,7 @@ class checks:
 			
 			return memData	
 			
-		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == False:
+		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
 			self.checksLogger.debug('getMemoryUsage: freebsd (native)')
 			
 			try:
@@ -1576,7 +1577,12 @@ class checks:
 				self.os = 'linux'
 		
 		self.checksLogger = logging.getLogger('checks')
-		self.linuxProcFsLocation = self.getMountedLinuxProcFsLocation()
+		
+		# We only need to set this if we're on FreeBSD
+		if self.linuxProcFsLocation == None and self.os == 'freebsd':
+			self.linuxProcFsLocation = self.getMountedLinuxProcFsLocation()
+		else:
+			self.linuxProcFsLocation = '/proc'
 		
 		self.checksLogger.debug('doChecks: start')
 		
