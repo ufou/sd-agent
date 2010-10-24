@@ -130,10 +130,10 @@ class checks:
 					
 					self.checksLogger.debug('getApacheStatus: required mod_status keys found, proceeding')
 					
-					if self.apacheTotalAccesses is None:
+					if self.apacheTotalAccesses is None or totalAccesses == 0:
 						reqPerSec = 0.0
 						self.apacheTotalAccesses = totalAccesses
-						self.checksLogger.debug('getApacheStatus: no cached total accesses, so storing for first time')
+						self.checksLogger.debug('getApacheStatus: no cached total accesses (or totalAccesses == 0), so storing for first time / resetting stored value')
 					else:
 						self.checksLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
 						reqPerSec = (totalAccesses - self.apacheTotalAccesses) / 60
