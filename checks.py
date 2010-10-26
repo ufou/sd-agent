@@ -1318,8 +1318,13 @@ class checks:
 		
 		# Memory logging (case 27152)
 		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
-			mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-			self.checksLogger.debug('getProcesses: memory before Popen - ' + str(mem))
+			try:
+				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				self.checksLogger.debug('getProcesses: memory before Popen - ' + str(mem))
+			except Exception, e:
+				import traceback
+				self.checksLogger.error('getProcesses: exception = ' + traceback.format_exc())
+				return False
 		
 		# Get output from ps
 		try:
