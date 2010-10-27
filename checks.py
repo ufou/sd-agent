@@ -1608,6 +1608,8 @@ class checks:
 		
 		self.checksLogger.debug('doChecks: checks success, build payload')
 		
+		self.checksLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
+		
 		checksData = {'os' : self.os, 'agentKey' : self.agentConfig['agentKey'], 'agentVersion' : self.agentConfig['version'], 'diskUsage' : diskUsage, 'loadAvrg' : loadAvrgs['1'], 'memPhysUsed' : memory['physUsed'], 'memPhysFree' : memory['physFree'], 'memSwapUsed' : memory['swapUsed'], 'memSwapFree' : memory['swapFree'], 'memCached' : memory['cached'], 'networkTraffic' : networkTraffic, 'processes' : processes}
 		
 		self.checksLogger.debug('doChecks: payload built, build optional payloads')
@@ -1668,6 +1670,7 @@ class checks:
 		
 		try:
 			checksData['internalHostname'] = socket.gethostname()
+			self.checksLogger.debug('doChecks: hostname = ' + checksData['internalHostname'])
 			
 		except socket.error, e:
 			self.checksLogger.debug('Unable to get hostname: ' + str(e))
