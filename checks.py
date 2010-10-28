@@ -1323,7 +1323,7 @@ class checks:
 				self.checksLogger.debug('getProcesses: memory before Popen - ' + str(mem))
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getProcesses: exception = ' + traceback.format_exc())
+				self.checksLogger.error('getProcesses: exception when getting memory before Popen = ' + traceback.format_exc())
 				return False
 		
 		# Get output from ps
@@ -1341,8 +1341,13 @@ class checks:
 		
 		# Memory logging (case 27152)
 		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
-			mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-			self.checksLogger.debug('getProcesses: memory after Popen - ' + str(mem))
+			try:
+				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				self.checksLogger.debug('getProcesses: memory after Popen - ' + str(mem))
+			except Exception, e:
+				import traceback
+				self.checksLogger.error('getProcesses: exception when getting memory after Popen = ' + traceback.format_exc())
+				return False
 		
 		# Split out each process
 		processLines = ps.split('\n')
