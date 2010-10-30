@@ -100,9 +100,9 @@ try:
 
 	if config.has_option('Main', 'mongodb_server'):
 		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
-
-	if config.has_option('Main', 'couchdb_server'):
-		agentConfig['CouchDBServer'] = config.get('Main', 'couchdb_server')
+		
+	if config.has_option('Main', 'mongodb_replset'):
+		agentConfig['MongoDBReplSet'] = config.get('Main', 'mongodb_replset')
 
 except ConfigParser.NoSectionError, e:
 	print 'Config file not found or incorrectly formatted'

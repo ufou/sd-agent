@@ -790,8 +790,31 @@ class checks:
 					self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
 					self.clearMongoDBStatus(status)
 
+			# Replica set status
+			if 'MongoDBReplSet' in self.agentConfig and self.agentConfig['MongoDBReplSet'] == 'yes':
+				self.checksLogger.debug('getMongoDBStatus: get replset status too')
+				
+				# Get
+				replSet = db.command('isMaster')
+				
+				self.checksLogger.debug('getMongoDBStatus: got replset')
+				
+				# Store
+				status['replSet']['setName'] = replSet['setName']
+				status['replSet']['isMaster'] = replSet['ismaster']
+				status['replSet']['isSecondary'] = replSet['secondary']
+				
+				if 'arbiterOnly' in replSet:
+					status['replSet']['isArbiter'] = replSet['arbiterOnly']
+					
+				if 'primary' in replSet:
+					status['replSet']['primary'] = replSet['primary']
+				
+				self.checksLogger.debug('getMongoDBStatus: stored replset')
+			
 			self.mongoDBStore = status
 			mongodb = status
+				
 		except Exception, ex:
 			import traceback
 			self.checksLogger.error('Unable to get MongoDB status - Exception = ' + traceback.format_exc())
