@@ -433,7 +433,7 @@ class checks:
 						# Sometimes device names span two lines.
 						device = deviceMatch.groups()[0]
 					
-					values = re.findall(valueRegexp, row)
+					values = re.findall(valueRegexp, row.replace(',', '.'))
 					
 					if not values:
 						# Sometimes values are on the next line so we encounter
