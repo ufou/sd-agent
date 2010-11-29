@@ -1538,7 +1538,12 @@ class checks:
 			for plugin in self.plugins:				
 				self.checksLogger.debug('getPlugins: executing ' + plugin.__class__.__name__)
 				
-				output[plugin.__class__.__name__] = plugin.run()
+				try:
+					output[plugin.__class__.__name__] = plugin.run()
+				
+				except Exception, ex:
+					import traceback
+					self.checksLogger.error('getPlugins: exception = ' + traceback.format_exc())
 				
 				self.checksLogger.debug('getPlugins: executed ' + plugin.__class__.__name__)
 			
