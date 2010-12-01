@@ -1389,7 +1389,7 @@ class checks:
 		self.checksLogger.debug('getProcesses: completed, returning')
 			
 		return processes
-			
+	
 	def getRabbitMQStatus(self):
 		self.checksLogger.debug('getRabbitMQStatus: start')
 
@@ -1417,7 +1417,7 @@ class checks:
 			# Do the request, log any errors
 			request = urllib2.urlopen(req)
 			response = request.read()
-
+			
 		except urllib2.HTTPError, e:
 			self.checksLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
 			return False
@@ -1444,6 +1444,54 @@ class checks:
 			else:
 				self.checksLogger.debug('getRabbitMQStatus: minjson read')
 				status = minjson.safeRead(response)
+
+			self.checksLogger.debug(status)
+
+			if 'connections' not in status:
+				# We are probably using the newer RabbitMQ 2.x status plug-in, so try to parse that instead.
+				status = {}
+				connections = {}
+				queues = {}
+				self.checksLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
+				import urlparse
+				
+				split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
+				
+				# Connections
+				url = split_url.scheme + '://' + split_url.netloc + '/api/connections'
+				self.checksLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+				req = urllib2.Request(url, None, headers)
+				# Do the request, log any errors
+				request = urllib2.urlopen(req)
+				response = request.read()
+				
+				if int(pythonVersion[1]) >= 6:
+					self.checksLogger.debug('getRabbitMQStatus: connections json read')
+					connections = json.loads(response)
+				else:
+					self.checksLogger.debug('getRabbitMQStatus: connections minjson read')
+					connections = minjson.safeRead(response)
+
+				status['connections'] = connections
+
+				# Queues
+				url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
+				self.checksLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+				req = urllib2.Request(url, None, headers)
+				# Do the request, log any errors
+				request = urllib2.urlopen(req)
+				response = request.read()
+				
+				if int(pythonVersion[1]) >= 6:
+					self.checksLogger.debug('getRabbitMQStatus: queues json read')
+					queues = json.loads(response)
+				else:
+					self.checksLogger.debug('getRabbitMQStatus: queues minjson read')
+					queues = minjson.safeRead(response)
+
+				status['queues'] = queues
 
 		except Exception, e:
 			import traceback
