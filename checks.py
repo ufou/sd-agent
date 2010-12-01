@@ -1448,7 +1448,7 @@ class checks:
 			self.checksLogger.debug(status)
 
 			if 'connections' not in status:
-				# We are probably using the newer RabbitMQ 2.x status plug-in, so try to parse that instead.
+				# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
 				status = {}
 				connections = {}
 				queues = {}
@@ -1473,7 +1473,7 @@ class checks:
 					self.checksLogger.debug('getRabbitMQStatus: connections minjson read')
 					connections = minjson.safeRead(response)
 
-				status['connections'] = connections
+				status['connections'] = len(connections)
 
 				# Queues
 				url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
