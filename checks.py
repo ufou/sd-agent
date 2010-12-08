@@ -857,6 +857,16 @@ class checks:
 					self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
 					self.clearMongoDBStatus(statusOutput)
 
+			# Cursors
+			try:
+				self.checksLogger.debug('getMongoDBStatus: cursors')
+				
+				status['cursors']['totalOpen'] = statusOutput['cursors']['totalOpen']
+				
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: cursors KeyError exception - ' + str(ex))
+				pass
+
 			# Replica set status
 			if 'MongoDBReplSet' in self.agentConfig and self.agentConfig['MongoDBReplSet'] == 'yes':
 				self.checksLogger.debug('getMongoDBStatus: get replset status too')
