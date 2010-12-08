@@ -729,6 +729,7 @@ class checks:
 		try:
 			import pymongo
 			from pymongo import Connection
+			
 		except ImportError:
 			self.checksLogger.error('Unable to import pymongo library')
 			return False
@@ -741,9 +742,11 @@ class checks:
 			if len(mongoInfo) == 2:
 				conn = Connection(mongoInfo[0], int(mongoInfo[1]))
 				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
+			
 			else:
 				conn = Connection(mongoInfo[0])
 				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
+				
 		except Exception, ex:
 			import traceback
 			self.checksLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
@@ -784,6 +787,7 @@ class checks:
 				status['backgroundFlushing']['secondsSinceLastFlush'] = delta.seconds
 				status['backgroundFlushing']['lastFlushLength'] = statusOutput['backgroundFlushing']['last_ms']
 				status['backgroundFlushing']['lastFlushLengthAvrg'] = statusOutput['backgroundFlushing']['average_ms']
+			
 			except KeyError:
 				pass
 			
@@ -791,6 +795,7 @@ class checks:
 			if self.mongoDBStore == None:
 				self.checksLogger.debug('getMongoDBStatus: no cached data, so storing for first time')
 				self.clearMongoDBStatus(statusOutput)
+			
 			else:
 				self.checksLogger.debug('getMongoDBStatus: cached data exists, so calculating per sec metrics')
 				accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accesses']) / 60
@@ -811,6 +816,7 @@ class checks:
 					status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msg']) / 60
 					status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['user']) / 60
 					status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rollovers']) / 60
+				
 				else:
 					self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
 					self.clearMongoDBStatus(statusOutput)
