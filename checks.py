@@ -802,6 +802,17 @@ class checks:
 			except KeyError, ex:
 				self.checksLogger.debug('getMongoDBStatus: connections KeyError exception - ' + str(ex))
 				pass
+				
+			# Extra info (Linux only)
+			try:
+				self.checksLogger.debug('getMongoDBStatus: extra info')
+				
+				status['extraInfo']['heapUsage'] = statusOutput['extra_info']['heap_usage_bytes']
+				status['extraInfo']['pageFaults'] = statusOutput['extra_info']['page_faults']
+				
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: extra info KeyError exception - ' + str(ex))
+				pass
 			
 			# Background flushing
 			try:
