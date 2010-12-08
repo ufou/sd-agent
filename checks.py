@@ -881,23 +881,21 @@ class checks:
 			if 'MongoDBReplSet' in self.agentConfig and self.agentConfig['MongoDBReplSet'] == 'yes':
 				self.checksLogger.debug('getMongoDBStatus: get replset status too')
 				
-				# Get
-				replSet = db.command('isMaster')
+				# isMaster (to get state
+				isMaster = db.command('isMaster')
 				
-				self.checksLogger.debug('getMongoDBStatus: got replset')
+				self.checksLogger.debug('getMongoDBStatus: executed isMaster')
 				
-				# Store
-				status['replSet']['setName'] = replSet['setName']
-				status['replSet']['isMaster'] = replSet['ismaster']
-				status['replSet']['isSecondary'] = replSet['secondary']
+				status['replSet']['setName'] = isMaster['setName']
+				status['replSet']['isMaster'] = isMaster['ismaster']
+				status['replSet']['isSecondary'] = isMaster['secondary']
 				
 				if 'arbiterOnly' in replSet:
-					status['replSet']['isArbiter'] = replSet['arbiterOnly']
-					
-				if 'primary' in replSet:
-					status['replSet']['primary'] = replSet['primary']
+					status['replSet']['isArbiter'] = isMaster['arbiterOnly']
 				
-				self.checksLogger.debug('getMongoDBStatus: stored replset')
+				self.checksLogger.debug('getMongoDBStatus: finished isMaster')
+				
+				# rs.status()
 			
 			self.mongoDBStore = status
 				
