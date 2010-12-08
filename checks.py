@@ -777,6 +777,17 @@ class checks:
 				status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
 				
 			except KeyError:
+				pass
+				
+			# Memory
+			try:
+				self.checksLogger.debug('getMongoDBStatus: memory')
+				
+				status['memory']['resident'] = statusOutput['mem']['resident']
+				status['memory']['virtual'] = statusOutput['mem']['virtual']
+				status['memory']['mapped'] = statusOutput['mem']['mapped']
+				
+			except KeyError:
 				pass	
 			
 			# Background flushing
