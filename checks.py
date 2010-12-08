@@ -915,6 +915,14 @@ class checks:
 					
 					status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
 					status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
+					
+					# Error?
+					try:
+						status['replSet']['members'][member['_id']]['error'] = member['errmsg']
+						
+					except KeyError, ex:
+						self.checksLogger.debug('getMongoDBStatus: replSetGetStatus rs.status() KeyError exception - ' + str(ex))
+						pass
 			
 			self.mongoDBStore = status
 				
