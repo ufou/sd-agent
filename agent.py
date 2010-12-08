@@ -31,7 +31,7 @@ import time
 # were only introduced in 2.4.
 if int(sys.version_info[1]) <= 3:
 	print 'You are using an outdated version of Python. Please update to v2.4 or above (v3 is not supported). For newer OSs, you can update Python without affecting your system install. See http://blog.boxedice.com/2010/01/19/updating-python-on-rhelcentos/ If you are running RHEl 4 / CentOS 4 then you will need to compile Python manually.'
-	sys.exit(2)
+	sys.exit(1)
 	
 # After the version check as this isn't available on older Python versions
 # and will error before the message is shown
@@ -107,12 +107,12 @@ try:
 except ConfigParser.NoSectionError, e:
 	print 'Config file not found or incorrectly formatted'
 	print 'Agent will now quit'
-	sys.exit(2)
+	sys.exit(1)
 	
 except ConfigParser.ParsingError, e:
 	print 'Config file not found or incorrectly formatted'
 	print 'Agent will now quit'
-	sys.exit(2)
+	sys.exit(1)
 	
 except ConfigParser.NoOptionError, e:
 	print 'There are some items missing from your config file, but nothing fatal'
@@ -121,24 +121,24 @@ except ConfigParser.NoOptionError, e:
 if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['agentKey'] == 'keyHere':
 	print 'You have not modified config.cfg for your server'
 	print 'Agent will now quit'
-	sys.exit(2)
+	sys.exit(1)
 	
 # Check to make sure sd_url is in correct
 if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
 	print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
 	print 'Agent will now quit'
-	sys.exit(2)
+	sys.exit(1)
 	
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] == None:
 	print 'You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it as its default value - http://www.example.com/server-status/?auto'
 	print 'Agent will now quit'
-	sys.exit(2) 
+	sys.exit(1) 
 
 if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] == None:
 	print 'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status'
 	print 'Agent will now quit'
-	sys.exit(2)
+	sys.exit(1)
 
 if 'MySQLServer' in agentConfig and agentConfig['MySQLServer'] != '' and 'MySQLUser' in agentConfig and agentConfig['MySQLUser'] != '' and 'MySQLPass' in agentConfig:
 	try:
@@ -146,7 +146,7 @@ if 'MySQLServer' in agentConfig and agentConfig['MySQLServer'] != '' and 'MySQLU
 	except ImportError:
 		print 'You have configured MySQL for monitoring, but the MySQLdb module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/'
 		print 'Agent will now quit'
-		sys.exit(2)
+		sys.exit(1)
 
 if 'MongoDBServer' in agentConfig and agentConfig['MongoDBServer'] != '':
 	try:
@@ -154,7 +154,7 @@ if 'MongoDBServer' in agentConfig and agentConfig['MongoDBServer'] != '':
 	except ImportError:
 		print 'You have configured MongoDB for monitoring, but the pymongo module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/'
 		print 'Agent will now quit'
-		sys.exit(2)
+		sys.exit(1)
 
 for section in config.sections():
 	rawConfig[section] = {}
@@ -285,7 +285,7 @@ if __name__ == '__main__':
 			if os.path.abspath(__file__) == '/usr/bin/sd-agent/agent.py':
 				print 'Please use the Linux package manager that was used to install the agent to update it.'
 				print 'e.g. yum install sd-agent or apt-get install sd-agent'
-				sys.exit(2)
+				sys.exit(1)
 			
 			import httplib
 			import platform
@@ -302,20 +302,20 @@ if __name__ == '__main__':
 				
 			except urllib2.HTTPError, e:
 				print 'Unable to get latest version info - HTTPError = ' + str(e)
-				sys.exit(2)
+				sys.exit(1)
 				
 			except urllib2.URLError, e:
 				print 'Unable to get latest version info - URLError = ' + str(e)
-				sys.exit(2)
+				sys.exit(1)
 				
 			except httplib.HTTPException, e:
 				print 'Unable to get latest version info - HTTPException'
-				sys.exit(2)
+				sys.exit(1)
 				
 			except Exception, e:
 				import traceback
 				print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
-				sys.exit(2)
+				sys.exit(1)
 			
 			mainLogger.debug('Update: importing json/minjson')
 			
@@ -334,7 +334,7 @@ if __name__ == '__main__':
 					updateInfo = json.loads(response)
 				except Exception, e:
 					print 'Unable to get latest version info. Try again later.'
-					sys.exit(2)
+					sys.exit(1)
 				
 			else:
 				import minjson
@@ -345,7 +345,7 @@ if __name__ == '__main__':
 					updateInfo = minjson.safeRead(response)
 				except Exception, e:
 					print 'Unable to get latest version info. Try again later.'
-					sys.exit(2)
+					sys.exit(1)
 			
 			# Do the version check	
 			if updateInfo['version'] != agentConfig['version']:			
@@ -387,7 +387,7 @@ if __name__ == '__main__':
 						
 						else:
 							print agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.'
-							sys.exit(2)
+							sys.exit(1)
 				
 				# Loop through the new files and call the download function
 				for agentFile in updateInfo['files']:
@@ -410,7 +410,7 @@ if __name__ == '__main__':
 					
 					except OSError:
 						print 'An OS level error occurred. You will need to manually re-install the agent by downloading the latest version from http://www.serverdensity.com/downloads/sd-agent.tar.gz. You can copy your config.cfg to the new install'
-						sys.exit(2)
+						sys.exit(1)
 				
 				mainLogger.debug('Update: done')
 				
@@ -421,10 +421,10 @@ if __name__ == '__main__':
 		
 		else:
 			print 'Unknown command'
-			sys.exit(2)
+			sys.exit(1)
 			
 		sys.exit(0)
 		
 	else:
 		print 'usage: %s start|stop|restart|status|update' % sys.argv[0]
-		sys.exit(2)
+		sys.exit(1)
