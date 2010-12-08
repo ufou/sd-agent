@@ -740,8 +740,10 @@ class checks:
 			mongoInfo = self.agentConfig['MongoDBServer'].split(':')
 			if len(mongoInfo) == 2:
 				conn = Connection(mongoInfo[0], int(mongoInfo[1]))
+				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
 			else:
 				conn = Connection(mongoInfo[0])
+				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
 		except Exception, ex:
 			import traceback
 			self.checksLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
@@ -753,16 +755,29 @@ class checks:
 			dbName = 'local'
 			db = conn[dbName]
 			status = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
-			# If these keys exist, remove them for now as they cannot be serialized
+			
+			self.checksLogger.debug('getMongoDBStatus: executed serverStatus')
+			
+			import datetime
+			
+			# Background flushing
 			try:
-				status['backgroundFlushing'].pop('last_finished')
+				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing')
+				
+				delta = datetime.datetime.now() - status['backgroundFlushing']['last_finished']
+				status['backgroundFlushing']['secondsSinceLastFlush'] = delta.seconds
+				status['backgroundFlushing']['lastFlushLength'] = status['backgroundFlushing']['last_ms']
+				status['backgroundFlushing']['lastFlushLengthAvrg'] = status['backgroundFlushing']['average_ms']
 			except KeyError:
 				pass
+			
+			# If these keys exist, remove them as we're not using them
 			try:
 				status.pop('localTime')
 			except KeyError:
 				pass
 
+			# Per second metric calculations
 			if self.mongoDBStore == None:
 				self.checksLogger.debug('getMongoDBStatus: no cached data, so storing for first time')
 				self.clearMongoDBStatus(status)
