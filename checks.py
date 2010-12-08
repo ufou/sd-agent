@@ -783,9 +783,9 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: memory')
 				
-				status['memory']['resident'] = statusOutput['mem']['resident']
-				status['memory']['virtual'] = statusOutput['mem']['virtual']
-				status['memory']['mapped'] = statusOutput['mem']['mapped']
+				status['mem']['resident'] = statusOutput['mem']['resident']
+				status['mem']['virtual'] = statusOutput['mem']['virtual']
+				status['mem']['mapped'] = statusOutput['mem']['mapped']
 				
 			except KeyError:
 				pass
