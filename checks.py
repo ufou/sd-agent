@@ -776,7 +776,8 @@ class checks:
 				status['globalLock']['currentQueue']['readers'] = statusOutput['globalLock']['currentQueue']['readers']
 				status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
 				
-			except KeyError:
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: globalLock KeyError exception - ' + str(ex))
 				pass
 				
 			# Memory
@@ -787,7 +788,8 @@ class checks:
 				status['mem']['virtual'] = statusOutput['mem']['virtual']
 				status['mem']['mapped'] = statusOutput['mem']['mapped']
 				
-			except KeyError:
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: memory KeyError exception - ' + str(ex))
 				pass
 				
 			# Connections
@@ -797,8 +799,9 @@ class checks:
 				status['connections']['current'] = statusOutput['connections']['current']
 				status['connections']['available'] = statusOutput['connections']['available']
 				
-			except KeyError:
-				pass	
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: connections KeyError exception - ' + str(ex))
+				pass
 			
 			# Background flushing
 			try:
@@ -809,7 +812,8 @@ class checks:
 				status['backgroundFlushing']['lastFlushLength'] = statusOutput['backgroundFlushing']['last_ms']
 				status['backgroundFlushing']['lastFlushLengthAvrg'] = statusOutput['backgroundFlushing']['average_ms']
 			
-			except KeyError:
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
 				pass
 			
 			# Per second metric calculations (opcounts and asserts)
