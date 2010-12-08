@@ -908,8 +908,13 @@ class checks:
 					
 					status['replSet']['members'][member['_id']]['name'] = member['name']
 					status['replSet']['members'][member['_id']]['state'] = member['state']
-					status['replSet']['members'][member['_id']]['optimeDate'] = datetime.datetime.now() - member['optimeDate']
-					status['replSet']['members'][member['_id']]['lastHeartbeat'] = datetime.datetime.now() - member['lastHeartbeat']
+					
+					# Calculate deltas
+					deltaOptime = datetime.datetime.now() - member['optimeDate']
+					deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']
+					
+					status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
+					status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
 			
 			self.mongoDBStore = status
 				
