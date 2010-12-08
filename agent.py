@@ -106,10 +106,12 @@ try:
 
 except ConfigParser.NoSectionError, e:
 	print 'Config file not found or incorrectly formatted'
+	print 'Agent will now quit'
 	sys.exit(2)
 	
 except ConfigParser.ParsingError, e:
 	print 'Config file not found or incorrectly formatted'
+	print 'Agent will now quit'
 	sys.exit(2)
 	
 except ConfigParser.NoOptionError, e:
@@ -118,34 +120,40 @@ except ConfigParser.NoOptionError, e:
 # Check to make sure the default config values have been changed (only core config values)
 if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['agentKey'] == 'keyHere':
 	print 'You have not modified config.cfg for your server'
+	print 'Agent will now quit'
 	sys.exit(2)
 	
 # Check to make sure sd_url is in correct
 if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
 	print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
+	print 'Agent will now quit'
 	sys.exit(2)
 	
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] == None:
 	print 'You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it as its default value - http://www.example.com/server-status/?auto'
+	print 'Agent will now quit'
 	sys.exit(2) 
 
 if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] == None:
 	print 'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status'
+	print 'Agent will now quit'
 	sys.exit(2)
 
 if 'MySQLServer' in agentConfig and agentConfig['MySQLServer'] != '' and 'MySQLUser' in agentConfig and agentConfig['MySQLUser'] != '' and 'MySQLPass' in agentConfig:
 	try:
 		import MySQLdb
 	except ImportError:
-		print 'You have configured MySQL for monitoring, but the MySQLdb module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/'
+		print 'You have configured MySQL for monitoring, but the MySQLdb module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/'
+		print 'Agent will now quit'
 		sys.exit(2)
 
 if 'MongoDBServer' in agentConfig and agentConfig['MongoDBServer'] != '':
 	try:
 		import pymongo
 	except ImportError:
-		print 'You have configured MongoDB for monitoring, but the pymongo module is not installed.  For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/'
+		print 'You have configured MongoDB for monitoring, but the pymongo module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/'
+		print 'Agent will now quit'
 		sys.exit(2)
 
 for section in config.sections():
