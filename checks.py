@@ -767,6 +767,16 @@ class checks:
 			import datetime
 			status = {}
 			
+			# Version
+			try:
+				self.checksLogger.debug('getMongoDBStatus: version')
+				
+				status['version'] = statusOutput['version']
+			
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: version KeyError exception - ' + str(ex))
+				pass
+			
 			# Global locks
 			try:
 				self.checksLogger.debug('getMongoDBStatus: globalLock')
