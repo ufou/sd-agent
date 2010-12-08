@@ -788,6 +788,16 @@ class checks:
 				status['memory']['mapped'] = statusOutput['mem']['mapped']
 				
 			except KeyError:
+				pass
+				
+			# Connections
+			try:
+				self.checksLogger.debug('getMongoDBStatus: connections')
+				
+				status['connections']['current'] = statusOutput['connections']['current']
+				status['connections']['available'] = statusOutput['connections']['available']
+				
+			except KeyError:
 				pass	
 			
 			# Background flushing
