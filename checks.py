@@ -755,8 +755,7 @@ class checks:
 		# Older versions of pymongo did not support the command()
 		# method below.
 		try:
-			dbName = 'local'
-			db = conn[dbName]
+			db = conn['local']
 			
 			# Server status
 			statusOutput = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
@@ -896,6 +895,21 @@ class checks:
 				self.checksLogger.debug('getMongoDBStatus: finished isMaster')
 				
 				# rs.status()
+				db = conn['admin']
+				replSet = db.command('replSetGetStatus')
+				
+				self.checksLogger.debug('getMongoDBStatus: executed replSetGetStatus')
+				
+				status['replSet']['myState'] = replSet['myState']
+				
+				for member in replSet['members']:
+				
+					self.checksLogger.debug('getMongoDBStatus: replSetGetStatus looping - ' + str(member['name']))
+					
+					status['replSet']['members'][member['_id']]['name'] = member['name']
+					status['replSet']['members'][member['_id']]['state'] = member['state']
+					status['replSet']['members'][member['_id']]['optimeDate'] = datetime.datetime.now() - member['optimeDate']
+					status['replSet']['members'][member['_id']]['lastHeartbeat'] = datetime.datetime.now() - member['lastHeartbeat']
 			
 			self.mongoDBStore = status
 				
