@@ -152,7 +152,7 @@ class checks:
 				self.checksLogger.debug('getApacheStatus: IndexError - Total Accesses, BusyWorkers or IdleWorkers not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getApacheStatus: KeyError - Total Accesse, BusyWorkers or IdleWorkers not present')
+				self.checksLogger.debug('getApacheStatus: KeyError - Total Accesses, BusyWorkers or IdleWorkers not present')
 								
 				return False
 			
