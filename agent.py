@@ -100,6 +100,9 @@ try:
 
 	if config.has_option('Main', 'mongodb_server'):
 		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
+	
+	if config.has_option('Main', 'mongodb_dbstats'):
+		agentConfig['MongoDBDBStats'] = config.get('Main', 'mongodb_dbstats')
 		
 	if config.has_option('Main', 'mongodb_replset'):
 		agentConfig['MongoDBReplSet'] = config.get('Main', 'mongodb_replset')
