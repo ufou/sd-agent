@@ -780,6 +780,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: globalLock')
 				
+				status['globalLock'] = {}
 				status['globalLock']['ratio'] = statusOutput['globalLock']['ratio']
 				status['globalLock']['currentQueue']['total'] = statusOutput['globalLock']['currentQueue']['total']
 				status['globalLock']['currentQueue']['readers'] = statusOutput['globalLock']['currentQueue']['readers']
@@ -793,6 +794,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: memory')
 				
+				status['mem'] = {}
 				status['mem']['resident'] = statusOutput['mem']['resident']
 				status['mem']['virtual'] = statusOutput['mem']['virtual']
 				status['mem']['mapped'] = statusOutput['mem']['mapped']
@@ -805,6 +807,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: connections')
 				
+				status['connections'] = {}
 				status['connections']['current'] = statusOutput['connections']['current']
 				status['connections']['available'] = statusOutput['connections']['available']
 				
@@ -816,6 +819,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: extra info')
 				
+				status['extraInfo'] = {}
 				status['extraInfo']['heapUsage'] = statusOutput['extra_info']['heap_usage_bytes']
 				status['extraInfo']['pageFaults'] = statusOutput['extra_info']['page_faults']
 				
@@ -827,6 +831,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing')
 				
+				status['backgroundFlushing'] = {}
 				delta = datetime.datetime.now() - statusOutput['backgroundFlushing']['last_finished']
 				status['backgroundFlushing']['secondsSinceLastFlush'] = delta.seconds
 				status['backgroundFlushing']['lastFlushLength'] = statusOutput['backgroundFlushing']['last_ms']
@@ -870,6 +875,7 @@ class checks:
 			try:
 				self.checksLogger.debug('getMongoDBStatus: cursors')
 				
+				status['cursors'] = {}
 				status['cursors']['totalOpen'] = statusOutput['cursors']['totalOpen']
 				
 			except KeyError, ex:
@@ -885,6 +891,7 @@ class checks:
 				
 				self.checksLogger.debug('getMongoDBStatus: executed isMaster')
 				
+				status['replSet'] = {}
 				status['replSet']['setName'] = isMaster['setName']
 				status['replSet']['isMaster'] = isMaster['ismaster']
 				status['replSet']['isSecondary'] = isMaster['secondary']
@@ -901,6 +908,8 @@ class checks:
 				self.checksLogger.debug('getMongoDBStatus: executed replSetGetStatus')
 				
 				status['replSet']['myState'] = replSet['myState']
+				
+				status['replSet']['members'] = {}
 				
 				for member in replSet['members']:
 				
@@ -928,6 +937,8 @@ class checks:
 			if 'MongoDBDBStats' in self.agentConfig and self.agentConfig['MongoDBDBStats'] == 'yes':
 				self.checksLogger.debug('getMongoDBStatus: db.stats() too')
 				
+				status['dbStats'] = {}
+				
 				for database in conn.database_names():
 					
 					if database != 'local' and database != 'admin' and database != 'test':
@@ -949,7 +960,7 @@ class checks:
 		
 		return status
 
-	def clearMongoDBStatus(self, status):
+	def clearMongoDBStatus(self, statusOutput):
 		statusOutput['indexCounters']['btree']['accessesPS'] = 0
 		statusOutput['indexCounters']['btree']['hitsPS'] = 0
 		statusOutput['indexCounters']['btree']['missesPS'] = 0
