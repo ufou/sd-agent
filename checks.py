@@ -936,6 +936,7 @@ class checks:
 						
 						status['dbStats'][database] = conn[database].command('dbstats')
 						status['dbStats'][database]['namespaces'] = conn[database]['system']['namespaces'].count()
+						status['dbStats'][database]['indexes'] = conn[database]['system']['indexes'].count()
 			
 			self.mongoDBStore = status
 				
