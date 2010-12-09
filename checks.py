@@ -935,6 +935,7 @@ class checks:
 						self.checksLogger.debug('getMongoDBStatus: executing db.stats() for ' + str(database))
 						
 						status['dbStats'][database] = conn[database].command('dbstats')
+						status['dbStats'][database]['namespaces'] = conn[database]['system']['namespaces'].count()
 			
 			self.mongoDBStore = status
 				
