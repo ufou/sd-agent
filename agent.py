@@ -63,11 +63,24 @@ try:
 		agentConfig['tmpDirectory'] = '/tmp/' # default which may be overriden in the config later
 	agentConfig['pidfileDirectory'] = agentConfig['tmpDirectory']
 	
+	# Plugin config
+	if config.has_option('Main', 'plugin_directory'):
+		agentConfig['pluginDirectory'] = config.get('Main', 'plugin_directory')
+	
 	# Optional config
 	# Also do not need to be present in the config file (case 28326).
 	if config.has_option('Main', 'apache_status_url'):
 		agentConfig['apacheStatusUrl'] = config.get('Main', 'apache_status_url')
+	
+	if config.has_option('Main', 'mongodb_server'):
+		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
+	
+	if config.has_option('Main', 'mongodb_dbstats'):
+		agentConfig['MongoDBDBStats'] = config.get('Main', 'mongodb_dbstats')
 		
+	if config.has_option('Main', 'mongodb_replset'):
+		agentConfig['MongoDBReplSet'] = config.get('Main', 'mongodb_replset')	
+	
 	if config.has_option('Main', 'mysql_server'):
 		agentConfig['MySQLServer'] = config.get('Main', 'mysql_server')
 		
@@ -86,9 +99,6 @@ try:
 	if config.has_option('Main', 'pidfile_directory'):
 		agentConfig['pidfileDirectory'] = config.get('Main', 'pidfile_directory')
 		
-	if config.has_option('Main', 'plugin_directory'):
-		agentConfig['pluginDirectory'] = config.get('Main', 'plugin_directory')
-
 	if config.has_option('Main', 'rabbitmq_status_url'):
 		agentConfig['rabbitMQStatusUrl'] = config.get('Main', 'rabbitmq_status_url')
 
@@ -97,15 +107,6 @@ try:
 
 	if config.has_option('Main', 'rabbitmq_pass'):
 		agentConfig['rabbitMQPass'] = config.get('Main', 'rabbitmq_pass')
-
-	if config.has_option('Main', 'mongodb_server'):
-		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
-	
-	if config.has_option('Main', 'mongodb_dbstats'):
-		agentConfig['MongoDBDBStats'] = config.get('Main', 'mongodb_dbstats')
-		
-	if config.has_option('Main', 'mongodb_replset'):
-		agentConfig['MongoDBReplSet'] = config.get('Main', 'mongodb_replset')
 
 except ConfigParser.NoSectionError, e:
 	print 'Config file not found or incorrectly formatted'
