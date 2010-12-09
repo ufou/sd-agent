@@ -924,6 +924,18 @@ class checks:
 						self.checksLogger.debug('getMongoDBStatus: replSetGetStatus rs.status() KeyError exception - ' + str(ex))
 						pass
 			
+			# db.stats()
+			if 'MongoDBDBStats' in self.agentConfig and self.agentConfig['MongoDBDBStats'] == 'yes':
+				self.checksLogger.debug('getMongoDBStatus: db.stats() too')
+				
+				for database in conn.database_names():
+					
+					if database != 'local' and database != 'admin' and database != 'test':
+						
+						self.checksLogger.debug('getMongoDBStatus: executing db.stats() for ' + str(database))
+						
+						status['dbStats'][database] = conn[database].command('dbstats')
+			
 			self.mongoDBStore = status
 				
 		except Exception, ex:
