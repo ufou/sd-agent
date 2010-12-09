@@ -776,8 +776,6 @@ class checks:
 				self.checksLogger.debug('getMongoDBStatus: version KeyError exception - ' + str(ex))
 				pass
 			
-			print statusOutput
-			
 			# Global locks
 			try:
 				self.checksLogger.debug('getMongoDBStatus: globalLock')
@@ -961,10 +959,6 @@ class checks:
 			return False
 
 		self.checksLogger.debug('getMongoDBStatus: completed, returning')
-		
-		print status
-		import sys
-		sys.exit(2)
 		
 		return status
 
