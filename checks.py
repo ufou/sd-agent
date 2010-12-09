@@ -784,6 +784,8 @@ class checks:
 				
 				status['globalLock'] = {}
 				status['globalLock']['ratio'] = statusOutput['globalLock']['ratio']
+				
+				status['globalLock']['currentQueue'] = {}
 				status['globalLock']['currentQueue']['total'] = statusOutput['globalLock']['currentQueue']['total']
 				status['globalLock']['currentQueue']['readers'] = statusOutput['globalLock']['currentQueue']['readers']
 				status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
