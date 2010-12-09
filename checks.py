@@ -776,6 +776,8 @@ class checks:
 				self.checksLogger.debug('getMongoDBStatus: version KeyError exception - ' + str(ex))
 				pass
 			
+			print statusOutput
+			
 			# Global locks
 			try:
 				self.checksLogger.debug('getMongoDBStatus: globalLock')
@@ -835,7 +837,7 @@ class checks:
 				delta = datetime.datetime.now() - statusOutput['backgroundFlushing']['last_finished']
 				status['backgroundFlushing']['secondsSinceLastFlush'] = delta.seconds
 				status['backgroundFlushing']['lastFlushLength'] = statusOutput['backgroundFlushing']['last_ms']
-				status['backgroundFlushing']['lastFlushLengthAvrg'] = statusOutput['backgroundFlushing']['average_ms']
+				status['backgroundFlushing']['flushLengthAvrg'] = statusOutput['backgroundFlushing']['average_ms']
 			
 			except KeyError, ex:
 				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
@@ -957,6 +959,10 @@ class checks:
 			return False
 
 		self.checksLogger.debug('getMongoDBStatus: completed, returning')
+		
+		print status
+		import sys
+		sys.exit(2)
 		
 		return status
 
