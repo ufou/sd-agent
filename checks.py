@@ -846,7 +846,7 @@ class checks:
 			# Per second metric calculations (opcounts and asserts)
 			if self.mongoDBStore == None:
 				self.checksLogger.debug('getMongoDBStatus: no cached data, so storing for first time')
-				self.clearMongoDBStatus(self.mongoDBStore)
+				self.clearMongoDBStatus()
 			
 			else:
 				self.checksLogger.debug('getMongoDBStatus: cached data exists, so calculating per sec metrics')
@@ -871,7 +871,7 @@ class checks:
 				
 				else:
 					self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
-					self.clearMongoDBStatus(self.mongoDBStore)
+					self.clearMongoDBStatus()
 
 			# Cursors
 			try:
@@ -961,30 +961,30 @@ class checks:
 		
 		return status
 
-	def clearMongoDBStatus(self, mongoDBStore):
-		mongoDBStore = {}
+	def clearMongoDBStatus(self):
+		self.mongoDBStore = {}
 		
-		mongoDBStore['indexCounters'] = {}
-		mongoDBStore['indexCounters']['btree'] = {}
-		mongoDBStore['indexCounters']['btree']['accessesPS'] = 0
-		mongoDBStore['indexCounters']['btree']['hitsPS'] = 0
-		mongoDBStore['indexCounters']['btree']['missesPS'] = 0
-		mongoDBStore['indexCounters']['btree']['missRatioPS'] = 0
+		self.mongoDBStore['indexCounters'] = {}
+		self.mongoDBStore['indexCounters']['btree'] = {}
+		self.mongoDBStore['indexCounters']['btree']['accessesPS'] = 0
+		self.mongoDBStore['indexCounters']['btree']['hitsPS'] = 0
+		self.mongoDBStore['indexCounters']['btree']['missesPS'] = 0
+		self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = 0
 		
-		mongoDBStore['opcounters'] = {}
-		mongoDBStore['opcounters']['insertPS'] = 0
-		mongoDBStore['opcounters']['queryPS'] = 0
-		mongoDBStore['opcounters']['updatePS'] = 0
-		mongoDBStore['opcounters']['deletePS'] = 0
-		mongoDBStore['opcounters']['getmorePS'] = 0
-		mongoDBStore['opcounters']['commandPS'] = 0
+		self.mongoDBStore['opcounters'] = {}
+		self.mongoDBStore['opcounters']['insertPS'] = 0
+		self.mongoDBStore['opcounters']['queryPS'] = 0
+		self.mongoDBStore['opcounters']['updatePS'] = 0
+		self.mongoDBStore['opcounters']['deletePS'] = 0
+		self.mongoDBStore['opcounters']['getmorePS'] = 0
+		self.mongoDBStore['opcounters']['commandPS'] = 0
 		
-		mongoDBStore['asserts'] = {}
-		mongoDBStore['asserts']['regularPS'] = 0
-		mongoDBStore['asserts']['warningPS'] = 0
-		mongoDBStore['asserts']['msgPS'] = 0
-		mongoDBStore['asserts']['userPS'] = 0
-		mongoDBStore['asserts']['rolloversPS'] = 0
+		self.mongoDBStore['asserts'] = {}
+		self.mongoDBStore['asserts']['regularPS'] = 0
+		self.mongoDBStore['asserts']['warningPS'] = 0
+		self.mongoDBStore['asserts']['msgPS'] = 0
+		self.mongoDBStore['asserts']['userPS'] = 0
+		self.mongoDBStore['asserts']['rolloversPS'] = 0
 
 	def getMySQLStatus(self):
 		self.checksLogger.debug('getMySQLStatus: start')
