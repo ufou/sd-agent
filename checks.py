@@ -925,6 +925,9 @@ class checks:
 					status['replSet']['members'][member['_id']]['name'] = member['name']
 					status['replSet']['members'][member['_id']]['state'] = member['state']
 					
+					if member['state'] == True:
+						status['replSet']['myId'] = member['_id']
+					
 					# Calculate deltas
 					deltaOptime = datetime.datetime.now() - member['optimeDate']
 					deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']
