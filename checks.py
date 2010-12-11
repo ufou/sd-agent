@@ -768,9 +768,9 @@ class checks:
 			
 			# Version
 			try:
-				self.checksLogger.debug('getMongoDBStatus: version')
-				
 				status['version'] = statusOutput['version']
+				
+				self.checksLogger.debug('getMongoDBStatus: version ' + str(statusOutput['version']))
 			
 			except KeyError, ex:
 				self.checksLogger.debug('getMongoDBStatus: version KeyError exception - ' + str(ex))
