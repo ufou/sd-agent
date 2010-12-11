@@ -843,36 +843,41 @@ class checks:
 				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
 				pass
 			
-			# Per second metric calculations (opcounts and asserts)
-			if self.mongoDBStore == None:
-				self.checksLogger.debug('getMongoDBStatus: no cached data, so storing for first time')
-				self.clearMongoDBStatus()
-			
-			else:
-				self.checksLogger.debug('getMongoDBStatus: cached data exists, so calculating per sec metrics')
-				accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accesses']) / 60
-				
-				if accessesPS >= 0:
-					status['indexCounters']['btree']['accessesPS'] = accessesPS
-					status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hits']) / 60
-					status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['misses']) / 60
-					status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatio']) / 60
-					status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insert']) / 60
-					status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['query']) / 60
-					status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['update']) / 60
-					status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['delete']) / 60
-					status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmore']) / 60
-					status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['command']) / 60
-					status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regular']) / 60
-					status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warning']) / 60
-					status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msg']) / 60
-					status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['user']) / 60
-					status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rollovers']) / 60
+			try:
+				# Per second metric calculations (opcounts and asserts)
+				if self.mongoDBStore == None:
+					self.checksLogger.debug('getMongoDBStatus: no cached data, so storing for first time')
+					self.clearMongoDBStatus()
 				
 				else:
-					self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
-					self.clearMongoDBStatus()
-
+					self.checksLogger.debug('getMongoDBStatus: cached data exists, so calculating per sec metrics')
+					accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accesses']) / 60
+					
+					if accessesPS >= 0:
+						status['indexCounters']['btree']['accessesPS'] = accessesPS
+						status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hits']) / 60
+						status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['misses']) / 60
+						status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatio']) / 60
+						status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insert']) / 60
+						status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['query']) / 60
+						status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['update']) / 60
+						status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['delete']) / 60
+						status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmore']) / 60
+						status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['command']) / 60
+						status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regular']) / 60
+						status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warning']) / 60
+						status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msg']) / 60
+						status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['user']) / 60
+						status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rollovers']) / 60
+					
+					else:
+						self.checksLogger.debug('getMongoDBStatus: negative value calculated, mongod likely restarted, so clearing cache')
+						self.clearMongoDBStatus()
+			
+			except KeyError, ex:
+				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
+				pass
+			
 			# Cursors
 			try:
 				self.checksLogger.debug('getMongoDBStatus: cursors')
