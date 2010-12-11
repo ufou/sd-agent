@@ -903,7 +903,7 @@ class checks:
 				status['replSet']['isMaster'] = isMaster['ismaster']
 				status['replSet']['isSecondary'] = isMaster['secondary']
 				
-				if 'arbiterOnly' in replSet:
+				if 'arbiterOnly' in isMaster:
 					status['replSet']['isArbiter'] = isMaster['arbiterOnly']
 				
 				self.checksLogger.debug('getMongoDBStatus: finished isMaster')
@@ -922,26 +922,25 @@ class checks:
 				
 					self.checksLogger.debug('getMongoDBStatus: replSetGetStatus looping - ' + str(member['name']))
 					
+					status['replSet']['members'][member['_id']] = {}
+					
 					status['replSet']['members'][member['_id']]['name'] = member['name']
 					status['replSet']['members'][member['_id']]['state'] = member['state']
 					
-					if member['state'] == True:
+					if 'self' in member:
 						status['replSet']['myId'] = member['_id']
 					
-					# Calculate deltas
-					deltaOptime = datetime.datetime.now() - member['optimeDate']
-					deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']
-					
-					status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
-					status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
-					
-					# Error?
-					try:
-						status['replSet']['members'][member['_id']]['error'] = member['errmsg']
+					else:
+						# Calculate deltas (not available for self)
+						deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']					
+						status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
 						
-					except KeyError, ex:
-						self.checksLogger.debug('getMongoDBStatus: replSetGetStatus rs.status() KeyError exception - ' + str(ex))
-						pass
+						if 'optimeDate' in member: # Only available as of 1.7.2
+							status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
+							deltaOptime = datetime.datetime.now() - member['optimeDate']
+					
+					if 'errmsg' in member:
+						status['replSet']['members'][member['_id']]['error'] = member['errmsg']
 			
 			# db.stats()
 			if 'MongoDBDBStats' in self.agentConfig and self.agentConfig['MongoDBDBStats'] == 'yes':
