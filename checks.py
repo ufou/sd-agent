@@ -851,7 +851,7 @@ class checks:
 				
 				else:
 					self.checksLogger.debug('getMongoDBStatus: cached data exists, so calculating per sec metrics')
-					accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accesses']) / 60
+					accessesPS = float(statusOutput['indexCounters']['btree']['accessesPS'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
 					
 					if accessesPS >= 0:
 						status['indexCounters']['btree']['accessesPS'] = accessesPS
