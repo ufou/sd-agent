@@ -1514,6 +1514,8 @@ class checks:
 			
 			ps = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 			
+			self.checksLogger.debug('getProcesses: ps result - ' + str(ps))
+			
 		except Exception, e:
 			import traceback
 			self.checksLogger.error('getProcesses: exception = ' + traceback.format_exc())
