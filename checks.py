@@ -1542,6 +1542,7 @@ class checks:
 		self.checksLogger.debug('getProcesses: Popen success, parsing, looping')
 		
 		for line in processLines:
+			self.checksLogger.debug('getProcesses: Popen success, parsing, loop...')
 			line = line.split(None, 10)
 			processes.append(line)
 		
