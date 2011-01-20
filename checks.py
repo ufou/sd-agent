@@ -944,8 +944,8 @@ class checks:
 						status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
 						
 						if 'optimeDate' in member: # Only available as of 1.7.2
-							status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
 							deltaOptime = datetime.datetime.now() - member['optimeDate']
+							status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
 					
 					if 'errmsg' in member:
 						status['replSet']['members'][member['_id']]['error'] = member['errmsg']
