@@ -930,10 +930,10 @@ class checks:
 				
 					self.checksLogger.debug('getMongoDBStatus: replSetGetStatus looping - ' + str(member['name']))
 					
-					status['replSet']['members'][member['_id']] = {}
+					status['replSet']['members'][str(member['_id'])] = {}
 					
-					status['replSet']['members'][member['_id']]['name'] = member['name']
-					status['replSet']['members'][member['_id']]['state'] = member['state']
+					status['replSet']['members'][str(member['_id'])]['name'] = member['name']
+					status['replSet']['members'][str(member['_id'])]['state'] = member['state']
 					
 					if 'self' in member:
 						status['replSet']['myId'] = member['_id']
@@ -941,14 +941,14 @@ class checks:
 					else:
 						# Calculate deltas (not available for self)
 						deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']					
-						status['replSet']['members'][member['_id']]['lastHeartbeat'] = deltaHeartbeat.seconds
+						status['replSet']['members'][str(member['_id'])]['lastHeartbeat'] = deltaHeartbeat.seconds
 						
 						if 'optimeDate' in member: # Only available as of 1.7.2
 							deltaOptime = datetime.datetime.now() - member['optimeDate']
-							status['replSet']['members'][member['_id']]['optimeDate'] = deltaOptime.seconds
+							status['replSet']['members'][str(member['_id'])]['optimeDate'] = deltaOptime.seconds
 					
 					if 'errmsg' in member:
-						status['replSet']['members'][member['_id']]['error'] = member['errmsg']
+						status['replSet']['members'][str(member['_id'])]['error'] = member['errmsg']
 			
 			# db.stats()
 			if 'MongoDBDBStats' in self.agentConfig and self.agentConfig['MongoDBDBStats'] == 'yes':
