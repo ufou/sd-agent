@@ -584,6 +584,11 @@ class checks:
 			self.checksLogger.debug('getMemoryUsage: parsing, looped')
 			
 			memData = {}
+			memData['physFree'] = 0
+			memData['physUsed'] = 0
+			memData['cached'] = 0
+			memData['swapFree'] = 0
+			memData['swapUsed'] = 0
 			
 			# Phys
 			try:
