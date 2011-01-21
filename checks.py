@@ -621,7 +621,7 @@ class checks:
 								
 			# Stops the agent crashing if one of the meminfo elements isn't set
 			except IndexError:
-				self.checksLogger.debug('getMemoryUsage: formatting (swap) IndexErro) - SwapTotal or SwapFree not present')
+				self.checksLogger.debug('getMemoryUsage: formatting (swap) IndexError - SwapTotal or SwapFree not present')
 				
 			except KeyError:
 				self.checksLogger.debug('getMemoryUsage: formatting (swap) KeyError - SwapTotal or SwapFree not present')
