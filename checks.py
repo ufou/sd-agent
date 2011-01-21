@@ -49,9 +49,11 @@ else:
 
 class checks:
 	
-	def __init__(self, agentConfig, rawConfig):
+	def __init__(self, agentConfig, rawConfig, mainLogger):
 		self.agentConfig = agentConfig
 		self.rawConfig = rawConfig
+		self.mainLogger = mainLogger
+		
 		self.mysqlConnectionsStore = None
 		self.mysqlSlowQueriesStore = None
 		self.mysqlVersion = None
@@ -73,36 +75,36 @@ class checks:
 	#
 		
 	def getApacheStatus(self):
-		self.checksLogger.debug('getApacheStatus: start')
+		self.mainLogger.debug('getApacheStatus: start')
 		
 		if 'apacheStatusUrl' in self.agentConfig and self.agentConfig['apacheStatusUrl'] != 'http://www.example.com/server-status/?auto':	# Don't do it if the status URL hasn't been provided
-			self.checksLogger.debug('getApacheStatus: config set')
+			self.mainLogger.debug('getApacheStatus: config set')
 			
 			try: 
-				self.checksLogger.debug('getApacheStatus: attempting urlopen')
+				self.mainLogger.debug('getApacheStatus: attempting urlopen')
 				
 				req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
 				request = urllib2.urlopen(req)
 				response = request.read()
 				
 			except urllib2.HTTPError, e:
-				self.checksLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
+				self.mainLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
 				return False
 				
 			except urllib2.URLError, e:
-				self.checksLogger.error('Unable to get Apache status - URLError = ' + str(e))
+				self.mainLogger.error('Unable to get Apache status - URLError = ' + str(e))
 				return False
 				
 			except httplib.HTTPException, e:
-				self.checksLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
+				self.mainLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
 				return False
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
+				self.mainLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
 				return False
 				
-			self.checksLogger.debug('getApacheStatus: urlopen success, start parsing')
+			self.mainLogger.debug('getApacheStatus: urlopen success, start parsing')
 			
 			# Split out each line
 			lines = response.split('\n')
@@ -110,7 +112,7 @@ class checks:
 			# Loop over each line and get the values
 			apacheStatus = {}
 			
-			self.checksLogger.debug('getApacheStatus: parsing, loop')
+			self.mainLogger.debug('getApacheStatus: parsing, loop')
 			
 			# Loop through and extract the numerical values
 			for line in lines:
@@ -122,53 +124,53 @@ class checks:
 				except IndexError:
 					break
 			
-			self.checksLogger.debug('getApacheStatus: parsed')
+			self.mainLogger.debug('getApacheStatus: parsed')
 			
 			try:
 				if apacheStatus['Total Accesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
 					totalAccesses = float(apacheStatus['Total Accesses'])
 					
-					self.checksLogger.debug('getApacheStatus: required mod_status keys found, proceeding')
+					self.mainLogger.debug('getApacheStatus: required mod_status keys found, proceeding')
 					
 					if self.apacheTotalAccesses is None or totalAccesses == 0:
 						reqPerSec = 0.0
 						self.apacheTotalAccesses = totalAccesses
-						self.checksLogger.debug('getApacheStatus: no cached total accesses (or totalAccesses == 0), so storing for first time / resetting stored value')
+						self.mainLogger.debug('getApacheStatus: no cached total accesses (or totalAccesses == 0), so storing for first time / resetting stored value')
 					else:
-						self.checksLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
+						self.mainLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
 						reqPerSec = (totalAccesses - self.apacheTotalAccesses) / 60
 						self.apacheTotalAccesses = totalAccesses
 					
-					self.checksLogger.debug('getApacheStatus: completed, returning')
+					self.mainLogger.debug('getApacheStatus: completed, returning')
 					return {'reqPerSec': reqPerSec, 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
 				
 				else:
-					self.checksLogger.debug('getApacheStatus: completed, status not available')
+					self.mainLogger.debug('getApacheStatus: completed, status not available')
 					
 					return False
 				
 			# Stops the agent crashing if one of the apacheStatus elements isn't set (e.g. ExtendedStatus Off)	
 			except IndexError:
-				self.checksLogger.debug('getApacheStatus: IndexError - Total Accesses, BusyWorkers or IdleWorkers not present')
+				self.mainLogger.error('getApacheStatus: IndexError - Total Accesses, BusyWorkers or IdleWorkers not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getApacheStatus: KeyError - Total Accesses, BusyWorkers or IdleWorkers not present')
+				self.mainLogger.error('getApacheStatus: KeyError - Total Accesses, BusyWorkers or IdleWorkers not present')
 								
 				return False
 			
 		else:
-			self.checksLogger.debug('getApacheStatus: config not set')
+			self.mainLogger.debug('getApacheStatus: config not set')
 			
 			return False
 		
 	def getCouchDBStatus(self):
-		self.checksLogger.debug('getCouchDBStatus: start')
+		self.mainLogger.debug('getCouchDBStatus: start')
 
 		if ('CouchDBServer' not in self.agentConfig or self.agentConfig['CouchDBServer'] == ''):
-			self.checksLogger.debug('getCouchDBStatus: config not set')
+			self.mainLogger.debug('getCouchDBStatus: config not set')
 			return False
 
-		self.checksLogger.debug('getCouchDBStatus: config set')
+		self.mainLogger.debug('getCouchDBStatus: config set')
 
 		# The dictionary to be returned.
 		couchdb = {'stats': None, 'databases': {}}
@@ -178,42 +180,42 @@ class checks:
 
 		try:
 			url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
-			self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
+			self.mainLogger.debug('getCouchDBStatus: attempting urlopen')
 			req = urllib2.Request(url, None, headers)
 
 			# Do the request, log any errors
 			request = urllib2.urlopen(req)
 			response = request.read()
 		except urllib2.HTTPError, e:
-			self.checksLogger.error('Unable to get CouchDB statistics - HTTPError = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB statistics - HTTPError = ' + str(e))
 			return False
 
 		except urllib2.URLError, e:
-			self.checksLogger.error('Unable to get CouchDB statistics - URLError = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB statistics - URLError = ' + str(e))
 			return False
 
 		except httplib.HTTPException, e:
-			self.checksLogger.error('Unable to get CouchDB statistics - HTTPException = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB statistics - HTTPException = ' + str(e))
 			return False
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to get CouchDB statistics - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to get CouchDB statistics - Exception = ' + traceback.format_exc())
 			return False
 
 		try:
 
 			if int(pythonVersion[1]) >= 6:
-				self.checksLogger.debug('getCouchDBStatus: json read')
+				self.mainLogger.debug('getCouchDBStatus: json read')
 				stats = json.loads(response)
 
 			else:
-				self.checksLogger.debug('getCouchDBStatus: minjson read')
+				self.mainLogger.debug('getCouchDBStatus: minjson read')
 				stats = minjson.safeRead(response)
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 			return False
 
 		couchdb['stats'] = stats
@@ -223,42 +225,42 @@ class checks:
 
 		try:
 			url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
-			self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
+			self.mainLogger.debug('getCouchDBStatus: attempting urlopen')
 			req = urllib2.Request(url, None, headers)
 
 			# Do the request, log any errors
 			request = urllib2.urlopen(req)
 			response = request.read()
 		except urllib2.HTTPError, e:
-			self.checksLogger.error('Unable to get CouchDB status - HTTPError = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB status - HTTPError = ' + str(e))
 			return False
 
 		except urllib2.URLError, e:
-			self.checksLogger.error('Unable to get CouchDB status - URLError = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB status - URLError = ' + str(e))
 			return False
 
 		except httplib.HTTPException, e:
-			self.checksLogger.error('Unable to get CouchDB status - HTTPException = ' + str(e))
+			self.mainLogger.error('Unable to get CouchDB status - HTTPException = ' + str(e))
 			return False
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to get CouchDB status - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to get CouchDB status - Exception = ' + traceback.format_exc())
 			return False
 
 		try:
 
 			if int(pythonVersion[1]) >= 6:
-				self.checksLogger.debug('getCouchDBStatus: json read')
+				self.mainLogger.debug('getCouchDBStatus: json read')
 				databases = json.loads(response)
 
 			else:
-				self.checksLogger.debug('getCouchDBStatus: minjson read')
+				self.mainLogger.debug('getCouchDBStatus: minjson read')
 				databases = minjson.safeRead(response)
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 			return False
 
 		for dbName in databases:
@@ -266,89 +268,89 @@ class checks:
 
 			try:
 				url = '%s%s' % (self.agentConfig['CouchDBServer'], endpoint)
-				self.checksLogger.debug('getCouchDBStatus: attempting urlopen')
+				self.mainLogger.debug('getCouchDBStatus: attempting urlopen')
 				req = urllib2.Request(url, None, headers)
 
 				# Do the request, log any errors
 				request = urllib2.urlopen(req)
 				response = request.read()
 			except urllib2.HTTPError, e:
-				self.checksLogger.error('Unable to get CouchDB database status - HTTPError = ' + str(e))
+				self.mainLogger.error('Unable to get CouchDB database status - HTTPError = ' + str(e))
 				return False
 
 			except urllib2.URLError, e:
-				self.checksLogger.error('Unable to get CouchDB database status - URLError = ' + str(e))
+				self.mainLogger.error('Unable to get CouchDB database status - URLError = ' + str(e))
 				return False
 
 			except httplib.HTTPException, e:
-				self.checksLogger.error('Unable to get CouchDB database status - HTTPException = ' + str(e))
+				self.mainLogger.error('Unable to get CouchDB database status - HTTPException = ' + str(e))
 				return False
 
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('Unable to get CouchDB database status - Exception = ' + traceback.format_exc())
+				self.mainLogger.error('Unable to get CouchDB database status - Exception = ' + traceback.format_exc())
 				return False
 
 			try:
 
 				if int(pythonVersion[1]) >= 6:
-					self.checksLogger.debug('getCouchDBStatus: json read')
+					self.mainLogger.debug('getCouchDBStatus: json read')
 					couchdb['databases'][dbName] = json.loads(response)
 
 				else:
-					self.checksLogger.debug('getCouchDBStatus: minjson read')
+					self.mainLogger.debug('getCouchDBStatus: minjson read')
 					couchdb['databases'][dbName] = minjson.safeRead(response)
 
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
+				self.mainLogger.error('Unable to load CouchDB database JSON - Exception = ' + traceback.format_exc())
 				return False
 
-		self.checksLogger.debug('getCouchDBStatus: completed, returning')
+		self.mainLogger.debug('getCouchDBStatus: completed, returning')
 		return couchdb
 	
 	def getDiskUsage(self):
-		self.checksLogger.debug('getDiskUsage: start')
+		self.mainLogger.debug('getDiskUsage: start')
 		
 		# Memory logging (case 27152)
-		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
+		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
 			try:
 				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.checksLogger.debug('getDiskUsage: memory before Popen - ' + str(mem))
+				self.mainLogger.debug('getDiskUsage: memory before Popen - ' + str(mem))
 			
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getDiskUsage: free -m exception = ' + traceback.format_exc())
+				self.mainLogger.error('getDiskUsage: free -m exception = ' + traceback.format_exc())
 				return False
 		
 		# Get output from df
 		try:
-			self.checksLogger.debug('getDiskUsage: attempting Popen')
+			self.mainLogger.debug('getDiskUsage: attempting Popen')
 			
 			df = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True).communicate()[0] # -k option uses 1024 byte blocks so we can calculate into MB
 			
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
+			self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
 			return False
 		
 		# Memory logging (case 27152)
-		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
+		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
 			mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-			self.checksLogger.debug('getDiskUsage: memory after Popen - ' + str(mem))
+			self.mainLogger.debug('getDiskUsage: memory after Popen - ' + str(mem))
 		
-		self.checksLogger.debug('getDiskUsage: Popen success, start parsing')
+		self.mainLogger.debug('getDiskUsage: Popen success, start parsing')
 			
 		# Split out each volume
 		volumes = df.split('\n')
 		
-		self.checksLogger.debug('getDiskUsage: parsing, split')
+		self.mainLogger.debug('getDiskUsage: parsing, split')
 		
 		# Remove first (headings) and last (blank)
 		volumes.pop(0)
 		volumes.pop()
 		
-		self.checksLogger.debug('getDiskUsage: parsing, pop')
+		self.mainLogger.debug('getDiskUsage: parsing, pop')
 		
 		usageData = []
 		
@@ -358,10 +360,10 @@ class checks:
 		previousVolume = None
 		volumeCount = 0
 		
-		self.checksLogger.debug('getDiskUsage: parsing, start loop')
+		self.mainLogger.debug('getDiskUsage: parsing, start loop')
 		
 		for volume in volumes:			
-			self.checksLogger.debug('getDiskUsage: parsing volume: ' + volume)
+			self.mainLogger.debug('getDiskUsage: parsing volume: ' + volume)
 			
 			# Split out the string
 			volume = volume.split(None, 10)
@@ -390,24 +392,24 @@ class checks:
 					volume[2] = int(volume[2]) / 1024 / 1024 # Used
 					volume[3] = int(volume[3]) / 1024 / 1024 # Available
 				except IndexError:
-					self.checksLogger.debug('getDiskUsage: parsing, loop IndexError - Used or Available not present')
+					self.mainLogger.error('getDiskUsage: parsing, loop IndexError - Used or Available not present')
 					
 				except KeyError:
-					self.checksLogger.debug('getDiskUsage: parsing, loop KeyError - Used or Available not present')
+					self.mainLogger.error('getDiskUsage: parsing, loop KeyError - Used or Available not present')
 				
 				usageData.append(volume)
 		
-		self.checksLogger.debug('getDiskUsage: completed, returning')
+		self.mainLogger.debug('getDiskUsage: completed, returning')
 			
 		return usageData
 	
 	def getIOStats(self):
-		self.checksLogger.debug('getIOStats: start')
+		self.mainLogger.debug('getIOStats: start')
 		
 		ioStats = {}
 	
 		if sys.platform == 'linux2':
-			self.checksLogger.debug('getIOStats: linux2')
+			self.mainLogger.debug('getIOStats: linux2')
 			
 			headerRegexp = re.compile(r'([%\\/\-\_a-zA-Z0-9]+)[\s+]?')
 			itemRegexp = re.compile(r'^([a-zA-Z0-9\/]+)')
@@ -448,28 +450,28 @@ class checks:
 					
 			except Exception, ex:
 				import traceback
-				self.checksLogger.error('getIOStats: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getIOStats: exception = ' + traceback.format_exc())
 				return False
 		else:
-			self.checksLogger.debug('getIOStats: unsupported platform')
+			self.mainLogger.debug('getIOStats: unsupported platform')
 			return False
 			
-		self.checksLogger.debug('getIOStats: completed, returning')
+		self.mainLogger.debug('getIOStats: completed, returning')
 		return ioStats
 			
 	def getLoadAvrgs(self):
-		self.checksLogger.debug('getLoadAvrgs: start')
+		self.mainLogger.debug('getLoadAvrgs: start')
 		
 		# If Linux like procfs system is present and mounted we use loadavg, else we use uptime
 		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
 			
 			if sys.platform == 'linux2':
-				self.checksLogger.debug('getLoadAvrgs: linux2')
+				self.mainLogger.debug('getLoadAvrgs: linux2')
 			else:
-				self.checksLogger.debug('getLoadAvrgs: freebsd (loadavg)')
+				self.mainLogger.debug('getLoadAvrgs: freebsd (loadavg)')
 			
 			try:
-				self.checksLogger.debug('getLoadAvrgs: attempting open')
+				self.mainLogger.debug('getLoadAvrgs: attempting open')
 				
 				if sys.platform == 'linux2':
 					loadAvrgProc = open('/proc/loadavg', 'r')
@@ -479,69 +481,69 @@ class checks:
 				uptime = loadAvrgProc.readlines()
 				
 			except IOError, e:
-				self.checksLogger.error('getLoadAvrgs: exception = ' + str(e))
+				self.mainLogger.error('getLoadAvrgs: exception = ' + str(e))
 				return False
 			
-			self.checksLogger.debug('getLoadAvrgs: open success')
+			self.mainLogger.debug('getLoadAvrgs: open success')
 				
 			loadAvrgProc.close()
 			
 			uptime = uptime[0] # readlines() provides a list but we want a string
 		
 		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
-			self.checksLogger.debug('getLoadAvrgs: freebsd (uptime)')
+			self.mainLogger.debug('getLoadAvrgs: freebsd (uptime)')
 			
 			try:
-				self.checksLogger.debug('getLoadAvrgs: attempting Popen')
+				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
 				
 				uptime = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
 				return False
 				
-			self.checksLogger.debug('getLoadAvrgs: Popen success')
+			self.mainLogger.debug('getLoadAvrgs: Popen success')
 			
 		elif sys.platform == 'darwin':
-			self.checksLogger.debug('getLoadAvrgs: darwin')
+			self.mainLogger.debug('getLoadAvrgs: darwin')
 			
 			# Get output from uptime
 			try:
-				self.checksLogger.debug('getLoadAvrgs: attempting Popen')
+				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
 				
 				uptime = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
 				return False
 				
-			self.checksLogger.debug('getLoadAvrgs: Popen success')
+			self.mainLogger.debug('getLoadAvrgs: Popen success')
 		
-		self.checksLogger.debug('getLoadAvrgs: parsing')
+		self.mainLogger.debug('getLoadAvrgs: parsing')
 				
 		# Split out the 3 load average values
 		loadAvrgs = [res.replace(',', '.') for res in re.findall(r'([0-9]+[\.,]\d+)', uptime)]
 		loadAvrgs = {'1': loadAvrgs[0], '5': loadAvrgs[1], '15': loadAvrgs[2]}	
 	
-		self.checksLogger.debug('getLoadAvrgs: completed, returning')
+		self.mainLogger.debug('getLoadAvrgs: completed, returning')
 	
 		return loadAvrgs
 		
 	def getMemoryUsage(self):
-		self.checksLogger.debug('getMemoryUsage: start')
+		self.mainLogger.debug('getMemoryUsage: start')
 		
 		# If Linux like procfs system is present and mounted we use meminfo, else we use "native" mode (vmstat and swapinfo)
 		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
 			
 			if sys.platform == 'linux2':
-				self.checksLogger.debug('getMemoryUsage: linux2')
+				self.mainLogger.debug('getMemoryUsage: linux2')
 			else:
-				self.checksLogger.debug('getMemoryUsage: freebsd (meminfo)')
+				self.mainLogger.debug('getMemoryUsage: freebsd (meminfo)')
 			
 			try:
-				self.checksLogger.debug('getMemoryUsage: attempting open')
+				self.mainLogger.debug('getMemoryUsage: attempting open')
 				
 				if sys.platform == 'linux2':
 					meminfoProc = open('/proc/meminfo', 'r')
@@ -551,20 +553,20 @@ class checks:
 				lines = meminfoProc.readlines()
 				
 			except IOError, e:
-				self.checksLogger.error('getMemoryUsage: exception = ' + str(e))
+				self.mainLogger.error('getMemoryUsage: exception = ' + str(e))
 				return False
 				
-			self.checksLogger.debug('getMemoryUsage: Popen success, parsing')
+			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 			
 			meminfoProc.close()
 			
-			self.checksLogger.debug('getMemoryUsage: open success, parsing')
+			self.mainLogger.debug('getMemoryUsage: open success, parsing')
 			
 			regexp = re.compile(r'([0-9]+)') # We run this several times so one-time compile now
 			
 			meminfo = {}
 			
-			self.checksLogger.debug('getMemoryUsage: parsing, looping')
+			self.mainLogger.debug('getMemoryUsage: parsing, looping')
 			
 			# Loop through and extract the numerical values
 			for line in lines:
@@ -581,7 +583,7 @@ class checks:
 				except IndexError:
 					break
 					
-			self.checksLogger.debug('getMemoryUsage: parsing, looped')
+			self.mainLogger.debug('getMemoryUsage: parsing, looped')
 			
 			memData = {}
 			memData['physFree'] = 0
@@ -592,7 +594,7 @@ class checks:
 			
 			# Phys
 			try:
-				self.checksLogger.debug('getMemoryUsage: formatting (phys)')
+				self.mainLogger.debug('getMemoryUsage: formatting (phys)')
 				
 				physTotal = int(meminfo['MemTotal'])
 				physFree = int(meminfo['MemFree'])
@@ -605,16 +607,16 @@ class checks:
 								
 			# Stops the agent crashing if one of the meminfo elements isn't set
 			except IndexError:
-				self.checksLogger.debug('getMemoryUsage: formatting (phys) IndexError - Cached, MemTotal or MemFree not present')
+				self.mainLogger.error('getMemoryUsage: formatting (phys) IndexError - Cached, MemTotal or MemFree not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getMemoryUsage: formatting (phys) KeyError - Cached, MemTotal or MemFree not present')
+				self.mainLogger.error('getMemoryUsage: formatting (phys) KeyError - Cached, MemTotal or MemFree not present')
 			
-			self.checksLogger.debug('getMemoryUsage: formatted (phys)')
+			self.mainLogger.debug('getMemoryUsage: formatted (phys)')
 			
 			# Swap
 			try:
-				self.checksLogger.debug('getMemoryUsage: formatting (swap)')
+				self.mainLogger.debug('getMemoryUsage: formatting (swap)')
 				
 				swapTotal = int(meminfo['SwapTotal'])
 				swapFree = int(meminfo['SwapFree'])
@@ -626,35 +628,35 @@ class checks:
 								
 			# Stops the agent crashing if one of the meminfo elements isn't set
 			except IndexError:
-				self.checksLogger.debug('getMemoryUsage: formatting (swap) IndexError - SwapTotal or SwapFree not present')
+				self.mainLogger.error('getMemoryUsage: formatting (swap) IndexError - SwapTotal or SwapFree not present')
 				
 			except KeyError:
-				self.checksLogger.debug('getMemoryUsage: formatting (swap) KeyError - SwapTotal or SwapFree not present')
+				self.mainLogger.error('getMemoryUsage: formatting (swap) KeyError - SwapTotal or SwapFree not present')
 			
-			self.checksLogger.debug('getMemoryUsage: formatted (swap), completed, returning')
+			self.mainLogger.debug('getMemoryUsage: formatted (swap), completed, returning')
 			
 			return memData	
 			
 		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
-			self.checksLogger.debug('getMemoryUsage: freebsd (native)')
+			self.mainLogger.debug('getMemoryUsage: freebsd (native)')
 			
 			try:
-				self.checksLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
+				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
 				physTotal = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
 				
-				self.checksLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
+				self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
 				vmstat = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
 				
-				self.checksLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
+				self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
 				swapinfo = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
 
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
 				
 				return False
 				
-			self.checksLogger.debug('getMemoryUsage: Popen success, parsing')
+			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 
 			# First we parse the information about the real memory
 			lines = vmstat.split('\n')
@@ -664,7 +666,7 @@ class checks:
 			physFree = int(physParts[1])
 			physUsed = int(physTotal - physFree)
 	
-			self.checksLogger.debug('getMemoryUsage: parsed vmstat')
+			self.mainLogger.debug('getMemoryUsage: parsed vmstat')
 	
 			# And then swap
 			lines = swapinfo.split('\n')
@@ -681,7 +683,7 @@ class checks:
 					except IndexError, e:
 						pass
 
-			self.checksLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
+			self.mainLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
 	
 			# Convert everything to MB
 			physUsed = int(physUsed) / 1024
@@ -690,32 +692,32 @@ class checks:
 			return {'physUsed' : physUsed, 'physFree' : physFree, 'swapUsed' : swapUsed, 'swapFree' : swapFree, 'cached' : 'NULL'}
 			
 		elif sys.platform == 'darwin':
-			self.checksLogger.debug('getMemoryUsage: darwin')
+			self.mainLogger.debug('getMemoryUsage: darwin')
 			
 			try:
-				self.checksLogger.debug('getMemoryUsage: attempting Popen (top)')				
+				self.mainLogger.debug('getMemoryUsage: attempting Popen (top)')				
 				top = subprocess.Popen(['top', '-l 1'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
-				self.checksLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
+				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
 				sysctl = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
 				return False
 			
-			self.checksLogger.debug('getMemoryUsage: Popen success, parsing')
+			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 			
 			# Deal with top
 			lines = top.split('\n')
 			physParts = re.findall(r'([0-9]\d+)', lines[self.topIndex])
 			
-			self.checksLogger.debug('getMemoryUsage: parsed top')
+			self.mainLogger.debug('getMemoryUsage: parsed top')
 			
 			# Deal with sysctl
 			swapParts = re.findall(r'([0-9]+\.\d+)', sysctl)
 			
-			self.checksLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
+			self.mainLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
 			
 			return {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}	
 			
@@ -723,20 +725,20 @@ class checks:
 			return False
 			
 	def getMongoDBStatus(self):
-		self.checksLogger.debug('getMongoDBStatus: start')
+		self.mainLogger.debug('getMongoDBStatus: start')
 
 		if 'MongoDBServer' not in self.agentConfig or self.agentConfig['MongoDBServer'] == '':
-			self.checksLogger.debug('getMongoDBStatus: config not set')
+			self.mainLogger.debug('getMongoDBStatus: config not set')
 			return False
 
-		self.checksLogger.debug('getMongoDBStatus: config set')
+		self.mainLogger.debug('getMongoDBStatus: config set')
 
 		try:
 			import pymongo
 			from pymongo import Connection
 			
 		except ImportError:
-			self.checksLogger.error('Unable to import pymongo library')
+			self.mainLogger.error('Unable to import pymongo library')
 			return False
 
 		# The dictionary to be returned.
@@ -746,15 +748,15 @@ class checks:
 			mongoInfo = self.agentConfig['MongoDBServer'].split(':')
 			if len(mongoInfo) == 2:
 				conn = Connection(mongoInfo[0], int(mongoInfo[1]))
-				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
+				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
 			
 			else:
 				conn = Connection(mongoInfo[0])
-				self.checksLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
+				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
 				
 		except Exception, ex:
 			import traceback
-			self.checksLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
 			return False
 
 		# Older versions of pymongo did not support the command()
@@ -765,7 +767,7 @@ class checks:
 			# Server status
 			statusOutput = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
 			
-			self.checksLogger.debug('getMongoDBStatus: executed serverStatus')
+			self.mainLogger.debug('getMongoDBStatus: executed serverStatus')
 			
 			# Setup
 			import datetime
@@ -775,15 +777,15 @@ class checks:
 			try:
 				status['version'] = statusOutput['version']
 				
-				self.checksLogger.debug('getMongoDBStatus: version ' + str(statusOutput['version']))
+				self.mainLogger.debug('getMongoDBStatus: version ' + str(statusOutput['version']))
 			
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: version KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: version KeyError exception - ' + str(ex))
 				pass
 			
 			# Global locks
 			try:
-				self.checksLogger.debug('getMongoDBStatus: globalLock')
+				self.mainLogger.debug('getMongoDBStatus: globalLock')
 				
 				status['globalLock'] = {}
 				status['globalLock']['ratio'] = statusOutput['globalLock']['ratio']
@@ -794,12 +796,12 @@ class checks:
 				status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
 				
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: globalLock KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: globalLock KeyError exception - ' + str(ex))
 				pass
 				
 			# Memory
 			try:
-				self.checksLogger.debug('getMongoDBStatus: memory')
+				self.mainLogger.debug('getMongoDBStatus: memory')
 				
 				status['mem'] = {}
 				status['mem']['resident'] = statusOutput['mem']['resident']
@@ -807,36 +809,36 @@ class checks:
 				status['mem']['mapped'] = statusOutput['mem']['mapped']
 				
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: memory KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: memory KeyError exception - ' + str(ex))
 				pass
 				
 			# Connections
 			try:
-				self.checksLogger.debug('getMongoDBStatus: connections')
+				self.mainLogger.debug('getMongoDBStatus: connections')
 				
 				status['connections'] = {}
 				status['connections']['current'] = statusOutput['connections']['current']
 				status['connections']['available'] = statusOutput['connections']['available']
 				
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: connections KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: connections KeyError exception - ' + str(ex))
 				pass
 				
 			# Extra info (Linux only)
 			try:
-				self.checksLogger.debug('getMongoDBStatus: extra info')
+				self.mainLogger.debug('getMongoDBStatus: extra info')
 				
 				status['extraInfo'] = {}
 				status['extraInfo']['heapUsage'] = statusOutput['extra_info']['heap_usage_bytes']
 				status['extraInfo']['pageFaults'] = statusOutput['extra_info']['page_faults']
 				
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: extra info KeyError exception - ' + str(ex))
+				self.mainLogger.debug('getMongoDBStatus: extra info KeyError exception - ' + str(ex))
 				pass
 			
 			# Background flushing
 			try:
-				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing')
+				self.mainLogger.debug('getMongoDBStatus: backgroundFlushing')
 				
 				status['backgroundFlushing'] = {}
 				delta = datetime.datetime.now() - statusOutput['backgroundFlushing']['last_finished']
@@ -845,17 +847,17 @@ class checks:
 				status['backgroundFlushing']['flushLengthAvrg'] = statusOutput['backgroundFlushing']['average_ms']
 			
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
+				self.mainLogger.debug('getMongoDBStatus: backgroundFlushing KeyError exception - ' + str(ex))
 				pass
 			
 			# Per second metric calculations (opcounts and asserts)
 			try:			
 				if self.mongoDBStore == None:
-					self.checksLogger.debug('getMongoDBStatus: per second metrics no cached data, so storing for first time')
+					self.mainLogger.debug('getMongoDBStatus: per second metrics no cached data, so storing for first time')
 					self.setMongoDBStore(statusOutput)
 					
 				else:
-					self.checksLogger.debug('getMongoDBStatus: per second metrics cached data exists')
+					self.mainLogger.debug('getMongoDBStatus: per second metrics cached data exists')
 					
 					accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
 					
@@ -884,32 +886,32 @@ class checks:
 						
 						self.setMongoDBStore(statusOutput)
 					else:
-						self.checksLogger.debug('getMongoDBStatus: per second metrics negative value calculated, mongod likely restarted, so clearing cache')
+						self.mainLogger.debug('getMongoDBStatus: per second metrics negative value calculated, mongod likely restarted, so clearing cache')
 						self.setMongoDBStore(statusOutput)
 			
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: per second metrics KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: per second metrics KeyError exception - ' + str(ex))
 				pass
 			
 			# Cursors
 			try:
-				self.checksLogger.debug('getMongoDBStatus: cursors')
+				self.mainLogger.debug('getMongoDBStatus: cursors')
 				
 				status['cursors'] = {}
 				status['cursors']['totalOpen'] = statusOutput['cursors']['totalOpen']
 				
 			except KeyError, ex:
-				self.checksLogger.debug('getMongoDBStatus: cursors KeyError exception - ' + str(ex))
+				self.mainLogger.error('getMongoDBStatus: cursors KeyError exception - ' + str(ex))
 				pass
 
 			# Replica set status
 			if 'MongoDBReplSet' in self.agentConfig and self.agentConfig['MongoDBReplSet'] == 'yes':
-				self.checksLogger.debug('getMongoDBStatus: get replset status too')
+				self.mainLogger.debug('getMongoDBStatus: get replset status too')
 				
 				# isMaster (to get state
 				isMaster = db.command('isMaster')
 				
-				self.checksLogger.debug('getMongoDBStatus: executed isMaster')
+				self.mainLogger.debug('getMongoDBStatus: executed isMaster')
 				
 				status['replSet'] = {}
 				status['replSet']['setName'] = isMaster['setName']
@@ -919,13 +921,13 @@ class checks:
 				if 'arbiterOnly' in isMaster:
 					status['replSet']['isArbiter'] = isMaster['arbiterOnly']
 				
-				self.checksLogger.debug('getMongoDBStatus: finished isMaster')
+				self.mainLogger.debug('getMongoDBStatus: finished isMaster')
 				
 				# rs.status()
 				db = conn['admin']
 				replSet = db.command('replSetGetStatus')
 				
-				self.checksLogger.debug('getMongoDBStatus: executed replSetGetStatus')
+				self.mainLogger.debug('getMongoDBStatus: executed replSetGetStatus')
 				
 				status['replSet']['myState'] = replSet['myState']
 				
@@ -933,7 +935,7 @@ class checks:
 				
 				for member in replSet['members']:
 				
-					self.checksLogger.debug('getMongoDBStatus: replSetGetStatus looping - ' + str(member['name']))
+					self.mainLogger.debug('getMongoDBStatus: replSetGetStatus looping - ' + str(member['name']))
 					
 					status['replSet']['members'][str(member['_id'])] = {}
 					
@@ -957,7 +959,7 @@ class checks:
 			
 			# db.stats()
 			if 'MongoDBDBStats' in self.agentConfig and self.agentConfig['MongoDBDBStats'] == 'yes':
-				self.checksLogger.debug('getMongoDBStatus: db.stats() too')
+				self.mainLogger.debug('getMongoDBStatus: db.stats() too')
 				
 				status['dbStats'] = {}
 				
@@ -965,17 +967,17 @@ class checks:
 					
 					if database != 'local' and database != 'admin' and database != 'test':
 						
-						self.checksLogger.debug('getMongoDBStatus: executing db.stats() for ' + str(database))
+						self.mainLogger.debug('getMongoDBStatus: executing db.stats() for ' + str(database))
 						
 						status['dbStats'][database] = conn[database].command('dbstats')
 						status['dbStats'][database]['namespaces'] = conn[database]['system']['namespaces'].count()
 				
 		except Exception, ex:
 			import traceback
-			self.checksLogger.error('Unable to get MongoDB status - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to get MongoDB status - Exception = ' + traceback.format_exc())
 			return False
 
-		self.checksLogger.debug('getMongoDBStatus: completed, returning')
+		self.mainLogger.debug('getMongoDBStatus: completed, returning')
 		
 		return status
 
@@ -1005,18 +1007,18 @@ class checks:
 		self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
 
 	def getMySQLStatus(self):
-		self.checksLogger.debug('getMySQLStatus: start')
+		self.mainLogger.debug('getMySQLStatus: start')
 		
 		if 'MySQLServer' in self.agentConfig and 'MySQLUser' in self.agentConfig and self.agentConfig['MySQLServer'] != '' and self.agentConfig['MySQLUser'] != '':
 		
-			self.checksLogger.debug('getMySQLStatus: config')
+			self.mainLogger.debug('getMySQLStatus: config')
 			
 			# Try import MySQLdb - http://sourceforge.net/projects/mysql-python/files/
 			try:
 				import MySQLdb
 			
 			except ImportError, e:
-				self.checksLogger.debug('getMySQLStatus: unable to import MySQLdb')
+				self.mainLogger.error('getMySQLStatus: unable to import MySQLdb')
 				return False
 				
 			# Connect
@@ -1025,15 +1027,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 				
-				self.checksLogger.debug('getMySQLStatus: MySQL connection error: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL connection error: ' + str(message))
 				return False
 			
-			self.checksLogger.debug('getMySQLStatus: connected')
+			self.mainLogger.debug('getMySQLStatus: connected')
 			
 			# Get MySQL version
 			if self.mysqlVersion == None:
 			
-				self.checksLogger.debug('getMySQLStatus: mysqlVersion unset storing for first time')
+				self.mainLogger.debug('getMySQLStatus: mysqlVersion unset storing for first time')
 				
 				try:
 					cursor = db.cursor()
@@ -1042,7 +1044,7 @@ class checks:
 					
 				except MySQLdb.OperationalError, message:
 				
-					self.checksLogger.debug('getMySQLStatus: MySQL query error when getting version: ' + str(message))
+					self.mainLogger.debug('getMySQLStatus: MySQL query error when getting version: ' + str(message))
 			
 				version = result[0].split('-') # Case 31237. Might include a description e.g. 4.1.26-log. See http://dev.mysql.com/doc/refman/4.1/en/information-functions.html#function_version
 				version = version[0].split('.')
@@ -1055,7 +1057,7 @@ class checks:
 					number = number.group(0)
 					self.mysqlVersion.append(number)
 			
-			self.checksLogger.debug('getMySQLStatus: getting Connections')
+			self.mainLogger.debug('getMySQLStatus: getting Connections')
 			
 			# Connections
 			try:
@@ -1065,11 +1067,11 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Connections: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Connections: ' + str(message))
 		
 			if self.mysqlConnectionsStore == None:
 				
-				self.checksLogger.debug('getMySQLStatus: mysqlConnectionsStore unset storing for first time')
+				self.mainLogger.debug('getMySQLStatus: mysqlConnectionsStore unset storing for first time')
 				
 				self.mysqlConnectionsStore = result[1]
 				
@@ -1077,19 +1079,19 @@ class checks:
 				
 			else:
 		
-				self.checksLogger.debug('getMySQLStatus: mysqlConnectionsStore set so calculating')
-				self.checksLogger.debug('getMySQLStatus: self.mysqlConnectionsStore = ' + str(self.mysqlConnectionsStore))
-				self.checksLogger.debug('getMySQLStatus: result = ' + str(result[1]))
+				self.mainLogger.debug('getMySQLStatus: mysqlConnectionsStore set so calculating')
+				self.mainLogger.debug('getMySQLStatus: self.mysqlConnectionsStore = ' + str(self.mysqlConnectionsStore))
+				self.mainLogger.debug('getMySQLStatus: result = ' + str(result[1]))
 				
 				connections = float(float(result[1]) - float(self.mysqlConnectionsStore)) / 60
 				
 				self.mysqlConnectionsStore = result[1]
 				
-			self.checksLogger.debug('getMySQLStatus: connections = ' + str(connections))
+			self.mainLogger.debug('getMySQLStatus: connections = ' + str(connections))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Connections - done')
+			self.mainLogger.debug('getMySQLStatus: getting Connections - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Created_tmp_disk_tables')
+			self.mainLogger.debug('getMySQLStatus: getting Created_tmp_disk_tables')
 				
 			# Created_tmp_disk_tables
 			
@@ -1107,15 +1109,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Created_tmp_disk_tables: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Created_tmp_disk_tables: ' + str(message))
 		
 			createdTmpDiskTables = float(result[1])
 				
-			self.checksLogger.debug('getMySQLStatus: createdTmpDiskTables = ' + str(createdTmpDiskTables))
+			self.mainLogger.debug('getMySQLStatus: createdTmpDiskTables = ' + str(createdTmpDiskTables))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Created_tmp_disk_tables - done')
+			self.mainLogger.debug('getMySQLStatus: getting Created_tmp_disk_tables - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Max_used_connections')
+			self.mainLogger.debug('getMySQLStatus: getting Max_used_connections')
 				
 			# Max_used_connections
 			try:
@@ -1125,15 +1127,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Max_used_connections: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Max_used_connections: ' + str(message))
 				
 			maxUsedConnections = result[1]
 			
-			self.checksLogger.debug('getMySQLStatus: maxUsedConnections = ' + str(createdTmpDiskTables))
+			self.mainLogger.debug('getMySQLStatus: maxUsedConnections = ' + str(createdTmpDiskTables))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Max_used_connections - done')
+			self.mainLogger.debug('getMySQLStatus: getting Max_used_connections - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Open_files')
+			self.mainLogger.debug('getMySQLStatus: getting Open_files')
 			
 			# Open_files
 			try:
@@ -1143,15 +1145,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Open_files: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Open_files: ' + str(message))
 				
 			openFiles = result[1]
 			
-			self.checksLogger.debug('getMySQLStatus: openFiles = ' + str(openFiles))
+			self.mainLogger.debug('getMySQLStatus: openFiles = ' + str(openFiles))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Open_files - done')
+			self.mainLogger.debug('getMySQLStatus: getting Open_files - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Slow_queries')
+			self.mainLogger.debug('getMySQLStatus: getting Slow_queries')
 			
 			# Slow_queries
 			
@@ -1169,11 +1171,11 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Slow_queries: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Slow_queries: ' + str(message))
 		
 			if self.mysqlSlowQueriesStore == None:
 				
-				self.checksLogger.debug('getMySQLStatus: mysqlSlowQueriesStore unset so storing for first time')
+				self.mainLogger.debug('getMySQLStatus: mysqlSlowQueriesStore unset so storing for first time')
 				
 				self.mysqlSlowQueriesStore = result[1]
 				
@@ -1181,19 +1183,19 @@ class checks:
 				
 			else:
 		
-				self.checksLogger.debug('getMySQLStatus: mysqlSlowQueriesStore set so calculating')
-				self.checksLogger.debug('getMySQLStatus: self.mysqlSlowQueriesStore = ' + str(self.mysqlSlowQueriesStore))
-				self.checksLogger.debug('getMySQLStatus: result = ' + str(result[1]))
+				self.mainLogger.debug('getMySQLStatus: mysqlSlowQueriesStore set so calculating')
+				self.mainLogger.debug('getMySQLStatus: self.mysqlSlowQueriesStore = ' + str(self.mysqlSlowQueriesStore))
+				self.mainLogger.debug('getMySQLStatus: result = ' + str(result[1]))
 				
 				slowQueries = float(float(result[1]) - float(self.mysqlSlowQueriesStore)) / 60
 				
 				self.mysqlSlowQueriesStore = result[1]
 				
-			self.checksLogger.debug('getMySQLStatus: slowQueries = ' + str(slowQueries))
+			self.mainLogger.debug('getMySQLStatus: slowQueries = ' + str(slowQueries))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Slow_queries - done')
+			self.mainLogger.debug('getMySQLStatus: getting Slow_queries - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Table_locks_waited')
+			self.mainLogger.debug('getMySQLStatus: getting Table_locks_waited')
 				
 			# Table_locks_waited
 			try:
@@ -1203,15 +1205,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Table_locks_waited: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Table_locks_waited: ' + str(message))
 		
 			tableLocksWaited = float(result[1])
 				
-			self.checksLogger.debug('getMySQLStatus: tableLocksWaited = ' + str(tableLocksWaited))
+			self.mainLogger.debug('getMySQLStatus: tableLocksWaited = ' + str(tableLocksWaited))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Table_locks_waited - done')
+			self.mainLogger.debug('getMySQLStatus: getting Table_locks_waited - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Threads_connected')
+			self.mainLogger.debug('getMySQLStatus: getting Threads_connected')
 				
 			# Threads_connected
 			try:
@@ -1221,15 +1223,15 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting Threads_connected: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Threads_connected: ' + str(message))
 				
 			threadsConnected = result[1]
 			
-			self.checksLogger.debug('getMySQLStatus: threadsConnected = ' + str(threadsConnected))
+			self.mainLogger.debug('getMySQLStatus: threadsConnected = ' + str(threadsConnected))
 			
-			self.checksLogger.debug('getMySQLStatus: getting Threads_connected - done')
+			self.mainLogger.debug('getMySQLStatus: getting Threads_connected - done')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Seconds_Behind_Master')
+			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master')
 			
 			# Seconds_Behind_Master
 			try:
@@ -1239,53 +1241,53 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.checksLogger.debug('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
+				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
 				result = None
 			
 			if result != None:
 				try:
 					secondsBehindMaster = result['Seconds_Behind_Master']
 				
-					self.checksLogger.debug('getMySQLStatus: secondsBehindMaster = ' + str(secondsBehindMaster))
+					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = ' + str(secondsBehindMaster))
 					
 				except IndexError, e:					
 					secondsBehindMaster = None
 					
-					self.checksLogger.debug('getMySQLStatus: secondsBehindMaster empty')
+					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
 			
 			else:
 				secondsBehindMaster = None
 				
-				self.checksLogger.debug('getMySQLStatus: secondsBehindMaster empty')
+				self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
 			
-			self.checksLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
+			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
 			
 			return {'connections' : connections, 'createdTmpDiskTables' : createdTmpDiskTables, 'maxUsedConnections' : maxUsedConnections, 'openFiles' : openFiles, 'slowQueries' : slowQueries, 'tableLocksWaited' : tableLocksWaited, 'threadsConnected' : threadsConnected, 'secondsBehindMaster' : secondsBehindMaster}
 
 		else:			
 			
-			self.checksLogger.debug('getMySQLStatus: config not set')
+			self.mainLogger.debug('getMySQLStatus: config not set')
 			return False	
 			
 	def getNetworkTraffic(self):
-		self.checksLogger.debug('getNetworkTraffic: start')
+		self.mainLogger.debug('getNetworkTraffic: start')
 		
 		if sys.platform == 'linux2':
-			self.checksLogger.debug('getNetworkTraffic: linux2')
+			self.mainLogger.debug('getNetworkTraffic: linux2')
 			
 			try:
-				self.checksLogger.debug('getNetworkTraffic: attempting open')
+				self.mainLogger.debug('getNetworkTraffic: attempting open')
 				
 				proc = open('/proc/net/dev', 'r')
 				lines = proc.readlines()
 				
 			except IOError, e:
-				self.checksLogger.error('getNetworkTraffic: exception = ' + str(e))
+				self.mainLogger.error('getNetworkTraffic: exception = ' + str(e))
 				return False
 			
 			proc.close()
 			
-			self.checksLogger.debug('getNetworkTraffic: open success, parsing')
+			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
 			columnLine = lines[1]
 			_, receiveCols , transmitCols = columnLine.split('|')
@@ -1294,7 +1296,7 @@ class checks:
 			
 			cols = receiveCols + transmitCols
 			
-			self.checksLogger.debug('getNetworkTraffic: parsing, looping')
+			self.mainLogger.debug('getNetworkTraffic: parsing, looping')
 			
 			faces = {}
 			for line in lines[2:]:
@@ -1303,7 +1305,7 @@ class checks:
 				faceData = dict(zip(cols, data.split()))
 				faces[face] = faceData
 			
-			self.checksLogger.debug('getNetworkTraffic: parsed, looping')
+			self.mainLogger.debug('getNetworkTraffic: parsed, looping')
 			
 			interfaces = {}
 			
@@ -1330,27 +1332,27 @@ class checks:
 					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
 					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
 		
-			self.checksLogger.debug('getNetworkTraffic: completed, returning')
+			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 					
 			return interfaces
 			
 		elif sys.platform.find('freebsd') != -1:
-			self.checksLogger.debug('getNetworkTraffic: freebsd')
+			self.mainLogger.debug('getNetworkTraffic: freebsd')
 			
 			try:
-				self.checksLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
+				self.mainLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
 				netstat = subprocess.Popen(['netstat', '-nbid', ' grep Link'], stdout=subprocess.PIPE, close_fds=True)
 				
-				self.checksLogger.debug('getNetworkTraffic: attempting Popen (grep)')
+				self.mainLogger.debug('getNetworkTraffic: attempting Popen (grep)')
 				grep = subprocess.Popen(['grep', 'Link'], stdin = netstat.stdout, stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getNetworkTraffic: exception = ' + traceback.format_exc())
+				self.mainLogger.error('getNetworkTraffic: exception = ' + traceback.format_exc())
 				
 				return False
 			
-			self.checksLogger.debug('getNetworkTraffic: open success, parsing')
+			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
 			lines = grep.split('\n')
 			
@@ -1371,7 +1373,7 @@ class checks:
 				face = line[0]
 				faces[face] = faceData
 				
-			self.checksLogger.debug('getNetworkTraffic: parsed, looping')
+			self.mainLogger.debug('getNetworkTraffic: parsed, looping')
 				
 			interfaces = {}
 			
@@ -1398,23 +1400,23 @@ class checks:
 					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
 					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
 		
-			self.checksLogger.debug('getNetworkTraffic: completed, returning')
+			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 	
 			return interfaces
 		
 		else:		
-			self.checksLogger.debug('getNetworkTraffic: other platform, returning')
+			self.mainLogger.debug('getNetworkTraffic: other platform, returning')
 		
 			return False	
 	
 	def getNginxStatus(self):
-		self.checksLogger.debug('getNginxStatus: start')
+		self.mainLogger.debug('getNginxStatus: start')
 		
 		if 'nginxStatusUrl' in self.agentConfig and self.agentConfig['nginxStatusUrl'] != 'http://www.example.com/nginx_status':	# Don't do it if the status URL hasn't been provided
-			self.checksLogger.debug('getNginxStatus: config set')
+			self.mainLogger.debug('getNginxStatus: config set')
 			
 			try: 
-				self.checksLogger.debug('getNginxStatus: attempting urlopen')
+				self.mainLogger.debug('getNginxStatus: attempting urlopen')
 				
 				req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
 
@@ -1423,49 +1425,49 @@ class checks:
 				response = request.read()
 				
 			except urllib2.HTTPError, e:
-				self.checksLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
+				self.mainLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
 				return False
 				
 			except urllib2.URLError, e:
-				self.checksLogger.error('Unable to get Nginx status - URLError = ' + str(e))
+				self.mainLogger.error('Unable to get Nginx status - URLError = ' + str(e))
 				return False
 				
 			except httplib.HTTPException, e:
-				self.checksLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
+				self.mainLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
 				return False
 				
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
+				self.mainLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
 				return False
 				
-			self.checksLogger.debug('getNginxStatus: urlopen success, start parsing')
+			self.mainLogger.debug('getNginxStatus: urlopen success, start parsing')
 			
 			# Thanks to http://hostingfu.com/files/nginx/nginxstats.py for this code
 			
-			self.checksLogger.debug('getNginxStatus: parsing connections')
+			self.mainLogger.debug('getNginxStatus: parsing connections')
 			
 			# Connections
 			parsed = re.search(r'Active connections:\s+(\d+)', response)
 			connections = int(parsed.group(1))
 			
-			self.checksLogger.debug('getNginxStatus: parsed connections')
-			self.checksLogger.debug('getNginxStatus: parsing reqs')
+			self.mainLogger.debug('getNginxStatus: parsed connections')
+			self.mainLogger.debug('getNginxStatus: parsing reqs')
 			
 			# Requests per second
 			parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
 
 			if not parsed:
-				self.checksLogger.debug('getNginxStatus: could not parse response')
+				self.mainLogger.debug('getNginxStatus: could not parse response')
 				return False
 
 			requests = int(parsed.group(3))
 			
-			self.checksLogger.debug('getNginxStatus: parsed reqs')
+			self.mainLogger.debug('getNginxStatus: parsed reqs')
 			
 			if self.nginxRequestsStore == None or self.nginxRequestsStore < 0:
 				
-				self.checksLogger.debug('getNginxStatus: no reqs so storing for first time')
+				self.mainLogger.debug('getNginxStatus: no reqs so storing for first time')
 				
 				self.nginxRequestsStore = requests
 				
@@ -1473,69 +1475,69 @@ class checks:
 				
 			else:
 				
-				self.checksLogger.debug('getNginxStatus: reqs stored so calculating')
-				self.checksLogger.debug('getNginxStatus: self.nginxRequestsStore = ' + str(self.nginxRequestsStore))
-				self.checksLogger.debug('getNginxStatus: requests = ' + str(requests))
+				self.mainLogger.debug('getNginxStatus: reqs stored so calculating')
+				self.mainLogger.debug('getNginxStatus: self.nginxRequestsStore = ' + str(self.nginxRequestsStore))
+				self.mainLogger.debug('getNginxStatus: requests = ' + str(requests))
 				
 				requestsPerSecond = float(requests - self.nginxRequestsStore) / 60
 				
-				self.checksLogger.debug('getNginxStatus: requestsPerSecond = ' + str(requestsPerSecond))
+				self.mainLogger.debug('getNginxStatus: requestsPerSecond = ' + str(requestsPerSecond))
 				
 				self.nginxRequestsStore = requests
 			
 			if connections != None and requestsPerSecond != None:
 			
-				self.checksLogger.debug('getNginxStatus: returning with data')
+				self.mainLogger.debug('getNginxStatus: returning with data')
 				
 				return {'connections' : connections, 'reqPerSec' : requestsPerSecond}
 			
 			else:
 			
-				self.checksLogger.debug('getNginxStatus: returning without data')
+				self.mainLogger.debug('getNginxStatus: returning without data')
 				
 				return False
 			
 		else:
-			self.checksLogger.debug('getNginxStatus: config not set')
+			self.mainLogger.debug('getNginxStatus: config not set')
 			
 			return False
 
 	def getProcesses(self):
-		self.checksLogger.debug('getProcesses: start')
+		self.mainLogger.debug('getProcesses: start')
 		
 		# Memory logging (case 27152)
-		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
+		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
 			try:
 				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.checksLogger.debug('getProcesses: memory before Popen - ' + str(mem))
+				self.mainLogger.debug('getProcesses: memory before Popen - ' + str(mem))
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getProcesses: exception when getting memory before Popen = ' + traceback.format_exc())
+				self.mainLogger.error('getProcesses: exception when getting memory before Popen = ' + traceback.format_exc())
 				return False
 		
 		# Get output from ps
 		try:
-			self.checksLogger.debug('getProcesses: attempting Popen')
+			self.mainLogger.debug('getProcesses: attempting Popen')
 			
 			ps = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
 			
-			self.checksLogger.debug('getProcesses: ps result - ' + str(ps))
+			self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
 			
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('getProcesses: exception = ' + traceback.format_exc())
+			self.mainLogger.error('getProcesses: exception = ' + traceback.format_exc())
 			return False
 		
-		self.checksLogger.debug('getProcesses: Popen success, parsing')
+		self.mainLogger.debug('getProcesses: Popen success, parsing')
 		
 		# Memory logging (case 27152)
-		if self.agentConfig['debugMode'] and sys.platform == 'linux2':
+		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
 			try:
 				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.checksLogger.debug('getProcesses: memory after Popen - ' + str(mem))
+				self.mainLogger.debug('getProcesses: memory after Popen - ' + str(mem))
 			except Exception, e:
 				import traceback
-				self.checksLogger.error('getProcesses: exception when getting memory after Popen = ' + traceback.format_exc())
+				self.mainLogger.error('getProcesses: exception when getting memory after Popen = ' + traceback.format_exc())
 				return False
 		
 		# Split out each process
@@ -1546,39 +1548,39 @@ class checks:
 		
 		processes = []
 		
-		self.checksLogger.debug('getProcesses: Popen success, parsing, looping')
+		self.mainLogger.debug('getProcesses: Popen success, parsing, looping')
 		
 		for line in processLines:
-			self.checksLogger.debug('getProcesses: Popen success, parsing, loop...')
+			self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
 			line = line.split(None, 10)
 			processes.append(line)
 		
-		self.checksLogger.debug('getProcesses: completed, returning')
+		self.mainLogger.debug('getProcesses: completed, returning')
 			
 		return processes
 	
 	def getRabbitMQStatus(self):
-		self.checksLogger.debug('getRabbitMQStatus: start')
+		self.mainLogger.debug('getRabbitMQStatus: start')
 
 		if 'rabbitMQStatusUrl' not in self.agentConfig or \
 		   'rabbitMQUser' not in self.agentConfig or \
 		   'rabbitMQPass' not in self.agentConfig or \
 			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
 
-			self.checksLogger.debug('getRabbitMQStatus: config not set')
+			self.mainLogger.debug('getRabbitMQStatus: config not set')
 			return False
 
-		self.checksLogger.debug('getRabbitMQStatus: config set')
+		self.mainLogger.debug('getRabbitMQStatus: config set')
 
 		try:
-			self.checksLogger.debug('getRabbitMQStatus: attempting authentication setup')
+			self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 			manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
 			manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
 			handler = urllib2.HTTPBasicAuthHandler(manager)
 			opener = urllib2.build_opener(handler)
 			urllib2.install_opener(opener)
 
-			self.checksLogger.debug('getRabbitMQStatus: attempting urlopen')
+			self.mainLogger.debug('getRabbitMQStatus: attempting urlopen')
 			req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
 
 			# Do the request, log any errors
@@ -1586,47 +1588,47 @@ class checks:
 			response = request.read()
 			
 		except urllib2.HTTPError, e:
-			self.checksLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
+			self.mainLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
 			return False
 
 		except urllib2.URLError, e:
-			self.checksLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
+			self.mainLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
 			return False
 
 		except httplib.HTTPException, e:
-			self.checksLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
+			self.mainLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
 			return False
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
 			return False
 			
 		try:
 
 			if int(pythonVersion[1]) >= 6:
-				self.checksLogger.debug('getRabbitMQStatus: json read')
+				self.mainLogger.debug('getRabbitMQStatus: json read')
 				status = json.loads(response)
 
 			else:
-				self.checksLogger.debug('getRabbitMQStatus: minjson read')
+				self.mainLogger.debug('getRabbitMQStatus: minjson read')
 				status = minjson.safeRead(response)
 
-			self.checksLogger.debug(status)
+			self.mainLogger.debug(status)
 
 			if 'connections' not in status:
 				# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
 				status = {}
 				connections = {}
 				queues = {}
-				self.checksLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
+				self.mainLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
 				import urlparse
 				
 				split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
 				
 				# Connections
 				url = split_url.scheme + '://' + split_url.netloc + '/api/connections'
-				self.checksLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
 				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
 				req = urllib2.Request(url, None, headers)
 				# Do the request, log any errors
@@ -1634,17 +1636,17 @@ class checks:
 				response = request.read()
 				
 				if int(pythonVersion[1]) >= 6:
-					self.checksLogger.debug('getRabbitMQStatus: connections json read')
+					self.mainLogger.debug('getRabbitMQStatus: connections json read')
 					connections = json.loads(response)
 				else:
-					self.checksLogger.debug('getRabbitMQStatus: connections minjson read')
+					self.mainLogger.debug('getRabbitMQStatus: connections minjson read')
 					connections = minjson.safeRead(response)
 
 				status['connections'] = len(connections)
 
 				# Queues
 				url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
-				self.checksLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
 				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
 				req = urllib2.Request(url, None, headers)
 				# Do the request, log any errors
@@ -1652,20 +1654,20 @@ class checks:
 				response = request.read()
 				
 				if int(pythonVersion[1]) >= 6:
-					self.checksLogger.debug('getRabbitMQStatus: queues json read')
+					self.mainLogger.debug('getRabbitMQStatus: queues json read')
 					queues = json.loads(response)
 				else:
-					self.checksLogger.debug('getRabbitMQStatus: queues minjson read')
+					self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
 					queues = minjson.safeRead(response)
 
 				status['queues'] = queues
 
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
 			return False
 
-		self.checksLogger.debug('getRabbitMQStatus: completed, returning')
+		self.mainLogger.debug('getRabbitMQStatus: completed, returning')
 		return status
 	
 	#
@@ -1673,11 +1675,11 @@ class checks:
 	#
 		
 	def getPlugins(self):
-		self.checksLogger.debug('getPlugins: start')
+		self.mainLogger.debug('getPlugins: start')
 		
 		if 'pluginDirectory' in self.agentConfig:
 			if os.path.exists(self.agentConfig['pluginDirectory']) == False:
-				self.checksLogger.debug('getPlugins: ' + self.agentConfig['pluginDirectory'] + ' directory does not exist')
+				self.mainLogger.debug('getPlugins: ' + self.agentConfig['pluginDirectory'] + ' directory does not exist')
 				return False
 		else:
 			return False
@@ -1685,7 +1687,7 @@ class checks:
 		# Have we already imported the plugins?
 		# Only load the plugins once
 		if self.plugins == None:
-			self.checksLogger.debug('getPlugins: initial load from ' + self.agentConfig['pluginDirectory'])
+			self.mainLogger.debug('getPlugins: initial load from ' + self.agentConfig['pluginDirectory'])
 			
 			sys.path.append(self.agentConfig['pluginDirectory'])
 			
@@ -1695,7 +1697,7 @@ class checks:
 			# Loop through all the plugin files
 			for root, dirs, files in os.walk(self.agentConfig['pluginDirectory']):
 				for name in files:
-					self.checksLogger.debug('getPlugins: considering: ' + name)
+					self.mainLogger.debug('getPlugins: considering: ' + name)
 				
 					name = name.split('.', 1)
 					
@@ -1703,7 +1705,7 @@ class checks:
 					try:
 						if name[1] == 'py':
 							
-							self.checksLogger.debug('getPlugins: ' + name[0] + '.' + name[1] + ' is a plugin')
+							self.mainLogger.debug('getPlugins: ' + name[0] + '.' + name[1] + ' is a plugin')
 							
 							plugins.append(name[0])
 							
@@ -1713,62 +1715,62 @@ class checks:
 			
 			# Loop through all the found plugins, import them then create new objects
 			for pluginName in plugins:
-				self.checksLogger.debug('getPlugins: importing ' + pluginName)
+				self.mainLogger.debug('getPlugins: importing ' + pluginName)
 				
 				# Import the plugin, but only from the pluginDirectory (ensures no conflicts with other module names elsehwhere in the sys.path
 				import imp
 				importedPlugin = imp.load_source(pluginName, os.path.join(self.agentConfig['pluginDirectory'], '%s.py' % pluginName))
 				
-				self.checksLogger.debug('getPlugins: imported ' + pluginName)
+				self.mainLogger.debug('getPlugins: imported ' + pluginName)
 				
 				try:
 					# Find out the class name and then instantiate it
 					pluginClass = getattr(importedPlugin, pluginName)
 					
 					try:
-						pluginObj = pluginClass(self.agentConfig, self.checksLogger, self.rawConfig)
+						pluginObj = pluginClass(self.agentConfig, self.mainLogger, self.rawConfig)
 					except TypeError:
 						
 						try:
-							pluginObj = pluginClass(self.agentConfig, self.checksLogger)
+							pluginObj = pluginClass(self.agentConfig, self.mainLogger)
 						except TypeError:
 							# Support older plugins.
 							pluginObj = pluginClass()
 				
-					self.checksLogger.debug('getPlugins: instantiated ' + pluginName)
+					self.mainLogger.debug('getPlugins: instantiated ' + pluginName)
 				
 					# Store in class var so we can execute it again on the next cycle
 					self.plugins.append(pluginObj)
 				except Exception, ex:
 					import traceback
-					self.checksLogger.error('getPlugins: exception = ' + traceback.format_exc())
+					self.mainLogger.error('getPlugins: exception = ' + traceback.format_exc())
 					
 		# Now execute the objects previously created
 		if self.plugins != None:			
-			self.checksLogger.debug('getPlugins: executing plugins')
+			self.mainLogger.debug('getPlugins: executing plugins')
 			
 			# Execute the plugins
 			output = {}
 					
 			for plugin in self.plugins:				
-				self.checksLogger.debug('getPlugins: executing ' + plugin.__class__.__name__)
+				self.mainLogger.debug('getPlugins: executing ' + plugin.__class__.__name__)
 				
 				try:
 					output[plugin.__class__.__name__] = plugin.run()
 				
 				except Exception, ex:
 					import traceback
-					self.checksLogger.error('getPlugins: exception = ' + traceback.format_exc())
+					self.mainLogger.error('getPlugins: exception = ' + traceback.format_exc())
 				
-				self.checksLogger.debug('getPlugins: executed ' + plugin.__class__.__name__)
+				self.mainLogger.debug('getPlugins: executed ' + plugin.__class__.__name__)
 			
-			self.checksLogger.debug('getPlugins: returning')
+			self.mainLogger.debug('getPlugins: returning')
 			
 			# Each plugin should output a dictionary so we can convert it to JSON later	
 			return output
 			
 		else:			
-			self.checksLogger.debug('getPlugins: no plugins, returning false')
+			self.mainLogger.debug('getPlugins: no plugins, returning false')
 			
 			return False
 	
@@ -1777,10 +1779,10 @@ class checks:
 	#
 	
 	def doPostBack(self, postBackData):
-		self.checksLogger.debug('doPostBack: start')	
+		self.mainLogger.debug('doPostBack: start')	
 		
 		try: 
-			self.checksLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
+			self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 			
 			# Build the request handler
 			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
@@ -1788,26 +1790,26 @@ class checks:
 			# Do the request, log any errors
 			response = urllib2.urlopen(request)
 			
-			self.checksLogger.debug('doPostBack: postback response: ' + str(response.read()))
+			self.mainLogger.info('Postback response: ' + str(response.read()))
 				
 		except urllib2.HTTPError, e:
-			self.checksLogger.error('doPostBack: HTTPError = ' + str(e))
+			self.mainLogger.error('doPostBack: HTTPError = ' + str(e))
 			return False
 			
 		except urllib2.URLError, e:
-			self.checksLogger.error('doPostBack: URLError = ' + str(e))
+			self.mainLogger.error('doPostBack: URLError = ' + str(e))
 			return False
 			
 		except httplib.HTTPException, e: # Added for case #26701
-			self.checksLogger.error('doPostBack: HTTPException')
+			self.mainLogger.error('doPostBack: HTTPException')
 			return False
 				
 		except Exception, e:
 			import traceback
-			self.checksLogger.error('doPostBack: Exception = ' + traceback.format_exc())
+			self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
 			return False
 			
-		self.checksLogger.debug('doPostBack: completed')
+		self.mainLogger.debug('doPostBack: completed')
 	
 	def doChecks(self, sc, firstRun, systemStats=False):
 		macV = None
@@ -1829,15 +1831,13 @@ class checks:
 			else:
 				self.os = 'linux'
 		
-		self.checksLogger = logging.getLogger('checks')
-		
 		# We only need to set this if we're on FreeBSD
 		if self.linuxProcFsLocation == None and self.os == 'freebsd':
 			self.linuxProcFsLocation = self.getMountedLinuxProcFsLocation()
 		else:
 			self.linuxProcFsLocation = '/proc'
 		
-		self.checksLogger.debug('doChecks: start')
+		self.mainLogger.debug('doChecks: start')
 		
 		# Do the checks
 		apacheStatus = self.getApacheStatus()
@@ -1854,9 +1854,9 @@ class checks:
 		plugins = self.getPlugins()
 		ioStats = self.getIOStats();
 		
-		self.checksLogger.debug('doChecks: checks success, build payload')
+		self.mainLogger.debug('doChecks: checks success, build payload')
 		
-		self.checksLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
+		self.mainLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
 		
 		try:
 		
@@ -1864,9 +1864,9 @@ class checks:
 		
 		except KeyError, ex:
 		
-			self.checksLogger.debug('doChecks: KeyError when building checksData = ' + str(ex))
+			self.mainLogger.error('doChecks: KeyError when building checksData = ' + str(ex))
 		
-		self.checksLogger.debug('doChecks: payload built, build optional payloads')
+		self.mainLogger.debug('doChecks: payload built, build optional payloads')
 		
 		# Apache Status
 		if apacheStatus != False:			
@@ -1874,7 +1874,7 @@ class checks:
 			checksData['apacheBusyWorkers'] = apacheStatus['busyWorkers']
 			checksData['apacheIdleWorkers'] = apacheStatus['idleWorkers']
 			
-			self.checksLogger.debug('doChecks: built optional payload apacheStatus')
+			self.mainLogger.debug('doChecks: built optional payload apacheStatus')
 		
 		# MySQL Status
 		if mysqlStatus != False:
@@ -1917,46 +1917,46 @@ class checks:
 		# Include system stats on first postback
 		if firstRun == True:
 			checksData['systemStats'] = systemStats
-			self.checksLogger.debug('doChecks: built optional payload systemStats')
+			self.mainLogger.debug('doChecks: built optional payload systemStats')
 			
 		# Include server indentifiers
 		import socket	
 		
 		try:
 			checksData['internalHostname'] = socket.gethostname()
-			self.checksLogger.debug('doChecks: hostname = ' + checksData['internalHostname'])
+			self.mainLogger.debug('doChecks: hostname = ' + checksData['internalHostname'])
 			
 		except socket.error, e:
-			self.checksLogger.debug('Unable to get hostname: ' + str(e))
+			self.mainLogger.debug('Unable to get hostname: ' + str(e))
 		
-		self.checksLogger.debug('doChecks: payloads built, convert to json')
+		self.mainLogger.debug('doChecks: payloads built, convert to json')
 		
 		# Post back the data
 		if int(pythonVersion[1]) >= 6:
-			self.checksLogger.debug('doChecks: json convert')
+			self.mainLogger.debug('doChecks: json convert')
 			
 			payload = json.dumps(checksData)
 		
 		else:
-			self.checksLogger.debug('doChecks: minjson convert')
+			self.mainLogger.debug('doChecks: minjson convert')
 			
 			payload = minjson.write(checksData)
 			
-		self.checksLogger.debug('doChecks: json converted, hash')
+		self.mainLogger.debug('doChecks: json converted, hash')
 		
 		payloadHash = md5(payload).hexdigest()
 		postBackData = urllib.urlencode({'payload' : payload, 'hash' : payloadHash})
 
-		self.checksLogger.debug('doChecks: hashed, doPostBack')
+		self.mainLogger.debug('doChecks: hashed, doPostBack')
 
 		self.doPostBack(postBackData)
 		
-		self.checksLogger.debug('doChecks: posted back, reschedule')
+		self.mainLogger.debug('doChecks: posted back, reschedule')
 		
 		sc.enter(self.agentConfig['checkFreq'], 1, self.doChecks, (sc, False))	
 		
 	def getMountedLinuxProcFsLocation(self):
-		self.checksLogger.debug('getMountedLinuxProcFsLocation: attempting to fetch mounted partitions')
+		self.mainLogger.debug('getMountedLinuxProcFsLocation: attempting to fetch mounted partitions')
 		
 		# Lets check if the Linux like style procfs is mounted
 		try:
@@ -1964,15 +1964,15 @@ class checks:
 			location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
 			
 		except OSError, e:
-			self.checksLogger.debug('getMountedLinuxProcFsLocation: OS error: ' + str(e))
+			self.mainLogger.error('getMountedLinuxProcFsLocation: OS error: ' + str(e))
 		
 		# Linux like procfs file system is not mounted so we return False, else we return mount point location
 		if location == None:
-			self.checksLogger.debug('getMountedLinuxProcFsLocation: none found so using /proc')
+			self.mainLogger.debug('getMountedLinuxProcFsLocation: none found so using /proc')
 			return '/proc' # Can't find anything so we might as well try this
 		
 		location = location.group(1)
 		
-		self.checksLogger.debug('getMountedLinuxProcFsLocation: using' + location)
+		self.mainLogger.debug('getMountedLinuxProcFsLocation: using' + location)
 		
 		return location

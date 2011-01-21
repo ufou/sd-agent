@@ -9,9 +9,11 @@
 	(C) Boxed Ice 2010 all rights reserved
 '''
 
+import logging
+
 # General config
 agentConfig = {}
-agentConfig['debugMode'] = 0
+agentConfig['logging'] = logging.INFO
 agentConfig['checkFreq'] = 60
 
 agentConfig['version'] = '1.10.0'
@@ -27,7 +29,6 @@ if int(sys.version_info[1]) <= 3:
 
 # Core modules
 import ConfigParser
-import logging
 import os
 import re
 import sched
@@ -128,10 +129,10 @@ if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['ag
 	sys.exit(1)
 	
 # Check to make sure sd_url is in correct
-if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
-	print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
-	print 'Agent will now quit'
-	sys.exit(1)
+#if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
+	#print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
+	#print 'Agent will now quit'
+	#sys.exit(1)
 	
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] == None:
@@ -170,9 +171,7 @@ for section in config.sections():
 class agent(Daemon):	
 	
 	def run(self):	
-		agentLogger = logging.getLogger('agent')
-		
-		agentLogger.debug('Collecting basic system stats')
+		mainLogger.debug('Collecting basic system stats')
 		
 		# Get some basic system stats to post back for development/testing
 		import platform
@@ -188,15 +187,15 @@ class agent(Daemon):
 			version = platform.uname()[2]
 			systemStats['fbsdV'] = ('freebsd', version, '') # no codename for FreeBSD
 		
-		agentLogger.debug('System: ' + str(systemStats))
+		mainLogger.info('System: ' + str(systemStats))
 						
-		agentLogger.debug('Creating checks instance')
+		mainLogger.debug('Creating checks instance')
 		
 		# Checks instance
-		c = checks(agentConfig, rawConfig)
+		c = checks(agentConfig, rawConfig, mainLogger)
 		
 		# Schedule the checks
-		agentLogger.debug('Scheduling checks every ' + str(agentConfig['checkFreq']) + ' seconds')
+		mainLogger.info('checkFreq: %s', agentConfig['checkFreq'])
 		s = sched.scheduler(time.time, time.sleep)
 		c.doChecks(s, True, systemStats) # start immediately (case 28315)
 		s.run()
@@ -214,14 +213,24 @@ class agent(Daemon):
 
 # Control of daemon		
 if __name__ == '__main__':	
-	# Logging
-	if agentConfig['debugMode']:
-		logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')
-		logging.basicConfig(filename=logFile, filemode='w', level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 	
-	mainLogger = logging.getLogger('main')		
-	mainLogger.debug('Agent called')
-	mainLogger.debug('Agent version: ' + agentConfig['version'])
+	# Logging
+	logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')
+	handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5) # 10MB files
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+	
+	handler.setFormatter(formatter)
+	
+	mainLogger = logging.getLogger('main')
+	mainLogger.setLevel(agentConfig['logging'])	
+	mainLogger.addHandler(handler)	
+	
+	mainLogger.info('--')
+	mainLogger.info('sd-agent %s started', agentConfig['version'])
+	mainLogger.info('--')
+	
+	mainLogger.info('sd_url: %s', agentConfig['sdUrl'])
+	mainLogger.info('agent_key: %s', agentConfig['agentKey'])
 	
 	argLen = len(sys.argv)
 	
@@ -237,8 +246,10 @@ if __name__ == '__main__':
 	else:
 		pidFile = os.path.join(agentConfig['pidfileDirectory'], 'sd-agent.pid')
 	
+	mainLogger.info('PID: %s', pidFile)
+	
 	if argLen == 4 and sys.argv[3] == '--clean':
-		mainLogger.debug('Agent called with --clean option, removing .pid')
+		mainLogger.info('--clean')
 		try:
 			os.remove(pidFile)
 		except OSError:
@@ -251,23 +262,23 @@ if __name__ == '__main__':
 	# Control options
 	if argLen == 2 or argLen == 3 or argLen == 4:
 		if 'start' == sys.argv[1]:
-			mainLogger.debug('Start daemon')
+			mainLogger.info('Action: start')
 			daemon.start()
 			
 		elif 'stop' == sys.argv[1]:
-			mainLogger.debug('Stop daemon')
+			mainLogger.info('Action: stop')
 			daemon.stop()
 			
 		elif 'restart' == sys.argv[1]:
-			mainLogger.debug('Restart daemon')
+			mainLogger.info('Action: restart')
 			daemon.restart()
 			
 		elif 'foreground' == sys.argv[1]:
-			mainLogger.debug('Running in foreground')
+			mainLogger.info('Action: foreground')
 			daemon.run()
 			
 		elif 'status' == sys.argv[1]:
-			mainLogger.debug('Checking agent status')
+			mainLogger.info('Action: status')
 			
 			try:
 				pf = file(pidFile,'r')
@@ -284,7 +295,7 @@ if __name__ == '__main__':
 				print 'sd-agent is not running.'
 
 		elif 'update' == sys.argv[1]:
-			mainLogger.debug('Updating agent')
+			mainLogger.info('Action: update')
 			
 			if os.path.abspath(__file__) == '/usr/bin/sd-agent/agent.py':
 				print 'Please use the Linux package manager that was used to install the agent to update it.'
