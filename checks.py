@@ -746,11 +746,11 @@ class checks:
 		try:
 			mongoInfo = self.agentConfig['MongoDBServer'].split(':')
 			if len(mongoInfo) == 2:
-				conn = Connection(mongoInfo[0], int(mongoInfo[1]))
+				conn = Connection(mongoInfo[0], int(mongoInfo[1]), slave_okay=True)
 				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
 			
 			else:
-				conn = Connection(mongoInfo[0])
+				conn = Connection(mongoInfo[0], slave_okay=True)
 				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
 				
 		except Exception, ex:
