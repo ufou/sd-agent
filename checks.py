@@ -944,14 +944,16 @@ class checks:
 					if 'self' in member:
 						status['replSet']['myId'] = member['_id']
 					
+					# Calculation is from http://docs.python.org/library/datetime.html#datetime.timedelta.total_seconds
+					# Have to do it manually because total_seconds() is only available as of Python 2.7
 					else:
 						# Calculate deltas (not available for self)
 						deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']					
-						status['replSet']['members'][str(member['_id'])]['lastHeartbeat'] = deltaHeartbeat.seconds
+						status['replSet']['members'][str(member['_id'])]['lastHeartbeat'] = (deltaHeartbeat.microseconds + (deltaHeartbeat.seconds + deltaHeartbeat.days * 24 * 3600) * 10**6) / 10**6
 						
 						if 'optimeDate' in member: # Only available as of 1.7.2
 							deltaOptime = datetime.datetime.now() - member['optimeDate']
-							status['replSet']['members'][str(member['_id'])]['optimeDate'] = deltaOptime.seconds
+							status['replSet']['members'][str(member['_id'])]['optimeDate'] = (deltaOptime.microseconds + (deltaOptime.seconds + deltaOptime.days * 24 * 3600) * 10**6) / 10**6
 					
 					if 'errmsg' in member:
 						status['replSet']['members'][str(member['_id'])]['error'] = member['errmsg']
