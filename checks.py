@@ -964,12 +964,18 @@ class checks:
 				
 				for database in conn.database_names():
 					
-					if database != 'local' and database != 'admin' and database != 'test':
+					if database != 'config' and database != 'local' and database != 'admin' and database != 'test':
 						
 						self.mainLogger.debug('getMongoDBStatus: executing db.stats() for ' + str(database))
 						
 						status['dbStats'][database] = conn[database].command('dbstats')
 						status['dbStats'][database]['namespaces'] = conn[database]['system']['namespaces'].count()
+						
+						# Ensure all strings to prevent JSON parse errors. We typecast on the server
+						for key in status['dbStats'][database].keys():
+						
+							status['dbStats'][database][key] = str(status['dbStats'][database][key])
+						
 				
 		except Exception, ex:
 			import traceback
