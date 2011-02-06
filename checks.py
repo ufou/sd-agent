@@ -2,7 +2,7 @@
 	Server Density
 	www.serverdensity.com
 	----
-	A web based server resource monitoring application
+	Server monitoring agent for Linux, FreeBSD and Mac OS X
 
 	Licensed under Simplified BSD License (see LICENSE)
 '''
