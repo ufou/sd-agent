@@ -47,10 +47,18 @@ try:
 	path = os.path.dirname(path)
 	
 	config = ConfigParser.ConfigParser()
+	
 	if os.path.exists('/etc/sd-agent/config.cfg'):
-		config.read('/etc/sd-agent/config.cfg')
+		configPath = '/etc/sd-agent/config.cfg'		
 	else:
-		config.read(path + '/config.cfg')
+		configPath = path + '/config.cfg'
+	
+	if os.access(configPath, os.R_OK) == False:
+		print 'Unable to read the config file at ' + configPath
+		print 'Agent will now quit'
+		sys.exit(1)
+	
+	config.read(configPath)
 	
 	# Core config
 	agentConfig['sdUrl'] = config.get('Main', 'sd_url')
@@ -215,6 +223,12 @@ if __name__ == '__main__':
 	
 	# Logging
 	logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')
+	
+	if os.access(agentConfig['tmpDirectory'], os.W_OK) == False:
+		print 'Unable to write the log file at ' + logFile
+		print 'Agent will now quit'
+		sys.exit(1)
+	
 	handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5) # 10MB files
 	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 	
@@ -244,6 +258,11 @@ if __name__ == '__main__':
 			
 	else:
 		pidFile = os.path.join(agentConfig['pidfileDirectory'], 'sd-agent.pid')
+	
+	if os.access(agentConfig['pidfileDirectory'], os.W_OK) == False:
+		print 'Unable to write the PID file at ' + pidFile
+		print 'Agent will now quit'
+		sys.exit(1)
 	
 	mainLogger.info('PID: %s', pidFile)
 	
