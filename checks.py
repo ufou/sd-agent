@@ -125,36 +125,65 @@ class checks:
 			
 			self.mainLogger.debug('getApacheStatus: parsed')
 			
+			apacheStatusReturn = {}
+			
 			try:
-				if apacheStatus['Total Accesses'] != False and apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
+			
+				if apacheStatus['Total Accesses'] != False:
+				
+					self.mainLogger.debug('getApacheStatus: processing total accesses')
+				
 					totalAccesses = float(apacheStatus['Total Accesses'])
 					
-					self.mainLogger.debug('getApacheStatus: required mod_status keys found, proceeding')
-					
 					if self.apacheTotalAccesses is None or totalAccesses == 0:
-						reqPerSec = 0.0
+						
+						apacheStatusReturn['reqPerSec'] = 0.0
+						
 						self.apacheTotalAccesses = totalAccesses
+						
 						self.mainLogger.debug('getApacheStatus: no cached total accesses (or totalAccesses == 0), so storing for first time / resetting stored value')
+					
 					else:
+					
 						self.mainLogger.debug('getApacheStatus: cached data exists, so calculating per sec metrics')
-						reqPerSec = (totalAccesses - self.apacheTotalAccesses) / 60
+						
+						apacheStatusReturn['reqPerSec'] = (totalAccesses - self.apacheTotalAccesses) / 60
+						
 						self.apacheTotalAccesses = totalAccesses
-					
-					self.mainLogger.debug('getApacheStatus: completed, returning')
-					return {'reqPerSec': reqPerSec, 'busyWorkers': apacheStatus['BusyWorkers'], 'idleWorkers': apacheStatus['IdleWorkers']}
-				
+			
 				else:
-					self.mainLogger.debug('getApacheStatus: completed, status not available')
 					
-					return False
-				
-			# Stops the agent crashing if one of the apacheStatus elements isn't set (e.g. ExtendedStatus Off)	
+					self.mainLogger.error('getApacheStatus: Total Accesses not present in mod_status output. Is ExtendedStatus enabled?')
+			
 			except IndexError:
-				self.mainLogger.error('getApacheStatus: IndexError - Total Accesses, BusyWorkers or IdleWorkers not present')
+				self.mainLogger.error('getApacheStatus: IndexError - Total Accesses not present in mod_status output. Is ExtendedStatus enabled?')
 				
 			except KeyError:
-				self.mainLogger.error('getApacheStatus: KeyError - Total Accesses, BusyWorkers or IdleWorkers not present')
-								
+				self.mainLogger.error('getApacheStatus: KeyError - Total Accesses not present in mod_status output. Is ExtendedStatus enabled?')
+			
+			try:
+				
+				if apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
+					
+					apacheStatusReturn['BusyWorkers'] = apacheStatus['BusyWorkers']
+					apacheStatusReturn['IdleWorkers'] = apacheStatus['IdleWorkers']
+					
+				else:
+					
+					self.mainLogger.error('getApacheStatus: BusyWorkers/IdleWorkers not present in mod_status output. Is the URL correct (must have ?auto at the end)?')
+					
+			except IndexError:
+				self.mainLogger.error('getApacheStatus: IndexError - BusyWorkers/IdleWorkers not present in mod_status output. Is the URL correct (must have ?auto at the end)?')
+				
+			except KeyError:
+				self.mainLogger.error('getApacheStatus: KeyError - BusyWorkers/IdleWorkers not present in mod_status output. Is the URL correct (must have ?auto at the end)?')			
+		
+			if 'reqPerSec' in apacheStatusReturn or 'BusyWorkers' in apacheStatusReturn or 'IdleWorkers' in apacheStatusReturn:
+			
+				return apacheStatusReturn
+			
+			else:
+			
 				return False
 			
 		else:
@@ -1877,9 +1906,15 @@ class checks:
 		
 		# Apache Status
 		if apacheStatus != False:			
-			checksData['apacheReqPerSec'] = apacheStatus['reqPerSec']
-			checksData['apacheBusyWorkers'] = apacheStatus['busyWorkers']
-			checksData['apacheIdleWorkers'] = apacheStatus['idleWorkers']
+			
+			if 'reqPerSec' in apacheStatus:
+				checksData['apacheReqPerSec'] = apacheStatus['reqPerSec']
+			
+			if 'busyWorkers' in apacheStatus:
+				checksData['apacheBusyWorkers'] = apacheStatus['busyWorkers']
+				
+			if 'idleWorkers' in apacheStatus:
+				checksData['apacheIdleWorkers'] = apacheStatus['idleWorkers']
 			
 			self.mainLogger.debug('doChecks: built optional payload apacheStatus')
 		
