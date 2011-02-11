@@ -1714,9 +1714,12 @@ class checks:
 		self.mainLogger.debug('getPlugins: start')
 		
 		if 'pluginDirectory' in self.agentConfig:
-			if os.path.exists(self.agentConfig['pluginDirectory']) == False:
-				self.mainLogger.debug('getPlugins: ' + self.agentConfig['pluginDirectory'] + ' directory does not exist')
+			
+			if os.access(self.agentConfig['pluginDirectory'], os.R_OK) == False:
+				self.mainLogger.warning('getPlugins: Plugin path % is set but not readable by agent. Skipping plugins.', self.agentConfig['pluginDirectory'])
+				
 				return False
+				
 		else:
 			return False
 		
@@ -1751,20 +1754,27 @@ class checks:
 			
 			# Loop through all the found plugins, import them then create new objects
 			for pluginName in plugins:
-				self.mainLogger.debug('getPlugins: importing ' + pluginName)
+				self.mainLogger.debug('getPlugins: loading ' + pluginName)
 				
-				# Import the plugin, but only from the pluginDirectory (ensures no conflicts with other module names elsehwhere in the sys.path
-				import imp
-				importedPlugin = imp.load_source(pluginName, os.path.join(self.agentConfig['pluginDirectory'], '%s.py' % pluginName))
+				pluginPath = os.path.join(self.agentConfig['pluginDirectory'], '%s.py' % pluginName)
 				
-				self.mainLogger.debug('getPlugins: imported ' + pluginName)
+				if os.access(pluginPath, os.R_OK) == False:
+					self.mainLogger.error('getPlugins: Unable to read %s so skipping this plugin.', pluginPath)
+					continue
 				
 				try:
+					# Import the plugin, but only from the pluginDirectory (ensures no conflicts with other module names elsehwhere in the sys.path
+					import imp
+					importedPlugin = imp.load_source(pluginName, pluginPath)
+				
+					self.mainLogger.debug('getPlugins: imported ' + pluginName)
+					
 					# Find out the class name and then instantiate it
 					pluginClass = getattr(importedPlugin, pluginName)
 					
 					try:
 						pluginObj = pluginClass(self.agentConfig, self.mainLogger, self.rawConfig)
+					
 					except TypeError:
 						
 						try:
@@ -1777,9 +1787,10 @@ class checks:
 				
 					# Store in class var so we can execute it again on the next cycle
 					self.plugins.append(pluginObj)
+				
 				except Exception, ex:
 					import traceback
-					self.mainLogger.error('getPlugins: exception = ' + traceback.format_exc())
+					self.mainLogger.error('getPlugins (' + pluginName + '): exception = ' + traceback.format_exc())
 					
 		# Now execute the objects previously created
 		if self.plugins != None:			
@@ -1789,7 +1800,7 @@ class checks:
 			output = {}
 					
 			for plugin in self.plugins:				
-				self.mainLogger.debug('getPlugins: executing ' + plugin.__class__.__name__)
+				self.mainLogger.info('getPlugins: executing ' + plugin.__class__.__name__)
 				
 				try:
 					output[plugin.__class__.__name__] = plugin.run()
@@ -1798,7 +1809,7 @@ class checks:
 					import traceback
 					self.mainLogger.error('getPlugins: exception = ' + traceback.format_exc())
 				
-				self.mainLogger.debug('getPlugins: executed ' + plugin.__class__.__name__)
+				self.mainLogger.info('getPlugins: executed ' + plugin.__class__.__name__)
 			
 			self.mainLogger.debug('getPlugins: returning')
 			
