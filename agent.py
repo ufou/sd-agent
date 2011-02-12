@@ -281,7 +281,28 @@ if __name__ == '__main__':
 	if argLen == 2 or argLen == 3 or argLen == 4:
 		if 'start' == sys.argv[1]:
 			mainLogger.info('Action: start')
-			daemon.start()
+			
+			# Check to see if the agent is already running
+			import subprocess
+			try:
+				p1 = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE)
+				p2 = subprocess.Popen(['grep', '-c', 'agent.py'], stdin=p1.stdout, stdout=subprocess.PIPE)
+				p1.stdout.close() # Allow p1 to receive a SIGPIPE if p2 exits.
+				processes = p2.communicate()[0]
+				
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Existing agent check failed: ' + traceback.format_exc())
+				sys.exit(1)
+			
+			if processes.strip() == '1':
+			
+				daemon.start()
+				
+			else:
+				
+				print 'The agent is already running. Check the output of ps aux | grep agent.py and kill any rogue agents (Alec Trevelyan).'
+				sys.exit(1)
 			
 		elif 'stop' == sys.argv[1]:
 			mainLogger.info('Action: stop')
