@@ -295,7 +295,7 @@ if __name__ == '__main__':
 				self.mainLogger.error('Existing agent check failed: ' + traceback.format_exc())
 				sys.exit(1)
 			
-			if processes.strip() <= '1':
+			if processes.strip() == '0' or processes.strip() == '1' or processes.strip() == '2': # 2 will be agent + grep, 1 will be grep, 0 shouldn't happen but it's fine anyway
 			
 				daemon.start()
 				
