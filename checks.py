@@ -981,7 +981,6 @@ class checks:
 						
 					# Have to do it manually because total_seconds() is only available as of Python 2.7
 					else:
-						# Heartbeat delta (only available from not self)
 						if 'lastHeartbeat' in member:
 							deltaHeartbeat = datetime.datetime.now() - member['lastHeartbeat']					
 							status['replSet']['members'][str(member['_id'])]['lastHeartbeat'] = (deltaHeartbeat.microseconds + (deltaHeartbeat.seconds + deltaHeartbeat.days * 24 * 3600) * 10**6) / 10**6
