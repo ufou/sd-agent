@@ -295,13 +295,14 @@ if __name__ == '__main__':
 				self.mainLogger.error('Existing agent check failed: ' + traceback.format_exc())
 				sys.exit(1)
 			
-			if processes.strip() == '1':
+			if processes.strip() <= '1':
 			
 				daemon.start()
 				
 			else:
 				
 				print 'The agent is already running. Check the output of ps aux | grep agent.py and kill any rogue agents (Alec Trevelyan).'
+				print 'Agent will now quit'
 				sys.exit(1)
 			
 		elif 'stop' == sys.argv[1]:
