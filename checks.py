@@ -165,8 +165,8 @@ class checks:
 				
 				if apacheStatus['BusyWorkers'] != False and apacheStatus['IdleWorkers'] != False:
 					
-					apacheStatusReturn['BusyWorkers'] = apacheStatus['BusyWorkers']
-					apacheStatusReturn['IdleWorkers'] = apacheStatus['IdleWorkers']
+					apacheStatusReturn['busyWorkers'] = apacheStatus['BusyWorkers']
+					apacheStatusReturn['idleWorkers'] = apacheStatus['IdleWorkers']
 					
 				else:
 					
