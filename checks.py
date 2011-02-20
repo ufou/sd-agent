@@ -1484,54 +1484,60 @@ class checks:
 			
 			self.mainLogger.debug('getNginxStatus: parsing connections')
 			
-			# Connections
-			parsed = re.search(r'Active connections:\s+(\d+)', response)
-			connections = int(parsed.group(1))
+			try:
+				# Connections
+				parsed = re.search(r'Active connections:\s+(\d+)', response)
+				connections = int(parsed.group(1))
+				
+				self.mainLogger.debug('getNginxStatus: parsed connections')
+				self.mainLogger.debug('getNginxStatus: parsing reqs')
+				
+				# Requests per second
+				parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
+	
+				if not parsed:
+					self.mainLogger.debug('getNginxStatus: could not parse response')
+					return False
+	
+				requests = int(parsed.group(3))
+				
+				self.mainLogger.debug('getNginxStatus: parsed reqs')
+				
+				if self.nginxRequestsStore == None or self.nginxRequestsStore < 0:
+					
+					self.mainLogger.debug('getNginxStatus: no reqs so storing for first time')
+					
+					self.nginxRequestsStore = requests
+					
+					requestsPerSecond = 0
+					
+				else:
+					
+					self.mainLogger.debug('getNginxStatus: reqs stored so calculating')
+					self.mainLogger.debug('getNginxStatus: self.nginxRequestsStore = ' + str(self.nginxRequestsStore))
+					self.mainLogger.debug('getNginxStatus: requests = ' + str(requests))
+					
+					requestsPerSecond = float(requests - self.nginxRequestsStore) / 60
+					
+					self.mainLogger.debug('getNginxStatus: requestsPerSecond = ' + str(requestsPerSecond))
+					
+					self.nginxRequestsStore = requests
+				
+				if connections != None and requestsPerSecond != None:
+				
+					self.mainLogger.debug('getNginxStatus: returning with data')
+					
+					return {'connections' : connections, 'reqPerSec' : requestsPerSecond}
+				
+				else:
+				
+					self.mainLogger.debug('getNginxStatus: returning without data')
+					
+					return False
 			
-			self.mainLogger.debug('getNginxStatus: parsed connections')
-			self.mainLogger.debug('getNginxStatus: parsing reqs')
-			
-			# Requests per second
-			parsed = re.search(r'\s*(\d+)\s+(\d+)\s+(\d+)', response)
-
-			if not parsed:
-				self.mainLogger.debug('getNginxStatus: could not parse response')
-				return False
-
-			requests = int(parsed.group(3))
-			
-			self.mainLogger.debug('getNginxStatus: parsed reqs')
-			
-			if self.nginxRequestsStore == None or self.nginxRequestsStore < 0:
-				
-				self.mainLogger.debug('getNginxStatus: no reqs so storing for first time')
-				
-				self.nginxRequestsStore = requests
-				
-				requestsPerSecond = 0
-				
-			else:
-				
-				self.mainLogger.debug('getNginxStatus: reqs stored so calculating')
-				self.mainLogger.debug('getNginxStatus: self.nginxRequestsStore = ' + str(self.nginxRequestsStore))
-				self.mainLogger.debug('getNginxStatus: requests = ' + str(requests))
-				
-				requestsPerSecond = float(requests - self.nginxRequestsStore) / 60
-				
-				self.mainLogger.debug('getNginxStatus: requestsPerSecond = ' + str(requestsPerSecond))
-				
-				self.nginxRequestsStore = requests
-			
-			if connections != None and requestsPerSecond != None:
-			
-				self.mainLogger.debug('getNginxStatus: returning with data')
-				
-				return {'connections' : connections, 'reqPerSec' : requestsPerSecond}
-			
-			else:
-			
-				self.mainLogger.debug('getNginxStatus: returning without data')
-				
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Unable to get Nginx status - Exception = %s', traceback.format_exc())
 				return False
 			
 		else:
