@@ -340,32 +340,20 @@ class checks:
 	def getDiskUsage(self):
 		self.mainLogger.debug('getDiskUsage: start')
 		
-		# Memory logging (case 27152)
-		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
-			try:
-				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.mainLogger.debug('getDiskUsage: memory before Popen - ' + str(mem))
-			
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getDiskUsage: free -m exception = ' + traceback.format_exc())
-				return False
-		
 		# Get output from df
 		try:
 			self.mainLogger.debug('getDiskUsage: attempting Popen')
 			
-			df = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True).communicate()[0] # -k option uses 1024 byte blocks so we can calculate into MB
+			proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
+			df = proc.communicate()[0]
+			
+			if int(pythonVersion[1]) >= 6:
+				proc.stop()
 			
 		except Exception, e:
 			import traceback
 			self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
 			return False
-		
-		# Memory logging (case 27152)
-		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
-			mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-			self.mainLogger.debug('getDiskUsage: memory after Popen - ' + str(mem))
 		
 		self.mainLogger.debug('getDiskUsage: Popen success, start parsing')
 			
@@ -444,7 +432,12 @@ class checks:
 			valueRegexp = re.compile(r'\d+\.\d+')
 			
 			try:
-				stats = subprocess.Popen(['iostat', '-d', '1', '2', '-x', '-k'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['iostat', '-d', '1', '2', '-x', '-k'], stdout=subprocess.PIPE, close_fds=True)
+				stats = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
+				
 				recentStats = stats.split('Device:')[2].split('\n')
 				header = recentStats[0]
 				headerNames = re.findall(headerRegexp, header)
@@ -524,7 +517,11 @@ class checks:
 			try:
 				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
 				
-				uptime = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+				uptime = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 			except Exception, e:
 				import traceback
@@ -540,7 +537,11 @@ class checks:
 			try:
 				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
 				
-				uptime = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+				uptime = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 			except Exception, e:
 				import traceback
@@ -670,13 +671,25 @@ class checks:
 			
 			try:
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
-				physTotal = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
+				proc = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True)
+				physTotal = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
-				vmstat = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
+				proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
+				vmstat = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
-				swapinfo = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
+				proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
+				swapinfo = proc.communicate()[0]
+
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 
 			except Exception, e:
 				import traceback
@@ -724,10 +737,18 @@ class checks:
 			
 			try:
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (top)')				
-				top = subprocess.Popen(['top', '-l 1'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['top', '-l 1'], stdout=subprocess.PIPE, close_fds=True)
+				top = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
-				sysctl = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True)
+				sysctl = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					proc.stop()
 				
 			except Exception, e:
 				import traceback
@@ -1381,7 +1402,12 @@ class checks:
 				netstat = subprocess.Popen(['netstat', '-nbid', ' grep Link'], stdout=subprocess.PIPE, close_fds=True)
 				
 				self.mainLogger.debug('getNetworkTraffic: attempting Popen (grep)')
-				grep = subprocess.Popen(['grep', 'Link'], stdin = netstat.stdout, stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+				proc = subprocess.Popen(['grep', 'Link'], stdin = netstat.stdout, stdout=subprocess.PIPE, close_fds=True)
+				grep = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					netstat.stop()
+					proc.stop()
 				
 			except Exception, e:
 				import traceback
@@ -1548,21 +1574,15 @@ class checks:
 	def getProcesses(self):
 		self.mainLogger.debug('getProcesses: start')
 		
-		# Memory logging (case 27152)
-		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
-			try:
-				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.mainLogger.debug('getProcesses: memory before Popen - ' + str(mem))
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getProcesses: exception when getting memory before Popen = ' + traceback.format_exc())
-				return False
-		
 		# Get output from ps
 		try:
 			self.mainLogger.debug('getProcesses: attempting Popen')
 			
-			ps = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
+			proc = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True)
+			ps = proc.communicate()[0]
+			
+			if int(pythonVersion[1]) >= 6:
+				proc.stop()
 			
 			self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
 			
@@ -1572,16 +1592,6 @@ class checks:
 			return False
 		
 		self.mainLogger.debug('getProcesses: Popen success, parsing')
-		
-		# Memory logging (case 27152)
-		if self.mainLogger.isEnabledFor(logging.DEBUG) and sys.platform == 'linux2':
-			try:
-				mem = subprocess.Popen(['free', '-m'], stdout=subprocess.PIPE, close_fds=True).communicate()[0]
-				self.mainLogger.debug('getProcesses: memory after Popen - ' + str(mem))
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getProcesses: exception when getting memory after Popen = ' + traceback.format_exc())
-				return False
 		
 		# Split out each process
 		processLines = ps.split('\n')
@@ -2020,7 +2030,12 @@ class checks:
 		
 		# Lets check if the Linux like style procfs is mounted
 		try:
-			mountedPartitions = subprocess.Popen(['mount'], stdout = subprocess.PIPE, close_fds = True).communicate()[0]
+			proc = subprocess.Popen(['mount'], stdout = subprocess.PIPE, close_fds = True)
+			mountedPartitions = proc.communicate()[0]
+			
+			if int(pythonVersion[1]) >= 6:
+				proc.stop()
+			
 			location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
 			
 		except OSError, e:
