@@ -794,18 +794,39 @@ class checks:
 		mongodb = {}
 
 		try:
-			mongoInfo = self.agentConfig['MongoDBServer'].split(':')
-			if len(mongoInfo) == 2:
-				conn = Connection(mongoInfo[0], int(mongoInfo[1]), slave_okay=True)
-				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]) + ':' + str(mongoInfo[1]))
+			import urlparse
+			parsed = urlparse.urlparse(self.agentConfig['MongoDBServer'])
 			
+			mongoURI = ''
+			
+			# Can't use attributes on Python 2.4
+			if parsed[0] != 'mongodb':
+			
+				mongoURI = 'mongodb://' + parsed[0]
+				
+				if parsed[2]:
+				
+					mongoURI = mongoURI + ':' + parsed[2]
+				
 			else:
-				conn = Connection(mongoInfo[0], slave_okay=True)
-				self.mainLogger.debug('getMongoDBStatus: connected to ' + str(mongoInfo[0]))
+			
+				if parsed[0] and parsed[0] == 'mongodb':
+				
+					mongoURI = 'mongodb:' + parsed[2]
+					
+				else:
+				
+					mongoURI = 'mongodb://' + parsed[2]
+			
+			self.mainLogger.debug('-- mongoURI: %s', mongoURI)
+			
+			conn = Connection(mongoURI, slave_okay=True)
+			
+			self.mainLogger.debug('Connected to MongoDB')
 				
 		except Exception, ex:
 			import traceback
-			self.mainLogger.error('Unable to connect to MongoDB server - Exception = ' + traceback.format_exc())
+			self.mainLogger.error('Unable to connect to MongoDB server %s - Exception = ' + traceback.format_exc(), mongoURI)
 			return False
 
 		# Older versions of pymongo did not support the command()
