@@ -1784,7 +1784,7 @@ class checks:
 	def getPlugins(self):
 		self.mainLogger.debug('getPlugins: start')
 		
-		if 'pluginDirectory' in self.agentConfig:
+		if 'pluginDirectory' in self.agentConfig and self.agentConfig['pluginDirectory'] != '':
 			
 			if os.access(self.agentConfig['pluginDirectory'], os.R_OK) == False:
 				self.mainLogger.warning('getPlugins: Plugin path %s is set but not readable by agent. Skipping plugins.', self.agentConfig['pluginDirectory'])
