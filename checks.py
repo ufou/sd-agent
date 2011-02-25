@@ -346,9 +346,12 @@ class checks:
 			
 			proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
 			df = proc.communicate()[0]
-			
+
 			if int(pythonVersion[1]) >= 6:
-				proc.stop()
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 			
 		except Exception, e:
 			import traceback
@@ -436,7 +439,10 @@ class checks:
 				stats = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 				recentStats = stats.split('Device:')[2].split('\n')
 				header = recentStats[0]
@@ -521,7 +527,10 @@ class checks:
 				uptime = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			except Exception, e:
 				import traceback
@@ -541,7 +550,10 @@ class checks:
 				uptime = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			except Exception, e:
 				import traceback
@@ -675,21 +687,30 @@ class checks:
 				physTotal = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
 				proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
 				vmstat = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
 				proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
 				swapinfo = proc.communicate()[0]
 
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 
 			except Exception, e:
 				import traceback
@@ -741,14 +762,20 @@ class checks:
 				top = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
 				proc = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True)
 				sysctl = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			except Exception, e:
 				import traceback
@@ -1428,7 +1455,10 @@ class checks:
 				
 				if int(pythonVersion[1]) >= 6:
 					netstat.stop()
-					proc.stop()
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			except Exception, e:
 				import traceback
@@ -1584,7 +1614,7 @@ class checks:
 			
 			except Exception, e:
 				import traceback
-				self.mainLogger.error('Unable to get Nginx status - Exception = %s', traceback.format_exc())
+				self.mainLogger.error('Unable to get Nginx status - %s - Exception = ' + traceback.format_exc(), response)
 				return False
 			
 		else:
@@ -1603,7 +1633,10 @@ class checks:
 			ps = proc.communicate()[0]
 			
 			if int(pythonVersion[1]) >= 6:
-				proc.stop()
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
 			
@@ -2056,7 +2089,10 @@ class checks:
 			mountedPartitions = proc.communicate()[0]
 			
 			if int(pythonVersion[1]) >= 6:
-				proc.stop()
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 			
 			location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
 			
