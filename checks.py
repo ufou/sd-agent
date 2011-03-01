@@ -828,22 +828,21 @@ class checks:
 			
 			# Can't use attributes on Python 2.4
 			if parsed[0] != 'mongodb':
-			
-				mongoURI = 'mongodb://' + parsed[0]
+
+				mongoURI = 'mongodb://'
 				
 				if parsed[2]:
 				
-					mongoURI = mongoURI + ':' + parsed[2]
-				
+					if parsed[0]:
+					
+						mongoURI = mongoURI + parsed[0] + ':' + parsed[2]
+					
+					else:
+						mongoURI = mongoURI + parsed[2]
+					
 			else:
 			
-				if parsed[0] and parsed[0] == 'mongodb':
-				
-					mongoURI = 'mongodb:' + parsed[2]
-					
-				else:
-				
-					mongoURI = 'mongodb://' + parsed[2]
+				mongoURI = parsed.geturl()
 			
 			self.mainLogger.debug('-- mongoURI: %s', mongoURI)
 			
