@@ -842,7 +842,7 @@ class checks:
 					
 			else:
 			
-				mongoURI = parsed.geturl()
+				mongoURI = self.agentConfig['MongoDBServer']
 			
 			self.mainLogger.debug('-- mongoURI: %s', mongoURI)
 			
