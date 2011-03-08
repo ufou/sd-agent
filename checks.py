@@ -1453,7 +1453,7 @@ class checks:
 				grep = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					netstat.stop()
+					netstat.kill()
 					try:
 						proc.kill()
 					except OSError, e:
