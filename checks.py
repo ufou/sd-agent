@@ -490,12 +490,9 @@ class checks:
 		self.mainLogger.debug('getLoadAvrgs: start')
 		
 		# If Linux like procfs system is present and mounted we use loadavg, else we use uptime
-		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
+		if sys.platform == 'linux2' or sys.platform.find('freebsd') == -1:
 			
-			if sys.platform == 'linux2':
-				self.mainLogger.debug('getLoadAvrgs: linux2')
-			else:
-				self.mainLogger.debug('getLoadAvrgs: freebsd (loadavg)')
+			self.mainLogger.debug('getLoadAvrgs: linux2')
 			
 			try:
 				self.mainLogger.debug('getLoadAvrgs: attempting open')
@@ -517,7 +514,7 @@ class checks:
 			
 			uptime = uptime[0] # readlines() provides a list but we want a string
 		
-		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
+		elif sys.platform.find('freebsd') != -1:
 			self.mainLogger.debug('getLoadAvrgs: freebsd (uptime)')
 			
 			try:
