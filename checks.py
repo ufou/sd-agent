@@ -1975,15 +1975,36 @@ class checks:
 		
 		self.mainLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
 		
-		try:
+		checksData = {}
 		
-			checksData = {'os' : self.os, 'agentKey' : self.agentConfig['agentKey'], 'agentVersion' : self.agentConfig['version'], 'diskUsage' : diskUsage, 'loadAvrg' : loadAvrgs['1'], 'memPhysUsed' : memory['physUsed'], 'memPhysFree' : memory['physFree'], 'memSwapUsed' : memory['swapUsed'], 'memSwapFree' : memory['swapFree'], 'memCached' : memory['cached'], 'networkTraffic' : networkTraffic, 'processes' : processes}
+		# Basic payload items
+		checksData['os'] = self.os
+		checksData['agentKey'] = self.agentConfig['agentKey']
+		checksData['agentVersion'] = self.agentConfig['version']
 		
-		except KeyError, ex:
+		if diskUsage != False:
 		
-			self.mainLogger.error('doChecks: KeyError when building checksData = ' + str(ex))
+			checksData['diskUsage'] = diskUsage
+			
+		if loadAvrgs != False:
 		
-		self.mainLogger.debug('doChecks: payload built, build optional payloads')
+			checksData['loadAvrg'] = loadAvrgs['1']
+			
+		if memory != False:
+		
+			checksData['memPhysUsed'] = memory['physUsed']
+			checksData['memPhysFree'] = memory['physFree']
+			checksData['memSwapUsed'] = memory['swapUsed']
+			checksData['memSwapFree'] = memory['swapFree']
+			checksData['memCached'] = memory['cached']
+			
+		if networkTraffic != False:
+			
+			checksData['networkTraffic'] = networkTraffic
+			
+		if processes != False:
+		
+			checksData['processes'] = processes
 		
 		# Apache Status
 		if apacheStatus != False:			
