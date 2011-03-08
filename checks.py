@@ -573,12 +573,9 @@ class checks:
 		self.mainLogger.debug('getMemoryUsage: start')
 		
 		# If Linux like procfs system is present and mounted we use meminfo, else we use "native" mode (vmstat and swapinfo)
-		if sys.platform == 'linux2' or (sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation != None):
+		if sys.platform == 'linux2' or sys.platform.find('freebsd') == -1:
 			
-			if sys.platform == 'linux2':
-				self.mainLogger.debug('getMemoryUsage: linux2')
-			else:
-				self.mainLogger.debug('getMemoryUsage: freebsd (meminfo)')
+			self.mainLogger.debug('getMemoryUsage: linux2')
 			
 			try:
 				self.mainLogger.debug('getMemoryUsage: attempting open')
@@ -675,7 +672,7 @@ class checks:
 			
 			return memData	
 			
-		elif sys.platform.find('freebsd') != -1 and self.linuxProcFsLocation == None:
+		elif sys.platform.find('freebsd') != -1:
 			self.mainLogger.debug('getMemoryUsage: freebsd (native)')
 			
 			try:
