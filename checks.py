@@ -1449,7 +1449,7 @@ class checks:
 			
 			try:
 				self.mainLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
-				netstat = subprocess.Popen(['netstat', '-nbid', ' grep Link'], stdout=subprocess.PIPE, close_fds=True)
+				netstat = subprocess.Popen(['netstat', '-nbid'], stdout=subprocess.PIPE, close_fds=True)
 				
 				self.mainLogger.debug('getNetworkTraffic: attempting Popen (grep)')
 				proc = subprocess.Popen(['grep', 'Link'], stdin = netstat.stdout, stdout=subprocess.PIPE, close_fds=True)
@@ -1481,7 +1481,9 @@ class checks:
 				if length == 13:
 					faceData = {'recv_bytes': line[6], 'trans_bytes': line[9], 'drops': line[10], 'errors': long(line[5]) + long(line[8])}
 				elif length == 12:
-					faceData = {'recv_bytes': line[5], 'trans_bytes': line[8], 'drops': line[9], 'errors': long(line[4]) + long(line[7])}
+					faceData = {'recv_bytes': line[7], 'trans_bytes': line[10], 'drops': line[9], 'errors': long(line[4]) + long(line[7])}
+				elif length == 14:
+					faceData = {'recv_bytes': line[7], 'trans_bytes': line[8], 'drops': line[12], 'errors': long(line[5]) + long(line[8])}
 				else:
 					# Malformed or not enough data for this interface, so we skip it
 					continue
