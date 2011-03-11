@@ -1901,18 +1901,18 @@ class checks:
 			# Do the request, log any errors
 			response = urllib2.urlopen(request)
 			
-			self.mainLogger.info('Postback response: ' + str(response.read()))
+			self.mainLogger.info('Postback response: %s', response.read())
 				
 		except urllib2.HTTPError, e:
-			self.mainLogger.error('doPostBack: HTTPError = ' + str(e))
+			self.mainLogger.error('doPostBack: HTTPError = %s', e)
 			return False
 			
 		except urllib2.URLError, e:
-			self.mainLogger.error('doPostBack: URLError = ' + str(e))
+			self.mainLogger.error('doPostBack: URLError = %s', e)
 			return False
 			
 		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException')
+			self.mainLogger.error('doPostBack: HTTPException, %s', e)
 			return False
 				
 		except Exception, e:
