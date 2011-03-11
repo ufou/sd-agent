@@ -716,10 +716,19 @@ class checks:
 
 			# First we parse the information about the real memory
 			lines = vmstat.split('\n')
-			physParts = re.findall(r'([0-9]\d+)', lines[2])
+			physParts = lines[2].split(' ')
+			
+			physMem = []
+
+			# We need to loop through and capture the numerical values
+			# because sometimes there will be strings and spaces
+			for k, v in enumerate(physParts):
+			
+				if re.match(r'([0-9]+)', v) != None:
+					physMem.append(v)
 	
 			physTotal = int(physTotal.strip()) / 1024 # physFree is returned in B, but we need KB so we convert it
-			physFree = int(physParts[1])
+			physFree = int(physMem[4])
 			physUsed = int(physTotal - physFree)
 	
 			self.mainLogger.debug('getMemoryUsage: parsed vmstat')
