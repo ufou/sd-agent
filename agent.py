@@ -79,6 +79,20 @@ try:
 	# Also do not need to be present in the config file (case 28326).
 	if config.has_option('Main', 'apache_status_url'):
 		agentConfig['apacheStatusUrl'] = config.get('Main', 'apache_status_url')
+		
+	if config.has_option('Main', 'logging_level'):
+		# Maps log levels from the configuration file to Python log levels
+		loggingLevelMapping = {
+			'debug'    : logging.DEBUG,
+			'info'     : logging.INFO,
+			'error'    : logging.ERROR,
+			'warn'     : logging.WARN,
+			'warning'  : logging.WARNING,
+			'critical' : logging.CRITICAL,
+			'fatal'    : logging.FATAL,
+		}
+		
+		agentConfig['logging'] = loggingLevelMapping[config.get('Main', 'logging_level')]
 	
 	if config.has_option('Main', 'mongodb_server'):
 		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
