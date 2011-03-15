@@ -92,7 +92,13 @@ try:
 			'fatal'    : logging.FATAL,
 		}
 		
-		agentConfig['logging'] = loggingLevelMapping[config.get('Main', 'logging_level')]
+		customLogging = config.get('Main', 'logging_level')
+		
+		try:
+			agentConfig['logging'] = loggingLevelMapping[customLogging.lower()]
+		
+		except KeyError ex:
+			agentConfig['logging'] = logging.INFO
 	
 	if config.has_option('Main', 'mongodb_server'):
 		agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
