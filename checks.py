@@ -675,65 +675,144 @@ class checks:
 		elif sys.platform.find('freebsd') != -1:
 			self.mainLogger.debug('getMemoryUsage: freebsd (native)')
 			
+			physFree = None
+			
 			try:
-				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
-				proc = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True)
-				physTotal = proc.communicate()[0]
+			
+				self.mainLogger.debug('getMemoryUsage: attempting sysinfo')
+				proc = subprocess.Popen(['sysinfo', '-v', 'mem'], stdout = subprocess.PIPE, close_fds = True)
+				sysinfo = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
 					except OSError, e:
 						self.mainLogger.debug('Process already terminated')
+						
+				sysinfo = sysinfo.split('\n')
+			
+				regexp = re.compile(r'([0-9]+)') # We run this several times so one-time compile now
+			
+				for line in sysinfo:
 				
-				self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
-				proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
-				vmstat = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
-				
-				self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
-				proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
-				swapinfo = proc.communicate()[0]
-
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
-
+					parts = line.split(' ')
+					
+					if parts[0] == 'Free':
+					
+						self.mainLogger.debug('getMemoryUsage: parsing free')
+						
+						for part in parts:
+						
+							match = re.search(regexp, part)
+	
+							if match != None:
+								physFree = match.group(0)
+								self.mainLogger.debug('getMemoryUsage: sysinfo: found free %s', physFree)
+								
+					if parts[0] == 'Active':
+					
+						self.mainLogger.debug('getMemoryUsage: parsing used')
+						
+						for part in parts:
+						
+							match = re.search(regexp, part)
+	
+							if match != None:
+								physUsed = match.group(0)
+								self.mainLogger.debug('getMemoryUsage: sysinfo: found used %s', physUsed)
+								
+					if parts[0] == 'Cached':
+					
+						self.mainLogger.debug('getMemoryUsage: parsing cached')
+						
+						for part in parts:
+						
+							match = re.search(regexp, part)
+	
+							if match != None:
+								cached = match.group(0)
+								self.mainLogger.debug('getMemoryUsage: sysinfo: found cached %s', cached)
+			
+			except OSError, e:
+			
+				self.mainLogger.debug('getMemoryUsage: sysinfo not available')
+										
 			except Exception, e:
 				import traceback
 				self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
-				
-				return False
-				
-			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
-
-			# First we parse the information about the real memory
-			lines = vmstat.split('\n')
-			physParts = lines[2].split(' ')
+							
+			if physFree == None:
 			
-			physMem = []
+				self.mainLogger.info('getMemoryUsage: sysinfo not installed so falling back on sysctl. sysinfo provides more accurate memory info so is recommended. http://www.freshports.org/sysutils/sysinfo')
+				
+				try:
+					self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
+					proc = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True)
+					physTotal = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except OSError, e:
+							self.mainLogger.debug('Process already terminated')
+					
+					self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
+					proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
+					vmstat = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except OSError, e:
+							self.mainLogger.debug('Process already terminated')
+	
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+					
+					return False
+					
+				self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 
-			# We need to loop through and capture the numerical values
-			# because sometimes there will be strings and spaces
-			for k, v in enumerate(physParts):
+				# First we parse the information about the real memory
+				lines = vmstat.split('\n')
+				physParts = lines[2].split(' ')
+				
+				physMem = []
+	
+				# We need to loop through and capture the numerical values
+				# because sometimes there will be strings and spaces
+				for k, v in enumerate(physParts):
+				
+					if re.match(r'([0-9]+)', v) != None:
+						physMem.append(v)
+		
+				physTotal = int(physTotal.strip()) / 1024 # physFree is returned in B, but we need KB so we convert it
+				physFree = int(physMem[4])
+				physUsed = int(physTotal - physFree)
+		
+				self.mainLogger.debug('getMemoryUsage: parsed vmstat')
+						
+				# Convert everything to MB
+				physUsed = int(physUsed) / 1024
+				physFree = int(physFree) / 1024
+
+				cached = 'NULL'
 			
-				if re.match(r'([0-9]+)', v) != None:
-					physMem.append(v)
-	
-			physTotal = int(physTotal.strip()) / 1024 # physFree is returned in B, but we need KB so we convert it
-			physFree = int(physMem[4])
-			physUsed = int(physTotal - physFree)
-	
-			self.mainLogger.debug('getMemoryUsage: parsed vmstat')
-	
-			# And then swap
+			#
+			# Swap memory details
+			#
+			
+			self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
+			proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
+			swapinfo = proc.communicate()[0]
+
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
+					
 			lines = swapinfo.split('\n')
 			swapUsed = 0
 			swapFree = 0
@@ -749,12 +828,8 @@ class checks:
 						pass
 
 			self.mainLogger.debug('getMemoryUsage: parsed swapinfo, completed, returning')
-	
-			# Convert everything to MB
-			physUsed = int(physUsed) / 1024
-			physFree = int(physFree) / 1024
 
-			return {'physUsed' : physUsed, 'physFree' : physFree, 'swapUsed' : swapUsed, 'swapFree' : swapFree, 'cached' : 'NULL'}
+			return {'physUsed' : physUsed, 'physFree' : physFree, 'swapUsed' : swapUsed, 'swapFree' : swapFree, 'cached' : cached}
 			
 		elif sys.platform == 'darwin':
 			self.mainLogger.debug('getMemoryUsage: darwin')
