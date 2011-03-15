@@ -1550,17 +1550,26 @@ class checks:
 			# Loop over available data for each inteface
 			faces = {}
 			for line in lines:
+				self.mainLogger.debug('getNetworkTraffic: %s', line)
+				
 				line = re.split(r'\s+', line)
-				length = len(line)
+				length = len(line)				
 				
 				if length == 13:
+					self.mainLogger.debug('getNetworkTraffic: parsing 13 (rx: %s / tx: %s)', line[6], line[9])
+					
 					faceData = {'recv_bytes': line[6], 'trans_bytes': line[9], 'drops': line[10], 'errors': long(line[5]) + long(line[8])}
 				elif length == 12:
+					self.mainLogger.debug('getNetworkTraffic: parsing 12 (rx: %s / tx: %s)', line[7], line[10])
+					
 					faceData = {'recv_bytes': line[7], 'trans_bytes': line[10], 'drops': line[9], 'errors': long(line[4]) + long(line[7])}
 				elif length == 14:
+					self.mainLogger.debug('getNetworkTraffic: parsing 14 (rx: %s / tx: %s)', line[7], line[8])
+					
 					faceData = {'recv_bytes': line[7], 'trans_bytes': line[8], 'drops': line[12], 'errors': long(line[5]) + long(line[8])}
 				else:
 					# Malformed or not enough data for this interface, so we skip it
+					self.mainLogger.debug('getNetworkTraffic: unable to parse len = %s', length)
 					continue
 				
 				face = line[0]
