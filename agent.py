@@ -97,7 +97,7 @@ try:
 		try:
 			agentConfig['logging'] = loggingLevelMapping[customLogging.lower()]
 		
-		except KeyError ex:
+		except KeyError, ex:
 			agentConfig['logging'] = logging.INFO
 	
 	if config.has_option('Main', 'mongodb_server'):
