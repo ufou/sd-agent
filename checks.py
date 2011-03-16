@@ -1864,6 +1864,15 @@ class checks:
 			return False
 
 		self.mainLogger.debug('getRabbitMQStatus: completed, returning')
+
+		# Fix for queues with the same name (case 32788)
+		for queue in status.get('queues', []):
+			vhost = queue.get('vhost', '/')
+			if vhost == '/':
+				continue
+
+			queue['name'] = '%s/%s' % (vhost, queue['name'])
+
 		return status
 	
 	#
