@@ -1524,14 +1524,10 @@ class checks:
 			
 			try:
 				self.mainLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
-				netstat = subprocess.Popen(['netstat', '-nbid'], stdout=subprocess.PIPE, close_fds=True)
-				
-				self.mainLogger.debug('getNetworkTraffic: attempting Popen (grep)')
-				proc = subprocess.Popen(['grep', 'Link'], stdin = netstat.stdout, stdout=subprocess.PIPE, close_fds=True)
-				grep = proc.communicate()[0]
+				proc = subprocess.Popen(['netstat', '-nbid'], stdout=subprocess.PIPE, close_fds=True)
+				netstat = proc.communicate()[0]
 				
 				if int(pythonVersion[1]) >= 6:
-					netstat.kill()
 					try:
 						proc.kill()
 					except OSError, e:
@@ -1545,35 +1541,40 @@ class checks:
 			
 			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
-			lines = grep.split('\n')
+			lines = netstat.split('\n')
 			
 			# Loop over available data for each inteface
 			faces = {}
+			rxKey = None
+			txKey = None
+			
 			for line in lines:
 				self.mainLogger.debug('getNetworkTraffic: %s', line)
 				
 				line = re.split(r'\s+', line)
-				length = len(line)				
 				
-				if length == 13:
-					self.mainLogger.debug('getNetworkTraffic: parsing 13 (rx: %s / tx: %s)', line[6], line[9])
+				# Figure out which index we need
+				if rxKey == None and txKey == None:
+					for k, part in enumerate(line):
+						self.mainLogger.debug('getNetworkTraffic: looping parts (%s)', part)
 					
-					faceData = {'recv_bytes': line[6], 'trans_bytes': line[9], 'drops': line[10], 'errors': long(line[5]) + long(line[8])}
-				elif length == 12:
-					self.mainLogger.debug('getNetworkTraffic: parsing 12 (rx: %s / tx: %s)', line[7], line[10])
-					
-					faceData = {'recv_bytes': line[7], 'trans_bytes': line[10], 'drops': line[9], 'errors': long(line[4]) + long(line[7])}
-				elif length == 14:
-					self.mainLogger.debug('getNetworkTraffic: parsing 14 (rx: %s / tx: %s)', line[7], line[8])
-					
-					faceData = {'recv_bytes': line[7], 'trans_bytes': line[8], 'drops': line[12], 'errors': long(line[5]) + long(line[8])}
+						if part == 'Ibytes':
+							rxKey = k
+							self.mainLogger.debug('getNetworkTraffic: found rxKey = %s', k)
+						elif part == 'Obytes':
+							txKey = k	
+							self.mainLogger.debug('getNetworkTraffic: found txKey = %s', k)	
+				
 				else:
-					# Malformed or not enough data for this interface, so we skip it
-					self.mainLogger.debug('getNetworkTraffic: unable to parse len = %s', length)
-					continue
-				
-				face = line[0]
-				faces[face] = faceData
+					if line[0] not in faces:
+						try:
+							self.mainLogger.debug('getNetworkTraffic: parsing (rx: %s = %s / tx: %s = %s)', rxKey, line[rxKey], txKey, line[txKey])
+							faceData = {'recv_bytes': line[rxKey], 'trans_bytes': line[txKey]}
+							
+							face = line[0]
+							faces[face] = faceData
+						except IndexError, e:
+							continue
 				
 			self.mainLogger.debug('getNetworkTraffic: parsed, looping')
 				
