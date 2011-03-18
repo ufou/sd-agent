@@ -1503,6 +1503,12 @@ class checks:
 					interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
 					interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
 					
+					if interfaces[key]['recv_bytes'] < 0:
+						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+						
+					if interfaces[key]['trans_bytes'] < 0:
+						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
+					
 					interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
 					interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
 					
@@ -1593,6 +1599,12 @@ class checks:
 					
 					interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
 					interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
+					
+					if interfaces[key]['recv_bytes'] < 0:
+						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+						
+					if interfaces[key]['trans_bytes'] < 0:
+						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
 					
 					# And update the stored value to subtract next time round
 					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
