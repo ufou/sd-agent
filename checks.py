@@ -1760,6 +1760,8 @@ class checks:
 		
 		for line in processLines:
 			self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
+			line = line.replace("'", '') # These will break JSON. ZD38282
+			line = line.replace('"', '')
 			line = line.split(None, 10)
 			processes.append(line)
 		
