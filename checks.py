@@ -1524,6 +1524,9 @@ class checks:
 				
 				except KeyError, ex:
 					self.mainLogger.debug('getNetworkTraffic: no data for %s', key)
+					
+				except ValueError, ex:
+					self.mainLogger.debug('getNetworkTraffic: invalid data for %s', key)
 		
 			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 					
@@ -1622,6 +1625,9 @@ class checks:
 		
 				except KeyError, ex:
 					self.mainLogger.debug('getNetworkTraffic: no data for %s', key)
+					
+				except ValueError, ex:
+					self.mainLogger.debug('getNetworkTraffic: invalid data for %s', key)
 		
 			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 	
