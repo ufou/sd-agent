@@ -1498,28 +1498,32 @@ class checks:
 				
 				# We need to work out the traffic since the last check so first time we store the current value
 				# then the next time we can calculate the difference
-				if key in self.networkTrafficStore:
-					interfaces[key] = {}
-					interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
-					interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
-					
-					if interfaces[key]['recv_bytes'] < 0:
-						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+				try:
+					if key in self.networkTrafficStore:
+						interfaces[key] = {}
+						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
+						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
 						
-					if interfaces[key]['trans_bytes'] < 0:
-						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
-					
-					interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
-					interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
-					
-					# And update the stored value to subtract next time round
-					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
-					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
-					
-				else:
-					self.networkTrafficStore[key] = {}
-					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
-					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+						if interfaces[key]['recv_bytes'] < 0:
+							interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+							
+						if interfaces[key]['trans_bytes'] < 0:
+							interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
+						
+						interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
+						interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
+						
+						# And update the stored value to subtract next time round
+						self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
+						self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+						
+					else:
+						self.networkTrafficStore[key] = {}
+						self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
+						self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+				
+				except KeyError, ex:
+					self.mainLogger.debug('getNetworkTraffic: no data for %s', key)
 		
 			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 					
@@ -1590,30 +1594,34 @@ class checks:
 			for face in faces:
 				key = face.strip()
 				
-				# We need to work out the traffic since the last check so first time we store the current value
-				# then the next time we can calculate the difference
-				if key in self.networkTrafficStore:
-					interfaces[key] = {}
-					interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
-					interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
-					
-					interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
-					interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
-					
-					if interfaces[key]['recv_bytes'] < 0:
-						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+				try:
+					# We need to work out the traffic since the last check so first time we store the current value
+					# then the next time we can calculate the difference
+					if key in self.networkTrafficStore:
+						interfaces[key] = {}
+						interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes']) - long(self.networkTrafficStore[key]['recv_bytes'])
+						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes']) - long(self.networkTrafficStore[key]['trans_bytes'])
 						
-					if interfaces[key]['trans_bytes'] < 0:
-						interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
-					
-					# And update the stored value to subtract next time round
-					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
-					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
-					
-				else:
-					self.networkTrafficStore[key] = {}
-					self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
-					self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+						interfaces[key]['recv_bytes'] = str(interfaces[key]['recv_bytes'])
+						interfaces[key]['trans_bytes'] = str(interfaces[key]['trans_bytes'])
+						
+						if interfaces[key]['recv_bytes'] < 0:
+							interfaces[key]['recv_bytes'] = long(faces[face]['recv_bytes'])
+							
+						if interfaces[key]['trans_bytes'] < 0:
+							interfaces[key]['trans_bytes'] = long(faces[face]['trans_bytes'])
+						
+						# And update the stored value to subtract next time round
+						self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
+						self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+						
+					else:
+						self.networkTrafficStore[key] = {}
+						self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
+						self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+		
+				except KeyError, ex:
+					self.mainLogger.debug('getNetworkTraffic: no data for %s', key)
 		
 			self.mainLogger.debug('getNetworkTraffic: completed, returning')
 	
