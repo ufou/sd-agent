@@ -1744,7 +1744,7 @@ class checks:
 		try:
 			self.mainLogger.debug('getProcesses: attempting Popen')
 			
-			proc = subprocess.Popen(['ps', 'aux'], stdout=subprocess.PIPE, close_fds=True)
+			proc = subprocess.Popen(['ps', 'auxww'], stdout=subprocess.PIPE, close_fds=True)
 			ps = proc.communicate()[0]
 			
 			if int(pythonVersion[1]) >= 6:
