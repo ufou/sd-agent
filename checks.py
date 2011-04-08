@@ -19,6 +19,7 @@ import logging.handlers
 import os
 import platform
 import re
+import signal
 import subprocess
 import sys
 import urllib
@@ -2028,11 +2029,20 @@ class checks:
 		try: 
 			self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 			
+			# Force timeout using signals
+			signal.signal(signal.SIGALRM, self.signalHandler)
+			signal.alarm(15)
+			
+			import time
+			time.sleep(20)
+			
 			# Build the request handler
 			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 			
 			# Do the request, log any errors
 			response = urllib2.urlopen(request)
+			
+			signal.alarm(0)
 			
 			self.mainLogger.info('Postback response: %s', response.read())
 				
@@ -2045,7 +2055,7 @@ class checks:
 			return False
 			
 		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException, %s', e)
+			self.mainLogger.error('doPostBack: HTTPException = %s', e)
 			return False
 				
 		except Exception, e:
@@ -2055,6 +2065,9 @@ class checks:
 			
 		self.mainLogger.debug('doPostBack: completed')
 	
+	def signalHandler(self, signum, frame):
+		raise httplib.HTTPException('Signal timeout')
+		
 	def doChecks(self, sc, firstRun, systemStats=False):
 		macV = None
 		if sys.platform == 'darwin':
