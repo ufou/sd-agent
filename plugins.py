@@ -6,6 +6,7 @@ Classes for plugin download, installation, and registration.
 """
 
 
+import ConfigParser
 import os
 import platform
 from optparse import OptionParser
@@ -38,12 +39,11 @@ class App(object):
         (options, args) = self.parser.parse_args()
         if len(args) != 1:
             self.parser.error('incorrect number of arguments')
-        downloader = PluginDownloader(args[0], options.verbose)
+        downloader = PluginDownloader(key=args[0], verbose=options.verbose)
         downloader.start()
 
 class PluginMetadata(object):
-    def __init__(self, downloader):
-        assert downloader, 'cannot get metadata without a downloader.'
+    def __init__(self, downloader=None):
         self.downloader = downloader
 
     def get(self):
@@ -77,7 +77,7 @@ class PluginDownloader(object):
     Class for downloading a plugin.
 
     """
-    def __init__(self, key, verbose=True):
+    def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
 
@@ -85,6 +85,42 @@ class PluginDownloader(object):
         metadata = FilePluginMetadata(self).json()
         if self.verbose:
             print 'retrieved metadata.'
+        assert 'configKeys' in metadata, 'metadata is not valid.'
+        writer = ConfigWriter(downloader=self, options=metadata['configKeys'])
+        writer.run()
+
+class ConfigWriter(object):
+    """
+    Class for writing new config options to sd-agent config.
+
+    """
+    def __init__(self, downloader=None, options=[]):
+        self.downloader = downloader
+        self.options = options
+
+    def __get_config_path(self):
+        paths = (
+            '/etc/sd-agent/config.cfg',
+            os.path.join(os.path.dirname(__file__), 'config.cfg')
+        )
+        for path in paths:
+            if os.path.exists(path):
+                if self.downloader.verbose:
+                    print 'found config at %s' % path
+                return path
+
+    def run(self):
+        config_path = self.__get_config_path()
+        if os.access(config_path, os.R_OK) == False:
+            if self.downloader.verbose:
+                print 'cannot access config'
+            return
+        if self.downloader.verbose:
+            print 'found config, parsing'
+        config = ConfigParser.ConfigParser()
+        config.read(config_path)
+        if self.downloader.verbose:
+            print 'parsed config'
 
 if __name__ == '__main__':
     app = App()
