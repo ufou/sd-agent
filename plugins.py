@@ -28,7 +28,7 @@ class App(object):
         usage = 'usage: %prog [options] key'
         self.parser = OptionParser(usage=usage)
         self.parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
-                               default=True, help='run in verbose mode [default]')
+                               default=False, help='run in verbose mode [default]')
 
     def run(self):
         """
@@ -36,19 +36,23 @@ class App(object):
 
         """
         (options, args) = self.parser.parse_args()
-        downloader = PluginDownloader(args[0])
+        if len(args) != 1:
+            self.parser.error('incorrect number of arguments')
+        downloader = PluginDownloader(args[0], options.verbose)
         downloader.start()
 
 class PluginMetadata(object):
-    def __init__(self):
-        pass
+    def __init__(self, downloader):
+        assert downloader, 'cannot get metadata without a downloader.'
+        self.downloader = downloader
 
     def get(self):
-        raise Exception, 'Sub-classes to provide implementation.'
+        raise Exception, 'sub-classes to provide implementation.'
 
     def json(self):
         metadata = self.get()
-        print metadata
+        if self.downloader.verbose:
+            print metadata
         if json:
             return json.loads(metadata)
         else:
@@ -61,7 +65,8 @@ class FilePluginMetadata(PluginMetadata):
     """
     def get(self):
         path = os.path.join(os.path.dirname(__file__), 'tests/plugin.json')
-        print 'Reading plugin data from %s' % path
+        if self.downloader.verbose:
+            print 'reading plugin data from %s' % path
         f = open(path, 'r')
         data = f.read()
         f.close()
@@ -72,12 +77,14 @@ class PluginDownloader(object):
     Class for downloading a plugin.
 
     """
-    def __init__(self, key):
-	    self.key = key
+    def __init__(self, key, verbose=True):
+        self.key = key
+        self.verbose = verbose
 
     def start(self):
-        metadata = FilePluginMetadata().json()
-        print 'Retrieved metadata.'
+        metadata = FilePluginMetadata(self).json()
+        if self.verbose:
+            print 'retrieved metadata.'
 
 if __name__ == '__main__':
     app = App()
