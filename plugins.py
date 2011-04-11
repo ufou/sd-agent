@@ -12,12 +12,14 @@ import platform
 import urllib, urllib2
 from optparse import OptionParser
 
+
 python_version = platform.python_version_tuple()
 
 if int(python_version[1]) >= 6:
     import json
 else:
     import minjson
+
 
 class App(object):
     """
