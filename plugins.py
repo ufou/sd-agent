@@ -30,7 +30,7 @@ class App(object):
         usage = 'usage: %prog [options] key'
         self.parser = OptionParser(usage=usage)
         self.parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
-                               default=False, help='run in verbose mode [default]')
+                               default=False, help='run in verbose mode')
 
     def run(self):
         """
