@@ -123,13 +123,24 @@ class ConfigWriter(object):
             print 'parsed config'
         return config
 
-    def __write(self, values):
-        pass
+    def __write(self, config, values):
+        for key in values.keys():   
+            config.set('Main', key, values[key])
+        config_path = self.__get_config_path()
+        try:
+            f = open(config_path, 'w')
+            config.write(f)
+            f.close()
+        except Exception, ex:
+            print ex
+            sys.exit(1)
 
     def run(self):
         config = self.__parse()
-        values = [raw_input('value for %s: ' % option) for option in self.options]
-        self.__write(values)
+        values = {}
+        for option in self.options:
+            values[option] = raw_input('value for %s: ' % option)
+        self.__write(config, values)
 
 if __name__ == '__main__':
     app = App()
