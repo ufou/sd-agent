@@ -84,7 +84,7 @@ class PluginDownloader(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
-        self.url = 'http://plugins.serverdensity.com/downloads/test.zip'
+        self.url = 'http://plugins.serverdensity.com/downloads/%s/' % self.key
 
     def __prepare_plugin_directory(self):
         if not os.path.exists(self.config.plugin_path):
@@ -101,7 +101,7 @@ class PluginDownloader(object):
             print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
         request = urllib2.urlopen(self.url)
         data = request.read()
-        path = os.path.join(self.config.plugin_path, 'download.zip')
+        path = os.path.join(self.config.plugin_path, '%s.zip' % self.key)
         f = open(path, 'w')
         f.write(data)
         f.close()
