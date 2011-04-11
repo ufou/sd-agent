@@ -11,6 +11,7 @@ import os
 import platform
 import urllib, urllib2
 from optparse import OptionParser
+from zipfile import ZipFile
 
 
 python_version = platform.python_version_tuple()
@@ -83,7 +84,7 @@ class PluginDownloader(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
-        self.url = 'http://plugins.serverdensity.com/download/%s/' % self.key
+        self.url = 'http://plugins.serverdensity.com/downloads/test.zip'
 
     def __prepare_plugin_directory(self):
         if not os.path.exists(self.config.plugin_path):
@@ -98,6 +99,16 @@ class PluginDownloader(object):
     def __download(self):
         if self.verbose:
             print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
+        request = urllib2.urlopen(self.url)
+        data = request.read()
+        path = os.path.join(self.config.plugin_path, 'download.zip')
+        f = open(path, 'w')
+        f.write(data)
+        f.close()
+        z = ZipFile(path, 'r')
+        z.extractall(os.path.dirname(path))
+        z.close()
+        os.remove(path)
 
     def start(self):
         metadata = FilePluginMetadata(self).json()
@@ -108,6 +119,7 @@ class PluginDownloader(object):
         self.config.prompt()
         self.__prepare_plugin_directory()
         self.__download()
+        print 'plugin installed; please restart your agent'
 
 class AgentConfig(object):
     """
