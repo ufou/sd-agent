@@ -83,22 +83,31 @@ class PluginDownloader(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
+        self.url = 'http://plugins.serverdensity.com/download/%s/' % self.key
+
+    def __prepare_plugin_directory(self):
+        if not os.path.exists(self.config.plugin_path):
+            if self.verbose:
+                print '%s does not exist, creating' % self.config.plugin_path
+            os.mkdir(self.config.plugin_path)
+            if self.verbose:
+                print '%s created' % self.config.plugin_path
+        elif self.verbose:
+            print '%s exists' % self.config.plugin_path
+
+    def __download(self):
+        if self.verbose:
+            print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
 
     def start(self):
         metadata = FilePluginMetadata(self).json()
         if self.verbose:
             print 'retrieved metadata.'
         assert 'configKeys' in metadata, 'metadata is not valid.'
-        config = AgentConfig(downloader=self, options=metadata['configKeys'])
-        config.prompt()
-        if not os.path.exists(config.plugin_path):
-            if self.verbose:
-                print '%s does not exist, creating' % config.plugin_path
-            os.mkdir(config.plugin_path)
-            if self.verbose:
-                print '%s created' % config.plugin_path
-        elif self.verbose:
-            print '%s exists' % config.plugin_path
+        self.config = AgentConfig(downloader=self, options=metadata['configKeys'])
+        self.config.prompt()
+        self.__prepare_plugin_directory()
+        self.__download()
 
 class AgentConfig(object):
     """
@@ -111,6 +120,7 @@ class AgentConfig(object):
         self.path = self.__get_config_path()
         assert self.path, 'no config path found.'
         self.plugin_path = os.path.join(os.path.dirname(__file__), 'plugins')
+        self.agent_key = None
 
     def __get_config_path(self):
         paths = (
@@ -151,6 +161,9 @@ class AgentConfig(object):
         config = self.__parse()
         if config.get('Main', 'plugin_directory'):
             self.plugin_path = config.get('Main', 'plugin_directory')
+        agent_key = config.get('Main', 'agent_key')
+        assert agent_key, 'no agent key.'
+        self.agent_key = agent_key
         values = {}
         for option in self.options:
             values[option] = raw_input('value for %s: ' % option)
