@@ -2033,9 +2033,6 @@ class checks:
 			signal.signal(signal.SIGALRM, self.signalHandler)
 			signal.alarm(15)
 			
-			import time
-			time.sleep(20)
-			
 			# Build the request handler
 			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 			
