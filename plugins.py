@@ -87,18 +87,18 @@ class PluginDownloader(object):
         if self.verbose:
             print 'retrieved metadata.'
         assert 'configKeys' in metadata, 'metadata is not valid.'
-        writer = ConfigWriter(downloader=self, options=metadata['configKeys'])
-        writer.run()
-        if not os.path.exists(writer.plugin_path):
+        config = AgentConfig(downloader=self, options=metadata['configKeys'])
+        config.prompt()
+        if not os.path.exists(config.plugin_path):
             if self.verbose:
-                print '%s does not exist, creating' % writer.plugin_path
-            os.mkdir(writer.plugin_path)
+                print '%s does not exist, creating' % config.plugin_path
+            os.mkdir(config.plugin_path)
             if self.verbose:
-                print '%s created' % writer.plugin_path
+                print '%s created' % config.plugin_path
         elif self.verbose:
-            print '%s exists' % writer.plugin_path
+            print '%s exists' % config.plugin_path
 
-class ConfigWriter(object):
+class AgentConfig(object):
     """
     Class for writing new config options to sd-agent config.
 
@@ -107,6 +107,7 @@ class ConfigWriter(object):
         self.downloader = downloader
         self.options = options
         self.path = self.__get_config_path()
+        assert self.path, 'no config path found.'
         self.plugin_path = os.path.join(os.path.dirname(__file__), 'plugins')
 
     def __get_config_path(self):
@@ -144,7 +145,7 @@ class ConfigWriter(object):
             print ex
             sys.exit(1)
 
-    def run(self):
+    def prompt(self):
         config = self.__parse()
         if config.get('Main', 'plugin_directory'):
             self.plugin_path = config.get('Main', 'plugin_directory')
