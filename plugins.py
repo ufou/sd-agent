@@ -109,7 +109,7 @@ class ConfigWriter(object):
                     print 'found config at %s' % path
                 return path
 
-    def run(self):
+    def __parse(self):
         config_path = self.__get_config_path()
         if os.access(config_path, os.R_OK) == False:
             if self.downloader.verbose:
@@ -121,6 +121,15 @@ class ConfigWriter(object):
         config.read(config_path)
         if self.downloader.verbose:
             print 'parsed config'
+        return config
+
+    def __write(self, values):
+        pass
+
+    def run(self):
+        config = self.__parse()
+        values = [raw_input('value for %s: ' % option) for option in self.options]
+        self.__write(values)
 
 if __name__ == '__main__':
     app = App()
