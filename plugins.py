@@ -9,6 +9,7 @@ Classes for plugin download, installation, and registration.
 import ConfigParser
 import os
 import platform
+import urllib, urllib2
 from optparse import OptionParser
 
 python_version = platform.python_version_tuple()
@@ -88,6 +89,14 @@ class PluginDownloader(object):
         assert 'configKeys' in metadata, 'metadata is not valid.'
         writer = ConfigWriter(downloader=self, options=metadata['configKeys'])
         writer.run()
+        if not os.path.exists(writer.plugin_path):
+            if self.verbose:
+                print '%s does not exist, creating' % writer.plugin_path
+            os.mkdir(writer.plugin_path)
+            if self.verbose:
+                print '%s created' % writer.plugin_path
+        elif self.verbose:
+            print '%s exists' % writer.plugin_path
 
 class ConfigWriter(object):
     """
@@ -98,6 +107,7 @@ class ConfigWriter(object):
         self.downloader = downloader
         self.options = options
         self.path = self.__get_config_path()
+        self.plugin_path = os.path.join(os.path.dirname(__file__), 'plugins')
 
     def __get_config_path(self):
         paths = (
@@ -136,6 +146,8 @@ class ConfigWriter(object):
 
     def run(self):
         config = self.__parse()
+        if config.get('Main', 'plugin_directory'):
+            self.plugin_path = config.get('Main', 'plugin_directory')
         values = {}
         for option in self.options:
             values[option] = raw_input('value for %s: ' % option)
