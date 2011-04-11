@@ -97,6 +97,7 @@ class ConfigWriter(object):
     def __init__(self, downloader=None, options=[]):
         self.downloader = downloader
         self.options = options
+        self.path = self.__get_config_path()
 
     def __get_config_path(self):
         paths = (
@@ -110,15 +111,14 @@ class ConfigWriter(object):
                 return path
 
     def __parse(self):
-        config_path = self.__get_config_path()
-        if os.access(config_path, os.R_OK) == False:
+        if os.access(self.path, os.R_OK) == False:
             if self.downloader.verbose:
                 print 'cannot access config'
-            return
+            raise Exception, 'cannot access config'
         if self.downloader.verbose:
             print 'found config, parsing'
         config = ConfigParser.ConfigParser()
-        config.read(config_path)
+        config.read(self.path)
         if self.downloader.verbose:
             print 'parsed config'
         return config
@@ -126,9 +126,8 @@ class ConfigWriter(object):
     def __write(self, config, values):
         for key in values.keys():   
             config.set('Main', key, values[key])
-        config_path = self.__get_config_path()
         try:
-            f = open(config_path, 'w')
+            f = open(self.path, 'w')
             config.write(f)
             f.close()
         except Exception, ex:
