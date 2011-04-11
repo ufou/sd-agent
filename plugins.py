@@ -182,5 +182,8 @@ class AgentConfig(object):
         self.__write(config, values)
 
 if __name__ == '__main__':
-    app = App()
-    app.run()
+    try:
+        app = App()
+        app.run()
+    except Exception, ex:
+        print 'error: %s' % ex
