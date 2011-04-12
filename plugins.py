@@ -154,6 +154,7 @@ class AgentConfig(object):
         if self.config.get('Main', 'plugin_directory'):
             self.plugin_path = self.config.get('Main', 'plugin_directory')
         self.agent_key = self.config.get('Main', 'agent_key')
+        assert self.agent_key, 'no agent key.'
 
     def __get_config_path(self):
         paths = (
@@ -191,7 +192,6 @@ class AgentConfig(object):
             sys.exit(1)
 
     def prompt(self, options):
-        assert self.agent_key, 'no agent key.'
         values = {}
         for option in options:
             values[option] = raw_input('value for %s: ' % option)
