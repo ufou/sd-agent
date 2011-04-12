@@ -135,7 +135,9 @@ class PluginDownloader(object):
         metadata = WebPluginMetadata(self, agent_key=self.config.agent_key).json()
         if self.verbose:
             print 'retrieved metadata.'
-        assert 'configKeys' in metadata, 'metadata is not valid.'
+        assert 'configKeys' in metadata or 'status' in metadata, 'metadata is not valid.'
+        if 'status' in metadata and metadata['status'] == 'error':
+            raise Exception, metadata['msg']
         self.__prepare_plugin_directory()
         self.__download()
         self.config.prompt(metadata['configKeys'])
