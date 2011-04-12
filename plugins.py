@@ -28,7 +28,6 @@ class App(object):
     download and installation process.
 
     """
-
     def __init__(self):
         usage = 'usage: %prog [options] key'
         self.parser = OptionParser(usage=usage)
@@ -76,6 +75,27 @@ class FilePluginMetadata(PluginMetadata):
         f.close()
         return data
 
+class WebPluginMetadata(PluginMetadata):
+    """
+    Web-based metadata provider.
+
+    """
+    def __init__(self, downloader=None, agent_key=None):
+        super(WebPluginMetadata, self).__init__(downloader=downloader)
+        self.agent_key = agent_key
+
+    def get(self):
+        url = 'http://plugins.serverdensity.com/install/'
+        data = {
+            'installId': self.downloader.key,
+            'agentKey': self.agent_key
+        }
+        if self.downloader.verbose:
+            print 'sending %s to %s' % (data, url)
+        request = urllib2.urlopen(url, urllib.urlencode(data))
+        response = request.read()
+        return response
+
 class PluginDownloader(object):
     """
     Class for downloading a plugin.
@@ -111,14 +131,14 @@ class PluginDownloader(object):
         os.remove(path)
 
     def start(self):
-        metadata = FilePluginMetadata(self).json()
+        self.config = AgentConfig(downloader=self)
+        metadata = WebPluginMetadata(self).json()
         if self.verbose:
             print 'retrieved metadata.'
         assert 'configKeys' in metadata, 'metadata is not valid.'
-        self.config = AgentConfig(downloader=self, options=metadata['configKeys'])
-        self.config.prompt()
         self.__prepare_plugin_directory()
         self.__download()
+        self.config.prompt(metadata['configKeys'])
         print 'plugin installed; please restart your agent'
 
 class AgentConfig(object):
@@ -126,13 +146,13 @@ class AgentConfig(object):
     Class for writing new config options to sd-agent config.
 
     """
-    def __init__(self, downloader=None, options=[]):
+    def __init__(self, downloader=None):
         self.downloader = downloader
-        self.options = options
         self.path = self.__get_config_path()
         assert self.path, 'no config path found.'
         self.plugin_path = os.path.join(os.path.dirname(__file__), 'plugins')
         self.agent_key = None
+        self.config = self.__parse()
 
     def __get_config_path(self):
         paths = (
@@ -158,26 +178,25 @@ class AgentConfig(object):
             print 'parsed config'
         return config
 
-    def __write(self, config, values):
+    def __write(self, values):
         for key in values.keys():   
-            config.set('Main', key, values[key])
+            self.config.set('Main', key, values[key])
         try:
             f = open(self.path, 'w')
-            config.write(f)
+            self.config.write(f)
             f.close()
         except Exception, ex:
             print ex
             sys.exit(1)
 
-    def prompt(self):
-        config = self.__parse()
-        if config.get('Main', 'plugin_directory'):
+    def prompt(self, options):
+        if self.config.get('Main', 'plugin_directory'):
             self.plugin_path = config.get('Main', 'plugin_directory')
         agent_key = config.get('Main', 'agent_key')
         assert agent_key, 'no agent key.'
         self.agent_key = agent_key
         values = {}
-        for option in self.options:
+        for option in options:
             values[option] = raw_input('value for %s: ' % option)
         self.__write(config, values)
 
