@@ -132,7 +132,7 @@ class PluginDownloader(object):
 
     def start(self):
         self.config = AgentConfig(downloader=self)
-        metadata = WebPluginMetadata(self).json()
+        metadata = WebPluginMetadata(self, agent_key=self.config.agent_key).json()
         if self.verbose:
             print 'retrieved metadata.'
         assert 'configKeys' in metadata, 'metadata is not valid.'
@@ -150,9 +150,10 @@ class AgentConfig(object):
         self.downloader = downloader
         self.path = self.__get_config_path()
         assert self.path, 'no config path found.'
-        self.plugin_path = os.path.join(os.path.dirname(__file__), 'plugins')
-        self.agent_key = None
         self.config = self.__parse()
+        if self.config.get('Main', 'plugin_directory'):
+            self.plugin_path = self.config.get('Main', 'plugin_directory')
+        self.agent_key = self.config.get('Main', 'agent_key')
 
     def __get_config_path(self):
         paths = (
@@ -190,15 +191,11 @@ class AgentConfig(object):
             sys.exit(1)
 
     def prompt(self, options):
-        if self.config.get('Main', 'plugin_directory'):
-            self.plugin_path = config.get('Main', 'plugin_directory')
-        agent_key = config.get('Main', 'agent_key')
-        assert agent_key, 'no agent key.'
-        self.agent_key = agent_key
+        assert self.agent_key, 'no agent key.'
         values = {}
         for option in options:
             values[option] = raw_input('value for %s: ' % option)
-        self.__write(config, values)
+        self.__write(values)
 
 if __name__ == '__main__':
     try:
