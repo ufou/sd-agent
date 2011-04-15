@@ -104,7 +104,6 @@ class PluginDownloader(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
-        self.url = 'http://plugins.serverdensity.com/download/%s/' % self.key
 
     def __prepare_plugin_directory(self):
         if not os.path.exists(self.config.plugin_path):
@@ -117,6 +116,7 @@ class PluginDownloader(object):
             print '%s exists' % self.config.plugin_path
 
     def __download(self):
+        self.url = 'http://plugins.serverdensity.com/download/%s/%s/' % (self.key, self.config.agent_key)
         if self.verbose:
             print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
         request = urllib2.urlopen(self.url)
