@@ -104,7 +104,7 @@ class PluginDownloader(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
-        self.url = 'http://plugins.serverdensity.com/downloads/%s/' % self.key
+        self.url = 'http://plugins.serverdensity.com/download/%s/' % self.key
 
     def __prepare_plugin_directory(self):
         if not os.path.exists(self.config.plugin_path):
