@@ -2063,7 +2063,7 @@ class checks:
 		self.mainLogger.debug('doPostBack: completed')
 	
 	def signalHandler(self, signum, frame):
-		raise httplib.HTTPException('Signal timeout')
+		raise Exception('Signal timeout')
 		
 	def doChecks(self, sc, firstRun, systemStats=False):
 		macV = None
