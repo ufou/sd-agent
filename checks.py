@@ -345,6 +345,9 @@ class checks:
 		try:
 			self.mainLogger.debug('getDiskUsage: attempting Popen')
 			
+			signal.signal(signal.SIGALRM, self.signalHandler)
+			signal.alarm(2)
+			
 			proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
 			df = proc.communicate()[0]
 
@@ -353,6 +356,8 @@ class checks:
 					proc.kill()
 				except OSError, e:
 					self.mainLogger.debug('Process already terminated')
+					
+			signal.alarm(0)
 			
 		except Exception, e:
 			import traceback
