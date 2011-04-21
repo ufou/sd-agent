@@ -275,7 +275,7 @@ if len(sys.argv) == 6:
 	
 	print '4/4: Installing init.d script'
 	
-	shutil.copy('sd-agent.init', '/etc/init.d/sd-agent')
+	shutil.copy('sd-agent/sd-agent.init', '/etc/init.d/sd-agent')
 	
 	import subprocess
 	
