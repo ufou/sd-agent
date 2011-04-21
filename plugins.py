@@ -44,8 +44,12 @@ class App(object):
         (options, args) = self.parser.parse_args()
         if len(args) != 1:
             self.parser.error('incorrect number of arguments')
-        downloader = PluginDownloader(key=args[0], verbose=options.verbose)
-        downloader.start()
+        if options.remove:
+            remover = PluginRemover(key=args[0], verbose=options.verbose)
+            remover.start()
+        else:
+            downloader = PluginDownloader(key=args[0], verbose=options.verbose)
+            downloader.start()
 
 class PluginMetadata(object):
     def __init__(self, downloader=None):
@@ -98,14 +102,34 @@ class WebPluginMetadata(PluginMetadata):
         response = request.read()
         return response
 
-class PluginDownloader(object):
+class Action(object):
+    def __init__(self, key=None, verbose=True):
+        self.key = key
+        self.verbose = verbose
+
+    def start(self):
+        raise Exception, 'sub-classes to provide implementation.'
+
+class PluginRemover(Action):
+    """
+    Class for removing a plugin.
+
+    """
+    def __init__(self, key=None, verbose=True):
+        super(PluginRemover, self).__init__(key=key, verbose=verbose)
+
+    def start(self):
+        self.config = AgentConfig(action=self)
+        if self.verbose:
+            print 'removing plugin with install key:', self.key
+
+class PluginDownloader(Action):
     """
     Class for downloading a plugin.
 
     """
     def __init__(self, key=None, verbose=True):
-        self.key = key
-        self.verbose = verbose
+        super(PluginDownloader, self).__init__(key=key, verbose=verbose)
 
     def __prepare_plugin_directory(self):
         if not os.path.exists(self.config.plugin_path):
@@ -133,7 +157,7 @@ class PluginDownloader(object):
         os.remove(path)
 
     def start(self):
-        self.config = AgentConfig(downloader=self)
+        self.config = AgentConfig(action=self)
         metadata = WebPluginMetadata(self, agent_key=self.config.agent_key).json()
         if self.verbose:
             print 'retrieved metadata.'
@@ -150,8 +174,8 @@ class AgentConfig(object):
     Class for writing new config options to sd-agent config.
 
     """
-    def __init__(self, downloader=None):
-        self.downloader = downloader
+    def __init__(self, action=None):
+        self.action = action
         self.path = self.__get_config_path()
         assert self.path, 'no config path found.'
         self.config = self.__parse()
@@ -167,20 +191,20 @@ class AgentConfig(object):
         )
         for path in paths:
             if os.path.exists(path):
-                if self.downloader.verbose:
+                if self.action.verbose:
                     print 'found config at %s' % path
                 return path
 
     def __parse(self):
         if os.access(self.path, os.R_OK) == False:
-            if self.downloader.verbose:
+            if self.action.verbose:
                 print 'cannot access config'
             raise Exception, 'cannot access config'
-        if self.downloader.verbose:
+        if self.action.verbose:
             print 'found config, parsing'
         config = ConfigParser.ConfigParser()
         config.read(self.path)
-        if self.downloader.verbose:
+        if self.action.verbose:
             print 'parsed config'
         return config
 
