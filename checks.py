@@ -341,26 +341,27 @@ class checks:
 	def getDiskUsage(self):
 		self.mainLogger.debug('getDiskUsage: start')
 		
-		# Get output from df
 		try:
-			self.mainLogger.debug('getDiskUsage: attempting Popen')
-			
-			signal.signal(signal.SIGALRM, self.signalHandler)
-			signal.alarm(2)
-			
-			proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
-			df = proc.communicate()[0]
-
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except OSError, e:
-					self.mainLogger.debug('Process already terminated')
-					
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
-			return False
+			# Get output from df
+			try:
+				self.mainLogger.debug('getDiskUsage: attempting Popen')
+				
+				signal.signal(signal.SIGALRM, self.signalHandler)
+				signal.alarm(2)
+				
+				proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
+				df = proc.communicate()[0]
+	
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
+						
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
+				return False
 
 		finally:
 			signal.alarm(0)
@@ -2032,37 +2033,39 @@ class checks:
 	def doPostBack(self, postBackData):
 		self.mainLogger.debug('doPostBack: start')	
 		
-		try: 
-			self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
-			
-			# Force timeout using signals
-			signal.signal(signal.SIGALRM, self.signalHandler)
-			signal.alarm(15)
-			
-			# Build the request handler
-			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
-			
-			# Do the request, log any errors
-			response = urllib2.urlopen(request)
-			
-			self.mainLogger.info('Postback response: %s', response.read())
+		try:
+		
+			try: 
+				self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 				
-		except urllib2.HTTPError, e:
-			self.mainLogger.error('doPostBack: HTTPError = %s', e)
-			return False
-			
-		except urllib2.URLError, e:
-			self.mainLogger.error('doPostBack: URLError = %s', e)
-			return False
-			
-		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException = %s', e)
-			return False
+				# Force timeout using signals
+				signal.signal(signal.SIGALRM, self.signalHandler)
+				signal.alarm(15)
 				
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
-			return False
+				# Build the request handler
+				request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+				
+				# Do the request, log any errors
+				response = urllib2.urlopen(request)
+				
+				self.mainLogger.info('Postback response: %s', response.read())
+					
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('doPostBack: HTTPError = %s', e)
+				return False
+				
+			except urllib2.URLError, e:
+				self.mainLogger.error('doPostBack: URLError = %s', e)
+				return False
+				
+			except httplib.HTTPException, e: # Added for case #26701
+				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+				return False
+					
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
+				return False
 
 		finally:
 			signal.alarm(0)
