@@ -119,7 +119,7 @@ class PluginRemover(Action):
         super(PluginRemover, self).__init__(key=key, verbose=verbose)
 
     def __send_removal(self):
-        url = 'http://plugins.serverdensity.com/install/?action=remove'
+        url = 'http://plugins.serverdensity.com/uninstall/'
         data = {
             'installId': self.key,
             'agentKey': self.config.agent_key
