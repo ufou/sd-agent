@@ -33,7 +33,7 @@ class App(object):
         self.parser = OptionParser(usage=usage)
         self.parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
                                default=False, help='run in verbose mode')
-        self.parser.add_option('-r', '--remove', action='store_true', dest='verbose',
+        self.parser.add_option('-r', '--remove', action='store_true', dest='remove',
                                default=False, help='remove plugin')
 
     def run(self):
