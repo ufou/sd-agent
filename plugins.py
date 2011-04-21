@@ -118,10 +118,31 @@ class PluginRemover(Action):
     def __init__(self, key=None, verbose=True):
         super(PluginRemover, self).__init__(key=key, verbose=verbose)
 
+    def __send_removal(self):
+        url = 'http://plugins.serverdensity.com/install/?action=remove'
+        data = {
+            'installId': self.key,
+            'agentKey': self.config.agent_key
+        }
+        request = urllib2.urlopen(url, urllib.urlencode(data))
+        response = request.read()
+        if json:
+            return json.loads(response)
+        else:
+            return minjson.safeRead(response)
+
     def start(self):
         self.config = AgentConfig(action=self)
         if self.verbose:
             print 'removing plugin with install key:', self.key
+        response = self.__send_removal()
+        if self.verbose:
+            print 'retrieved remove response.'
+        assert 'status' in response, 'response is not valid.'
+        if 'status' in response and response['status'] == 'error':
+            raise Exception, response['msg']
+        # TODO: remove plugin files
+        print 'plugin removed successfully.'
 
 class PluginDownloader(Action):
     """
