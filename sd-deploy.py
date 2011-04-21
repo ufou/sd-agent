@@ -6,7 +6,15 @@
 
 	Licensed under Simplified BSD License (see LICENSE)
 '''
-	
+
+#
+# Why are you using this?
+#
+import time
+print 'Note: This script is for automating deployments and is not the normal way to install the SD agent. See http://www.serverdensity.com/docs/agent/installation/'
+print 'Continuing in 4 seconds...'
+time.sleep(4)
+
 #
 # Argument checks
 #
