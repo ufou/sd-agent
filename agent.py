@@ -62,13 +62,18 @@ try:
 	
 	# Core config
 	agentConfig['sdUrl'] = config.get('Main', 'sd_url')
+	
 	if agentConfig['sdUrl'].endswith('/'):
 		agentConfig['sdUrl'] = agentConfig['sdUrl'][:-1]
+	
 	agentConfig['agentKey'] = config.get('Main', 'agent_key')
+	
+	# Tmp path
 	if os.path.exists('/var/log/sd-agent/'):
 		agentConfig['tmpDirectory'] = '/var/log/sd-agent/'
 	else:
 		agentConfig['tmpDirectory'] = '/tmp/' # default which may be overriden in the config later
+	
 	agentConfig['pidfileDirectory'] = agentConfig['tmpDirectory']
 	
 	# Plugin config
