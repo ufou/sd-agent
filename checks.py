@@ -1303,7 +1303,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 				
-				self.mainLogger.debug('getMySQLStatus: MySQL connection error: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
 				return False
 			
 			self.mainLogger.debug('getMySQLStatus: connected')
@@ -1320,7 +1320,7 @@ class checks:
 					
 				except MySQLdb.OperationalError, message:
 				
-					self.mainLogger.debug('getMySQLStatus: MySQL query error when getting version: ' + str(message))
+					self.mainLogger.error('getMySQLStatus: MySQL query error when getting version: ' + str(message))
 			
 				version = result[0].split('-') # Case 31237. Might include a description e.g. 4.1.26-log. See http://dev.mysql.com/doc/refman/4.1/en/information-functions.html#function_version
 				version = version[0].split('.')
@@ -1343,7 +1343,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Connections: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Connections: ' + str(message))
 		
 			if self.mysqlConnectionsStore == None:
 				
@@ -1385,7 +1385,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Created_tmp_disk_tables: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Created_tmp_disk_tables: ' + str(message))
 		
 			createdTmpDiskTables = float(result[1])
 				
@@ -1403,7 +1403,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Max_used_connections: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Max_used_connections: ' + str(message))
 				
 			maxUsedConnections = result[1]
 			
@@ -1421,7 +1421,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Open_files: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Open_files: ' + str(message))
 				
 			openFiles = result[1]
 			
@@ -1447,7 +1447,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Slow_queries: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Slow_queries: ' + str(message))
 		
 			if self.mysqlSlowQueriesStore == None:
 				
@@ -1481,7 +1481,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Table_locks_waited: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Table_locks_waited: ' + str(message))
 		
 			tableLocksWaited = float(result[1])
 				
@@ -1499,7 +1499,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting Threads_connected: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting Threads_connected: ' + str(message))
 				
 			threadsConnected = result[1]
 			
@@ -1517,7 +1517,7 @@ class checks:
 				
 			except MySQLdb.OperationalError, message:
 			
-				self.mainLogger.debug('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
+				self.mainLogger.error('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
 				result = None
 			
 			if result != None:
