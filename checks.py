@@ -345,6 +345,69 @@ class checks:
 
 		self.mainLogger.debug('getCouchDBStatus: completed, returning')
 		return couchdb
+
+	def getCPUStats(self):
+		self.mainLogger.debug('getCPUStats: start')
+
+		cpuStats = {}
+
+		if sys.platform == 'linux2':
+			self.mainLogger.debug('getCPUStats: linux2')
+
+			headerRegexp = re.compile(r'\s+([%][a-zA-Z0-9]+)[\s+]?')
+			itemRegexp = re.compile(r'.*?\s+(\d+)[\s+]?')
+			valueRegexp = re.compile(r'\d+\.\d+')
+
+			try:
+				try:
+					signal.signal(signal.SIGALRM, self.signalHandler)
+					signal.alarm(15)
+
+					proc = subprocess.Popen(['mpstat', '-P', 'ALL', '1', '1'], stdout=subprocess.PIPE, close_fds=True)
+					stats = proc.communicate()[0]
+
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except OSError, e:
+							pass
+
+					stats = stats.split('\n')
+					header = stats[2]
+					headerNames = re.findall(headerRegexp, header)
+					device = None
+
+					for statsIndex in range(4, len(stats)): # skip "all"
+						row = stats[statsIndex]
+
+						if not row:
+							break
+
+						deviceMatch = re.match(itemRegexp, row)
+
+						if deviceMatch is not None:
+							device = 'CPU%s' % deviceMatch.groups()[0]
+
+						values = re.findall(valueRegexp, row.replace(',', '.'))
+
+						cpuStats[device] = {}
+						for headerIndex in range(0, len(headerNames)):
+							headerName = headerNames[headerIndex]
+							cpuStats[device][headerName] = values[headerIndex]
+
+				except Exception, ex:
+					import traceback
+					self.mainLogger.error('getCPUStats: exception = ' + traceback.format_exc())
+					return False
+			finally:
+				signal.alarm(0)
+		else:
+			self.mainLogger.debug('getCPUStats: unsupported platform')
+			return False
+
+		self.mainLogger.debug('getCPUStats: completed, returning')
+		self.mainLogger.debug(cpuStats)
+		return cpuStats
 	
 	def getDiskUsage(self):
 		self.mainLogger.debug('getDiskUsage: start')
@@ -2251,6 +2314,7 @@ class checks:
 		couchdb = self.getCouchDBStatus()
 		plugins = self.getPlugins()
 		ioStats = self.getIOStats();
+		cpuStats = self.getCPUStats();
 		
 		self.mainLogger.debug('doChecks: checks success, build payload')
 		
