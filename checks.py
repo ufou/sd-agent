@@ -380,7 +380,7 @@ class checks:
 					for statsIndex in range(4, len(stats)): # skip "all"
 						row = stats[statsIndex]
 
-						if not row:
+						if not row: # skip the averages
 							break
 
 						deviceMatch = re.match(itemRegexp, row)
@@ -406,7 +406,6 @@ class checks:
 			return False
 
 		self.mainLogger.debug('getCPUStats: completed, returning')
-		self.mainLogger.debug(cpuStats)
 		return cpuStats
 	
 	def getDiskUsage(self):
