@@ -2401,6 +2401,9 @@ class checks:
 		
 		if ioStats != False:
 			checksData['ioStats'] = ioStats
+
+		if cpuStats != False:
+			checksData['cpuStats'] = cpuStats
 			
 		# Include system stats on first postback
 		if firstRun == True:
