@@ -354,7 +354,7 @@ class checks:
 		if sys.platform == 'linux2':
 			self.mainLogger.debug('getCPUStats: linux2')
 
-			headerRegexp = re.compile(r'\s+([%][a-zA-Z0-9]+)[\s+]?')
+			headerRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
 			itemRegexp = re.compile(r'.*?\s+(\d+)[\s+]?')
 			valueRegexp = re.compile(r'\d+\.\d+')
 
