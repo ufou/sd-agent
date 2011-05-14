@@ -14,6 +14,8 @@ from optparse import OptionParser
 from zipfile import ZipFile
 
 
+BASE_URL = 'http://plugins.serverdensity.com/'
+
 python_version = platform.python_version_tuple()
 
 if int(python_version[1]) >= 6:
@@ -91,7 +93,7 @@ class WebPluginMetadata(PluginMetadata):
         self.agent_key = agent_key
 
     def get(self):
-        url = 'http://plugins/install/'
+        url = '%sinstall/' % BASE_URL
         data = {
             'installId': self.downloader.key,
             'agentKey': self.agent_key
@@ -119,7 +121,7 @@ class PluginRemover(Action):
         super(PluginRemover, self).__init__(key=key, verbose=verbose)
 
     def __send_removal(self):
-        url = 'http://plugins/uninstall/'
+        url = '%suninstall/' % BASE_URL
         data = {
             'installId': self.key,
             'agentKey': self.config.agent_key
@@ -163,7 +165,7 @@ class PluginDownloader(Action):
             print '%s exists' % self.config.plugin_path
 
     def __download(self):
-        self.url = 'http://plugins/download/%s/%s/' % (self.key, self.config.agent_key)
+        self.url = '%sdownload/%s/%s/' % (BASE_URL, self.key, self.config.agent_key)
         if self.verbose:
             print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
         request = urllib2.urlopen(self.url)
