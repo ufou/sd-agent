@@ -91,7 +91,7 @@ class WebPluginMetadata(PluginMetadata):
         self.agent_key = agent_key
 
     def get(self):
-        url = 'http://plugins.serverdensity.com/install/'
+        url = 'http://plugins/install/'
         data = {
             'installId': self.downloader.key,
             'agentKey': self.agent_key
@@ -119,7 +119,7 @@ class PluginRemover(Action):
         super(PluginRemover, self).__init__(key=key, verbose=verbose)
 
     def __send_removal(self):
-        url = 'http://plugins.serverdensity.com/uninstall/'
+        url = 'http://plugins/uninstall/'
         data = {
             'installId': self.key,
             'agentKey': self.config.agent_key
@@ -163,7 +163,7 @@ class PluginDownloader(Action):
             print '%s exists' % self.config.plugin_path
 
     def __download(self):
-        self.url = 'http://plugins.serverdensity.com/download/%s/%s/' % (self.key, self.config.agent_key)
+        self.url = 'http://plugins/download/%s/%s/' % (self.key, self.config.agent_key)
         if self.verbose:
             print 'downloading for agent %s: %s' % (self.config.agent_key, self.url)
         request = urllib2.urlopen(self.url)
@@ -241,6 +241,8 @@ class AgentConfig(object):
             sys.exit(1)
 
     def prompt(self, options):
+        if not options:
+            return
         values = {}
         for option in options:
             values[option] = raw_input('value for %s: ' % option)
