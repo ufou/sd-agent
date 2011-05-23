@@ -14,7 +14,8 @@ from optparse import OptionParser
 from zipfile import ZipFile
 
 
-BASE_URL = 'http://plugins.serverdensity.com/'
+#BASE_URL = 'http://plugins.serverdensity.com/'
+BASE_URL = 'http://plugins/'
 
 python_version = platform.python_version_tuple()
 
@@ -278,7 +279,8 @@ class AgentConfig(object):
             return
         values = {}
         for option in options:
-            values[option] = raw_input('value for %s: ' % option)
+            if not self.config.has_option('Main', option):
+                values[option] = raw_input('value for %s: ' % option)
         self.__write(values)
 
 if __name__ == '__main__':
