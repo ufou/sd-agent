@@ -37,6 +37,8 @@ class App(object):
                                default=False, help='run in verbose mode')
         self.parser.add_option('-r', '--remove', action='store_true', dest='remove',
                                default=False, help='remove plugin')
+        self.parser.add_option('-u', '--update', action='store_true', dest='update',
+                               default=False, help='update installed plugins')
 
     def run(self):
         """
@@ -45,7 +47,12 @@ class App(object):
         """
         (options, args) = self.parser.parse_args()
         if len(args) != 1:
-            self.parser.error('incorrect number of arguments')
+            if options.update:
+                updater = PluginUpdater(verbose=options.verbose)
+                updater.start()
+                return
+            else:
+                self.parser.error('incorrect number of arguments')
         if options.remove:
             remover = PluginRemover(key=args[0], verbose=options.verbose)
             remover.start()
@@ -111,6 +118,14 @@ class Action(object):
 
     def start(self):
         raise Exception, 'sub-classes to provide implementation.'
+
+class PluginUpdater(Action):
+    def __init__(self, verbose=True):
+        super(PluginUpdater, self).__init__(verbose=verbose)
+
+    def start(self):
+        if self.verbose:
+            print 'updating plugins'
 
 class PluginRemover(Action):
     """
