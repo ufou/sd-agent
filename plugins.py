@@ -168,7 +168,7 @@ class PluginRemover(Action):
         name = '%s.py' % name
         path = os.path.join(self.config.plugin_path, name)
         if self.verbose:
-            print 'removing %s', path
+            print 'removing %s' % path
         os.remove(path)
 
     def start(self):
