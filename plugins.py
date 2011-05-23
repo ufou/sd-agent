@@ -14,8 +14,7 @@ from optparse import OptionParser
 from zipfile import ZipFile
 
 
-#BASE_URL = 'http://plugins.serverdensity.com/'
-BASE_URL = 'http://plugins/'
+BASE_URL = 'http://plugins.serverdensity.com/'
 
 python_version = platform.python_version_tuple()
 
