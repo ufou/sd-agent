@@ -168,6 +168,8 @@ class PluginRemover(Action):
     def __remove_file(self, name):
         name = '%s.py' % name
         path = os.path.join(self.config.plugin_path, name)
+        if self.verbose:
+            print 'removing %s', path
         os.remove(path)
 
     def start(self):
@@ -180,8 +182,7 @@ class PluginRemover(Action):
         assert 'status' in response, 'response is not valid.'
         if 'status' in response and response['status'] == 'error':
             raise Exception, response['msg']
-        if self.verbose:
-            self.__remove_file(response['name'])
+        self.__remove_file(response['name'])
         print 'plugin removed successfully.'
 
 class PluginDownloader(Action):
