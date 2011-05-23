@@ -165,6 +165,11 @@ class PluginRemover(Action):
         else:
             return minjson.safeRead(response)
 
+    def __remove_file(self, name):
+        name = '%s.py' % name
+        path = os.path.join(self.config.plugin_path, name)
+        os.remove(path)
+
     def start(self):
         self.config = AgentConfig(action=self)
         if self.verbose:
@@ -175,7 +180,8 @@ class PluginRemover(Action):
         assert 'status' in response, 'response is not valid.'
         if 'status' in response and response['status'] == 'error':
             raise Exception, response['msg']
-        # TODO: remove plugin files
+        if self.verbose:
+            self.__remove_file(response['name'])
         print 'plugin removed successfully.'
 
 class PluginDownloader(Action):
