@@ -14,7 +14,8 @@ from optparse import OptionParser
 from zipfile import ZipFile
 
 
-BASE_URL = 'http://plugins.serverdensity.com/'
+#BASE_URL = 'http://plugins.serverdensity.com/'
+BASE_URL = 'http://plugins/'
 
 python_version = platform.python_version_tuple()
 
@@ -123,9 +124,25 @@ class PluginUpdater(Action):
     def __init__(self, verbose=True):
         super(PluginUpdater, self).__init__(verbose=verbose)
 
+    def __get_installs(self):
+        url = '%supdate/' % BASE_URL
+        data = {
+            'agentKey': self.config.agent_key
+        }
+        request = urllib2.urlopen(url, urllib.urlencode(data))
+        response = request.read()
+        if json:
+            return json.loads(response)
+        else:
+            return minjson.safeRead(response)
+
     def start(self):
+        self.config = AgentConfig(action=self)
         if self.verbose:
             print 'updating plugins'
+        installs = self.__get_installs()
+        for install_id in installs['installIds']:
+            PluginDownloader(key=install_id, verbose=self.verbose).start()
 
 class PluginRemover(Action):
     """
