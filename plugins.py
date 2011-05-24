@@ -214,7 +214,11 @@ class PluginDownloader(Action):
         f.write(data)
         f.close()
         z = ZipFile(path, 'r')
-        z.extractall(os.path.dirname(path))
+        if json:
+            z.extractall(os.path.dirname(path))
+        else:
+            name = z.namelist()[0]
+            z.extract(name, os.path.dirname(path))
         z.close()
         os.remove(path)
 
