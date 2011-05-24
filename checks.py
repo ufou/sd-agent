@@ -670,6 +670,36 @@ class checks:
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
 		
+		elif sys.platform.find('sunos') != -1:
+			self.mainLogger.debug('getLoadAvrgs: solaris (uptime)')
+			
+			try:
+				try:
+					self.mainLogger.debug('getLoadAvrgs: attempting Popen')
+					
+					# Force timeout using signals
+					signal.signal(signal.SIGALRM, self.signalHandler)
+					signal.alarm(15)
+					
+					proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+					uptime = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except OSError, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+					return False
+			
+			finally:
+				signal.alarm(0)
+				
+			self.mainLogger.debug('getLoadAvrgs: Popen success')
+			
 		else:
 			self.mainLogger.debug('getLoadAvrgs: other platform, returning')
 			return False
@@ -2293,6 +2323,8 @@ class checks:
 				self.os = 'mac'
 			elif sys.platform.find('freebsd') != -1:
 				self.os = 'freebsd'
+			elif sys.platform.find('sunos') != -1:
+				self.os = 'solaris'
 			else:
 				self.os = 'linux'
 		
