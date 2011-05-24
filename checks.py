@@ -2323,8 +2323,6 @@ class checks:
 				self.os = 'mac'
 			elif sys.platform.find('freebsd') != -1:
 				self.os = 'freebsd'
-			elif sys.platform.find('sunos') != -1:
-				self.os = 'solaris'
 			else:
 				self.os = 'linux'
 		
