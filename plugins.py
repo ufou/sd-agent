@@ -22,6 +22,7 @@ if int(python_version[1]) >= 6:
     import json
 else:
     import minjson
+    json = None
 
 
 class App(object):
