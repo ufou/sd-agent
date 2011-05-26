@@ -15,7 +15,7 @@ agentConfig = {}
 agentConfig['logging'] = logging.INFO
 agentConfig['checkFreq'] = 60
 
-agentConfig['version'] = '1.11.0'
+agentConfig['version'] = '1.11.1'
 
 rawConfig = {}
 
