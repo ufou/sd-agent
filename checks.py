@@ -2350,6 +2350,11 @@ class checks:
 		ioStats = self.getIOStats();
 		cpuStats = self.getCPUStats();
 		
+		if len(processes > 4194304):
+			self.mainLogger.warn('doChecks: process list larger than 4MB limit, so it has been stripped')
+			
+			processes = []
+		
 		self.mainLogger.debug('doChecks: checks success, build payload')
 		
 		self.mainLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
@@ -2470,13 +2475,6 @@ class checks:
 			payload = minjson.write(checksData)
 			
 		self.mainLogger.debug('doChecks: json converted, hash')
-		
-		# Payload size check
-		if len(payload > 4194304):
-			self.mainLogger.error('doChecks: payload larger than 4MB so unable to postback. Please enable debug mode as per http://j.mp/mot6Yu and e-mail the log to hello@boxedice.com')
-			
-			sc.enter(300, 1, self.doChecks, (sc, False)) # Don't run again for 5 minutes
-			return False
 		
 		payloadHash = md5(payload).hexdigest()
 		postBackData = urllib.urlencode({'payload' : payload, 'hash' : payloadHash})
