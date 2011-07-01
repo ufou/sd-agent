@@ -217,11 +217,11 @@ class PluginDownloader(Action):
         if json:
             z.extractall(os.path.dirname(path))
         else:
-            name = z.namelist()[0]
-            data = z.read(name)
-            f = open(os.path.join(os.path.dirname(path), name), 'w')
-            f.write(data)
-            f.close()
+            for name in z.namelist():
+                data = z.read(name)
+                f = open(os.path.join(os.path.dirname(path), name), 'w')
+                f.write(data)
+                f.close()
         z.close()
         os.remove(path)
 
