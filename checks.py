@@ -2142,6 +2142,7 @@ class checks:
 						connections = minjson.safeRead(response)
 	
 					status['connections'] = len(connections)
+					self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
 	
 					# Queues
 					url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
@@ -2160,6 +2161,7 @@ class checks:
 						queues = minjson.safeRead(response)
 	
 					status['queues'] = queues
+					self.mainLogger.debug(status['queues'])
 	
 			except Exception, e:
 				import traceback
