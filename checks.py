@@ -2400,7 +2400,7 @@ class checks:
 		
 		self.mainLogger.debug('doChecks: checks success, build payload')
 		
-		self.mainLogger.debug('doChecks: agent key = ' + self.agentConfig['agentKey'])
+		self.mainLogger.info('doChecks: agent key = ' + self.agentConfig['agentKey'])
 		
 		checksData = {}
 		
@@ -2498,7 +2498,7 @@ class checks:
 		
 		try:
 			checksData['internalHostname'] = socket.gethostname()
-			self.mainLogger.debug('doChecks: hostname = ' + checksData['internalHostname'])
+			self.mainLogger.info('doChecks: hostname = ' + checksData['internalHostname'])
 			
 		except socket.error, e:
 			self.mainLogger.debug('Unable to get hostname: ' + str(e))
