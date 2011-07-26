@@ -122,6 +122,12 @@ try:
 		
 	if config.has_option('Main', 'mysql_pass'):
 		agentConfig['MySQLPass'] = config.get('Main', 'mysql_pass')
+		
+	if config.has_option('Main', 'mysql_port'):
+		agentConfig['MySQLPort'] = config.get('Main', 'mysql_port')
+		
+	if config.has_option('Main', 'mysql_socket'):
+		agentConfig['MySQLSocket'] = config.get('Main', 'mysql_socket')
 	
 	if config.has_option('Main', 'nginx_status_url'):	
 		agentConfig['nginxStatusUrl'] = config.get('Main', 'nginx_status_url')

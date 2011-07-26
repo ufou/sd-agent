@@ -1420,10 +1420,18 @@ class checks:
 			except ImportError, e:
 				self.mainLogger.error('getMySQLStatus: unable to import MySQLdb')
 				return False
+			
+			if 'MySQLPort' not in self.agentConfig:
+			
+				self.agentConfig['MySQLPort'] = 3306
+				
+			if 'MySQLSocket' not in self.agentConfig
+			
+				self.agentConfig['MySQLSocket'] = None
 				
 			# Connect
 			try:
-				db = MySQLdb.connect(self.agentConfig['MySQLServer'], self.agentConfig['MySQLUser'], self.agentConfig['MySQLPass'])
+				db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'], unix_socket=self.agentConfig['MySQLSocket'])
 				
 			except MySQLdb.OperationalError, message:
 				
