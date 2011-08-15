@@ -406,6 +406,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 		else:
 			self.mainLogger.debug('getCPUStats: unsupported platform')
 			return False
@@ -442,6 +448,12 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
+
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 		
 		self.mainLogger.debug('getDiskUsage: Popen success, start parsing')
 			
@@ -574,6 +586,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 		else:
 			self.mainLogger.debug('getIOStats: unsupported platform')
@@ -613,6 +631,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getLoadAvrgs: open success')
 				
@@ -649,6 +673,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
 			
@@ -682,6 +712,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
 		
@@ -714,6 +750,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
 			
@@ -762,6 +804,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 			
@@ -923,6 +971,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 							
 			if physFree == None:
 			
@@ -965,6 +1019,12 @@ class checks:
 				finally:
 					if not python24:
 						signal.alarm(0)
+
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except OSError, e:
+							self.mainLogger.debug('Process already terminated')
 					
 				self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 
@@ -1007,16 +1067,22 @@ class checks:
 				
 				proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
 				swapinfo = proc.communicate()[0]
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 			
 			finally:
 				if not python24:
 					signal.alarm(0)
 
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except OSError, e:
-					self.mainLogger.debug('Process already terminated')
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')		
 					
 			lines = swapinfo.split('\n')
 			swapUsed = 0
@@ -1075,6 +1141,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 			
@@ -1425,7 +1497,7 @@ class checks:
 			
 				self.agentConfig['MySQLPort'] = 3306
 				
-			if 'MySQLSocket' not in self.agentConfig
+			if 'MySQLSocket' not in self.agentConfig:
 			
 				self.agentConfig['MySQLSocket'] = None
 				
@@ -1704,6 +1776,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)		
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
@@ -1797,6 +1875,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
@@ -1925,6 +2009,12 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getNginxStatus: urlopen success, start parsing')
 			
@@ -2025,6 +2115,12 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
+
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 		
 		self.mainLogger.debug('getProcesses: Popen success, parsing')
 		
@@ -2104,6 +2200,12 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
+
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 			
 		try:
 			try:
@@ -2179,6 +2281,12 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
+
+			if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except OSError, e:
+						self.mainLogger.debug('Process already terminated')
 
 		self.mainLogger.debug('getRabbitMQStatus: completed, returning')
 
@@ -2351,6 +2459,12 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
+
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except OSError, e:
+					self.mainLogger.debug('Process already terminated')
 			
 		self.mainLogger.debug('doPostBack: completed')
 	
