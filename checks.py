@@ -1487,16 +1487,25 @@ class checks:
 				
 			if 'MySQLSocket' not in self.agentConfig:
 			
-				self.agentConfig['MySQLSocket'] = None
-				
-			# Connect
-			try:
-				db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'], unix_socket=self.agentConfig['MySQLSocket'])
-				
-			except MySQLdb.OperationalError, message:
-				
-				self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
-				return False
+				# Connect
+				try:
+					db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'])
+					
+				except MySQLdb.OperationalError, message:
+					
+					self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
+					return False
+
+			else:
+
+				# Connect
+				try:
+					db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'], unix_socket=self.agentConfig['MySQLSocket'])
+					
+				except MySQLdb.OperationalError, message:
+					
+					self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
+					return False			
 			
 			self.mainLogger.debug('getMySQLStatus: connected')
 			
@@ -2461,7 +2470,7 @@ class checks:
 		apacheStatus = self.getApacheStatus()
 		diskUsage = self.getDiskUsage()
 		loadAvrgs = self.getLoadAvrgs()
-		memory = self.getMemoryUsage()
+		#memory = self.getMemoryUsage()
 		mysqlStatus = self.getMySQLStatus()
 		networkTraffic = self.getNetworkTraffic()
 		nginxStatus = self.getNginxStatus()
