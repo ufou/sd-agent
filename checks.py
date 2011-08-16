@@ -373,8 +373,8 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
-							pass
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
 
 					stats = stats.split('\n')
 					header = stats[2]
@@ -410,7 +410,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 		else:
 			self.mainLogger.debug('getCPUStats: unsupported platform')
@@ -437,7 +437,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 						
 			except Exception, e:
@@ -452,7 +452,7 @@ class checks:
 			if int(pythonVersion[1]) >= 6:
 				try:
 					proc.kill()
-				except OSError, e:
+				except Exception, e:
 					self.mainLogger.debug('Process already terminated')
 		
 		self.mainLogger.debug('getDiskUsage: Popen success, start parsing')
@@ -544,7 +544,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 					recentStats = stats.split('Device:')[2].split('\n')
@@ -590,7 +590,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 				
 		else:
@@ -656,7 +656,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				except Exception, e:
@@ -671,7 +671,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
@@ -695,7 +695,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				except Exception, e:
@@ -710,7 +710,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
@@ -733,7 +733,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				except Exception, e:
@@ -748,7 +748,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getLoadAvrgs: Popen success')
@@ -901,7 +901,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 							
 					sysinfo = sysinfo.split('\n')
@@ -963,7 +963,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 							
 			if physFree == None:
@@ -985,7 +985,7 @@ class checks:
 						if int(pythonVersion[1]) >= 6:
 							try:
 								proc.kill()
-							except OSError, e:
+							except Exception, e:
 								self.mainLogger.debug('Process already terminated')
 						
 						self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
@@ -995,7 +995,7 @@ class checks:
 						if int(pythonVersion[1]) >= 6:
 							try:
 								proc.kill()
-							except OSError, e:
+							except Exception, e:
 								self.mainLogger.debug('Process already terminated')
 		
 					except Exception, e:
@@ -1011,7 +1011,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
@@ -1059,7 +1059,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 			
 			finally:
@@ -1069,7 +1069,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')		
 					
 			lines = swapinfo.split('\n')
@@ -1108,7 +1108,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 					self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
@@ -1118,7 +1118,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				except Exception, e:
@@ -1133,7 +1133,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
@@ -1845,7 +1845,7 @@ class checks:
 					if int(pythonVersion[1]) >= 6:
 						try:
 							proc.kill()
-						except OSError, e:
+						except Exception, e:
 							self.mainLogger.debug('Process already terminated')
 					
 				except Exception, e:
@@ -1861,7 +1861,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
@@ -2078,7 +2078,7 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
-					except OSError, e:
+					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 				
 				self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
@@ -2095,7 +2095,7 @@ class checks:
 			if int(pythonVersion[1]) >= 6:
 				try:
 					proc.kill()
-				except OSError, e:
+				except Exception, e:
 					self.mainLogger.debug('Process already terminated')
 		
 		self.mainLogger.debug('getProcesses: Popen success, parsing')
@@ -2621,7 +2621,7 @@ class checks:
 			if int(pythonVersion[1]) >= 6:
 				try:
 					proc.kill()
-				except OSError, e:
+				except Exception, e:
 					self.mainLogger.debug('Process already terminated')
 			
 			location = re.search(r'linprocfs on (.*?) \(.*?\)', mountedPartitions)
