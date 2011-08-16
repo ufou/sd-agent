@@ -631,12 +631,6 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
-
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
 			
 			self.mainLogger.debug('getLoadAvrgs: open success')
 				
@@ -804,12 +798,6 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
-
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getMemoryUsage: Popen success, parsing')
 			
@@ -1775,13 +1763,7 @@ class checks:
 					
 			finally:
 				if not python24:
-					signal.alarm(0)		
-
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
+					signal.alarm(0)
 			
 			self.mainLogger.debug('getNetworkTraffic: open success, parsing')
 			
@@ -2009,12 +1991,6 @@ class checks:
 			finally:
 				if not python24:
 					signal.alarm(0)
-
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
 				
 			self.mainLogger.debug('getNginxStatus: urlopen success, start parsing')
 			
@@ -2200,12 +2176,6 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
-
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except OSError, e:
-					self.mainLogger.debug('Process already terminated')
 			
 		try:
 			try:
@@ -2281,12 +2251,6 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
-
-			if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except OSError, e:
-						self.mainLogger.debug('Process already terminated')
 
 		self.mainLogger.debug('getRabbitMQStatus: completed, returning')
 
@@ -2459,12 +2423,6 @@ class checks:
 		finally:
 			if not python24:
 				signal.alarm(0)
-
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except OSError, e:
-					self.mainLogger.debug('Process already terminated')
 			
 		self.mainLogger.debug('doPostBack: completed')
 	
