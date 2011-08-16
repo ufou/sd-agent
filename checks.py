@@ -429,7 +429,7 @@ class checks:
 
 				if not python24:
 					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(2)
+					signal.alarm(5)
 				
 				proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
 				df = proc.communicate()[0]
