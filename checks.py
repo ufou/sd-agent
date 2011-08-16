@@ -2470,7 +2470,7 @@ class checks:
 		apacheStatus = self.getApacheStatus()
 		diskUsage = self.getDiskUsage()
 		loadAvrgs = self.getLoadAvrgs()
-		#memory = self.getMemoryUsage()
+		memory = self.getMemoryUsage()
 		mysqlStatus = self.getMySQLStatus()
 		networkTraffic = self.getNetworkTraffic()
 		nginxStatus = self.getNginxStatus()
