@@ -1390,7 +1390,7 @@ class checks:
 					
 				except MySQLdb.OperationalError, message:
 					
-					self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
+					self.mainLogger.error('getMySQLStatus: MySQL connection error (server): ' + str(message))
 					return False
 
 			else:
@@ -1401,7 +1401,7 @@ class checks:
 					
 				except MySQLdb.OperationalError, message:
 					
-					self.mainLogger.error('getMySQLStatus: MySQL connection error: ' + str(message))
+					self.mainLogger.error('getMySQLStatus: MySQL connection error (socket): ' + str(message))
 					return False			
 			
 			self.mainLogger.debug('getMySQLStatus: connected')
