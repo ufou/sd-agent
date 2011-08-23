@@ -81,35 +81,35 @@ class checks:
 		if 'apacheStatusUrl' in self.agentConfig and self.agentConfig['apacheStatusUrl'] != 'http://www.example.com/server-status/?auto':	# Don't do it if the status URL hasn't been provided
 			self.mainLogger.debug('getApacheStatus: config set')
 			
-			try: 
-				self.mainLogger.debug('getApacheStatus: attempting urlopen')
-				
-				# Force timeout using signals
-				if not python24:
-					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(15)
-				
-				req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
-				request = urllib2.urlopen(req)
-				response = request.read()
-				
-			except urllib2.HTTPError, e:
-				self.mainLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
-				return False
-				
-			except urllib2.URLError, e:
-				self.mainLogger.error('Unable to get Apache status - URLError = ' + str(e))
-				return False
-				
-			except httplib.HTTPException, e:
-				self.mainLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
-				return False
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
-				return False
+			try:
+				try: 
+					self.mainLogger.debug('getApacheStatus: attempting urlopen')
 					
+					# Force timeout using signals
+					if not python24:
+						signal.signal(signal.SIGALRM, self.signalHandler)
+						signal.alarm(15)
+					
+					req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
+					request = urllib2.urlopen(req)
+					response = request.read()
+					
+				except urllib2.HTTPError, e:
+					self.mainLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
+					return False
+					
+				except urllib2.URLError, e:
+					self.mainLogger.error('Unable to get Apache status - URLError = ' + str(e))
+					return False
+					
+				except httplib.HTTPException, e:
+					self.mainLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
+					return False
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
+					return False					
 			finally:
 				if not python24:
 					signal.alarm(0)
@@ -415,22 +415,22 @@ class checks:
 		
 		# Get output from df
 		try:
-			self.mainLogger.debug('getDiskUsage: attempting Popen')
+			try:
+				self.mainLogger.debug('getDiskUsage: attempting Popen')
 
-			proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
-			df = proc.communicate()[0]
+				proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
+				df = proc.communicate()[0]
 
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except Exception, e:
-					self.mainLogger.debug('Process already terminated')
-					
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
-			return False
-
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+						
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
+				return False
 		finally:
 			if int(pythonVersion[1]) >= 6:
 				try:
@@ -515,51 +515,51 @@ class checks:
 			valueRegexp = re.compile(r'\d+\.\d+')
 			
 			try:
-				proc = subprocess.Popen(['iostat', '-d', '1', '2', '-x', '-k'], stdout=subprocess.PIPE, close_fds=True)
-				stats = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-				recentStats = stats.split('Device:')[2].split('\n')
-				header = recentStats[0]
-				headerNames = re.findall(headerRegexp, header)
-				device = None
-				
-				for statsIndex in range(1, len(recentStats)):
-					row = recentStats[statsIndex]
+				try:
+					proc = subprocess.Popen(['iostat', '-d', '1', '2', '-x', '-k'], stdout=subprocess.PIPE, close_fds=True)
+					stats = proc.communicate()[0]
 					
-					if not row:
-						# Ignore blank lines.
-						continue
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
 					
-					deviceMatch = re.match(itemRegexp, row)
+					recentStats = stats.split('Device:')[2].split('\n')
+					header = recentStats[0]
+					headerNames = re.findall(headerRegexp, header)
+					device = None
 					
-					if deviceMatch is not None:
-						# Sometimes device names span two lines.
-						device = deviceMatch.groups()[0]
-					
-					values = re.findall(valueRegexp, row.replace(',', '.'))
-					
-					if not values:
-						# Sometimes values are on the next line so we encounter
-						# instances of [].
-						continue
-					
-					ioStats[device] = {}
-					
-					for headerIndex in range(0, len(headerNames)):
-						headerName = headerNames[headerIndex]
-						ioStats[device][headerName] = values[headerIndex]
-					
-			except Exception, ex:
-				import traceback
-				self.mainLogger.error('getIOStats: exception = ' + traceback.format_exc())
-				return False
-					
+					for statsIndex in range(1, len(recentStats)):
+						row = recentStats[statsIndex]
+						
+						if not row:
+							# Ignore blank lines.
+							continue
+						
+						deviceMatch = re.match(itemRegexp, row)
+						
+						if deviceMatch is not None:
+							# Sometimes device names span two lines.
+							device = deviceMatch.groups()[0]
+						
+						values = re.findall(valueRegexp, row.replace(',', '.'))
+						
+						if not values:
+							# Sometimes values are on the next line so we encounter
+							# instances of [].
+							continue
+						
+						ioStats[device] = {}
+						
+						for headerIndex in range(0, len(headerNames)):
+							headerName = headerNames[headerIndex]
+							ioStats[device][headerName] = values[headerIndex]
+						
+				except Exception, ex:
+					import traceback
+					self.mainLogger.error('getIOStats: exception = ' + traceback.format_exc())
+					return False					
 			finally:				
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -606,22 +606,22 @@ class checks:
 			self.mainLogger.debug('getLoadAvrgs: freebsd (uptime)')
 			
 			try:
-				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
-				
-				proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
-				uptime = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
-				return False
-			
+				try:
+					self.mainLogger.debug('getLoadAvrgs: attempting Popen')
+					
+					proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+					uptime = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+					return False			
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -636,22 +636,22 @@ class checks:
 			
 			# Get output from uptime
 			try:
-				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
-				
-				proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
-				uptime = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
-				return False
+				try:
+					self.mainLogger.debug('getLoadAvrgs: attempting Popen')
 					
+					proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+					uptime = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+					return False					
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -665,22 +665,22 @@ class checks:
 			self.mainLogger.debug('getLoadAvrgs: solaris (uptime)')
 			
 			try:
-				self.mainLogger.debug('getLoadAvrgs: attempting Popen')
-				
-				proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
-				uptime = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
-				return False
-			
+				try:
+					self.mainLogger.debug('getLoadAvrgs: attempting Popen')
+					
+					proc = subprocess.Popen(['uptime'], stdout=subprocess.PIPE, close_fds=True)
+					uptime = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getLoadAvrgs: exception = ' + traceback.format_exc())
+					return False			
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -812,70 +812,70 @@ class checks:
 			
 			physFree = None
 			
-			try:				
-				self.mainLogger.debug('getMemoryUsage: attempting sysinfo')
+			try:
+				try:				
+					self.mainLogger.debug('getMemoryUsage: attempting sysinfo')
+					
+					proc = subprocess.Popen(['sysinfo', '-v', 'mem'], stdout = subprocess.PIPE, close_fds = True)
+					sysinfo = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+							
+					sysinfo = sysinfo.split('\n')
 				
-				proc = subprocess.Popen(['sysinfo', '-v', 'mem'], stdout = subprocess.PIPE, close_fds = True)
-				sysinfo = proc.communicate()[0]
+					regexp = re.compile(r'([0-9]+)') # We run this several times so one-time compile now
 				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
+					for line in sysinfo:
+					
+						parts = line.split(' ')
 						
-				sysinfo = sysinfo.split('\n')
-			
-				regexp = re.compile(r'([0-9]+)') # We run this several times so one-time compile now
-			
-				for line in sysinfo:
+						if parts[0] == 'Free':
+						
+							self.mainLogger.debug('getMemoryUsage: parsing free')
+							
+							for part in parts:
+							
+								match = re.search(regexp, part)
+		
+								if match != None:
+									physFree = match.group(0)
+									self.mainLogger.debug('getMemoryUsage: sysinfo: found free %s', physFree)
+									
+						if parts[0] == 'Active':
+						
+							self.mainLogger.debug('getMemoryUsage: parsing used')
+							
+							for part in parts:
+							
+								match = re.search(regexp, part)
+		
+								if match != None:
+									physUsed = match.group(0)
+									self.mainLogger.debug('getMemoryUsage: sysinfo: found used %s', physUsed)
+									
+						if parts[0] == 'Cached':
+						
+							self.mainLogger.debug('getMemoryUsage: parsing cached')
+							
+							for part in parts:
+							
+								match = re.search(regexp, part)
+		
+								if match != None:
+									cached = match.group(0)
+									self.mainLogger.debug('getMemoryUsage: sysinfo: found cached %s', cached)
 				
-					parts = line.split(' ')
-					
-					if parts[0] == 'Free':
-					
-						self.mainLogger.debug('getMemoryUsage: parsing free')
-						
-						for part in parts:
-						
-							match = re.search(regexp, part)
-	
-							if match != None:
-								physFree = match.group(0)
-								self.mainLogger.debug('getMemoryUsage: sysinfo: found free %s', physFree)
-								
-					if parts[0] == 'Active':
-					
-						self.mainLogger.debug('getMemoryUsage: parsing used')
-						
-						for part in parts:
-						
-							match = re.search(regexp, part)
-	
-							if match != None:
-								physUsed = match.group(0)
-								self.mainLogger.debug('getMemoryUsage: sysinfo: found used %s', physUsed)
-								
-					if parts[0] == 'Cached':
-					
-						self.mainLogger.debug('getMemoryUsage: parsing cached')
-						
-						for part in parts:
-						
-							match = re.search(regexp, part)
-	
-							if match != None:
-								cached = match.group(0)
-								self.mainLogger.debug('getMemoryUsage: sysinfo: found cached %s', cached)
-			
-			except OSError, e:
-			
-				self.mainLogger.debug('getMemoryUsage: sysinfo not available')
-										
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
-			
+				except OSError, e:
+				
+					self.mainLogger.debug('getMemoryUsage: sysinfo not available')
+											
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())			
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -888,33 +888,33 @@ class checks:
 				self.mainLogger.info('getMemoryUsage: sysinfo not installed so falling back on sysctl. sysinfo provides more accurate memory info so is recommended. http://www.freshports.org/sysutils/sysinfo')
 				
 				try:
-					self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
-					
-					proc = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True)
-					physTotal = proc.communicate()[0]
-					
-					if int(pythonVersion[1]) >= 6:
-						try:
-							proc.kill()
-						except Exception, e:
-							self.mainLogger.debug('Process already terminated')
-					
-					self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
-					proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
-					vmstat = proc.communicate()[0]
-					
-					if int(pythonVersion[1]) >= 6:
-						try:
-							proc.kill()
-						except Exception, e:
-							self.mainLogger.debug('Process already terminated')
-	
-				except Exception, e:
-					import traceback
-					self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
-					
-					return False
+					try:
+						self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
 						
+						proc = subprocess.Popen(['sysctl', '-n', 'hw.physmem'], stdout = subprocess.PIPE, close_fds = True)
+						physTotal = proc.communicate()[0]
+						
+						if int(pythonVersion[1]) >= 6:
+							try:
+								proc.kill()
+							except Exception, e:
+								self.mainLogger.debug('Process already terminated')
+						
+						self.mainLogger.debug('getMemoryUsage: attempting Popen (vmstat)')
+						proc = subprocess.Popen(['vmstat', '-H'], stdout = subprocess.PIPE, close_fds = True)
+						vmstat = proc.communicate()[0]
+						
+						if int(pythonVersion[1]) >= 6:
+							try:
+								proc.kill()
+							except Exception, e:
+								self.mainLogger.debug('Process already terminated')
+		
+					except Exception, e:
+						import traceback
+						self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+						
+						return False						
 				finally:
 					if int(pythonVersion[1]) >= 6:
 						try:
@@ -956,21 +956,21 @@ class checks:
 			self.mainLogger.debug('getMemoryUsage: attempting Popen (swapinfo)')
 			
 			try:
-				proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
-				swapinfo = proc.communicate()[0]
+				try:
+					proc = subprocess.Popen(['swapinfo', '-k'], stdout = subprocess.PIPE, close_fds = True)
+					swapinfo = proc.communicate()[0]
 
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-			
-			except Exception, e:
-					import traceback
-					self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
-					
-					return False	
-
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+				
+				except Exception, e:
+						import traceback
+						self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+						
+						return False
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -1000,32 +1000,32 @@ class checks:
 			self.mainLogger.debug('getMemoryUsage: darwin')
 			
 			try:
-				self.mainLogger.debug('getMemoryUsage: attempting Popen (top)')				
-				
-				proc = subprocess.Popen(['top', '-l 1'], stdout=subprocess.PIPE, close_fds=True)
-				top = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-				self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
-				proc = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True)
-				sysctl = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
-				return False
-			
+				try:
+					self.mainLogger.debug('getMemoryUsage: attempting Popen (top)')				
+					
+					proc = subprocess.Popen(['top', '-l 1'], stdout=subprocess.PIPE, close_fds=True)
+					top = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+					self.mainLogger.debug('getMemoryUsage: attempting Popen (sysctl)')
+					proc = subprocess.Popen(['sysctl', 'vm.swapusage'], stdout=subprocess.PIPE, close_fds=True)
+					sysctl = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getMemoryUsage: exception = ' + traceback.format_exc())
+					return False			
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -1727,23 +1727,23 @@ class checks:
 			self.mainLogger.debug('getNetworkTraffic: freebsd')
 			
 			try:
-				self.mainLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
-				
-				proc = subprocess.Popen(['netstat', '-nbid'], stdout=subprocess.PIPE, close_fds=True)
-				netstat = proc.communicate()[0]
-				
-				if int(pythonVersion[1]) >= 6:
-					try:
-						proc.kill()
-					except Exception, e:
-						self.mainLogger.debug('Process already terminated')
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('getNetworkTraffic: exception = ' + traceback.format_exc())
-				
-				return False
+				try:
+					self.mainLogger.debug('getNetworkTraffic: attempting Popen (netstat)')
 					
+					proc = subprocess.Popen(['netstat', '-nbid'], stdout=subprocess.PIPE, close_fds=True)
+					netstat = proc.communicate()[0]
+					
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('getNetworkTraffic: exception = ' + traceback.format_exc())
+					
+					return False					
 			finally:
 				if int(pythonVersion[1]) >= 6:
 					try:
@@ -1844,37 +1844,37 @@ class checks:
 			self.mainLogger.debug('getNginxStatus: config set')
 			
 			
-			try: 
-				self.mainLogger.debug('getNginxStatus: attempting urlopen')
-				
-				# Force timeout using signals
-				if not python24:
-					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(15)
-				
-				req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
-
-				# Do the request, log any errors
-				request = urllib2.urlopen(req)
-				response = request.read()
-				
-			except urllib2.HTTPError, e:
-				self.mainLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
-				return False
-				
-			except urllib2.URLError, e:
-				self.mainLogger.error('Unable to get Nginx status - URLError = ' + str(e))
-				return False
-				
-			except httplib.HTTPException, e:
-				self.mainLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
-				return False
-				
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
-				return False
+			try:
+				try: 
+					self.mainLogger.debug('getNginxStatus: attempting urlopen')
 					
+					# Force timeout using signals
+					if not python24:
+						signal.signal(signal.SIGALRM, self.signalHandler)
+						signal.alarm(15)
+					
+					req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
+
+					# Do the request, log any errors
+					request = urllib2.urlopen(req)
+					response = request.read()
+					
+				except urllib2.HTTPError, e:
+					self.mainLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
+					return False
+					
+				except urllib2.URLError, e:
+					self.mainLogger.error('Unable to get Nginx status - URLError = ' + str(e))
+					return False
+					
+				except httplib.HTTPException, e:
+					self.mainLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
+					return False
+					
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
+					return False					
 			finally:
 				if not python24:
 					signal.alarm(0)
@@ -1951,24 +1951,24 @@ class checks:
 		
 		# Get output from ps
 		try:
-			self.mainLogger.debug('getProcesses: attempting Popen')
-			
-			proc = subprocess.Popen(['ps', 'auxww'], stdout=subprocess.PIPE, close_fds=True)
-			ps = proc.communicate()[0]
-			
-			if int(pythonVersion[1]) >= 6:
-				try:
-					proc.kill()
-				except Exception, e:
-					self.mainLogger.debug('Process already terminated')
-			
-			self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
-			
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('getProcesses: exception = ' + traceback.format_exc())
-			return False
-		
+			try:
+				self.mainLogger.debug('getProcesses: attempting Popen')
+				
+				proc = subprocess.Popen(['ps', 'auxww'], stdout=subprocess.PIPE, close_fds=True)
+				ps = proc.communicate()[0]
+				
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+				
+				self.mainLogger.debug('getProcesses: ps result - ' + str(ps))
+				
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('getProcesses: exception = ' + traceback.format_exc())
+				return False		
 		finally:
 			if int(pythonVersion[1]) >= 6:
 				try:
@@ -2013,116 +2013,116 @@ class checks:
 		self.mainLogger.debug('getRabbitMQStatus: config set')
 
 		try:
-			self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
-			
-			# Force timeout using signals
-			if not python24:
-				signal.signal(signal.SIGALRM, self.signalHandler)
-				signal.alarm(15)
-			
-			manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-			manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-			handler = urllib2.HTTPBasicAuthHandler(manager)
-			opener = urllib2.build_opener(handler)
-			urllib2.install_opener(opener)
-
-			self.mainLogger.debug('getRabbitMQStatus: attempting urlopen')
-			req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
-
-			# Do the request, log any errors
-			request = urllib2.urlopen(req)
-			response = request.read()
-			
-		except urllib2.HTTPError, e:
-			self.mainLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
-			return False
-
-		except urllib2.URLError, e:
-			self.mainLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
-			return False
-
-		except httplib.HTTPException, e:
-			self.mainLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
-			return False
-
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
-			return False
+			try:
+				self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 				
+				# Force timeout using signals
+				if not python24:
+					signal.signal(signal.SIGALRM, self.signalHandler)
+					signal.alarm(15)
+				
+				manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+				manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+				handler = urllib2.HTTPBasicAuthHandler(manager)
+				opener = urllib2.build_opener(handler)
+				urllib2.install_opener(opener)
+
+				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen')
+				req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
+
+				# Do the request, log any errors
+				request = urllib2.urlopen(req)
+				response = request.read()
+				
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
+				return False
+
+			except urllib2.URLError, e:
+				self.mainLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
+				return False
+
+			except httplib.HTTPException, e:
+				self.mainLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
+				return False
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
+				return False				
 		finally:
 			if not python24:
 				signal.alarm(0)
 			
-		try:	
-			# Force timeout using signals
-			if not python24:
-				signal.signal(signal.SIGALRM, self.signalHandler)
-				signal.alarm(15)
-			
-			if int(pythonVersion[1]) >= 6:
-				self.mainLogger.debug('getRabbitMQStatus: json read')
-				status = json.loads(response)
-
-			else:
-				self.mainLogger.debug('getRabbitMQStatus: minjson read')
-				status = minjson.safeRead(response)
-
-			self.mainLogger.debug(status)
-
-			if 'connections' not in status:
-				# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
-				status = {}
-				connections = {}
-				queues = {}
-				self.mainLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
-				import urlparse
-				
-				split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
-				
-				# Connections
-				url = split_url.scheme + '://' + split_url.netloc + '/api/connections'
-				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
-				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-				req = urllib2.Request(url, None, headers)
-				# Do the request, log any errors
-				request = urllib2.urlopen(req)
-				response = request.read()
+		try:
+			try:	
+				# Force timeout using signals
+				if not python24:
+					signal.signal(signal.SIGALRM, self.signalHandler)
+					signal.alarm(15)
 				
 				if int(pythonVersion[1]) >= 6:
-					self.mainLogger.debug('getRabbitMQStatus: connections json read')
-					connections = json.loads(response)
+					self.mainLogger.debug('getRabbitMQStatus: json read')
+					status = json.loads(response)
+
 				else:
-					self.mainLogger.debug('getRabbitMQStatus: connections minjson read')
-					connections = minjson.safeRead(response)
+					self.mainLogger.debug('getRabbitMQStatus: minjson read')
+					status = minjson.safeRead(response)
 
-				status['connections'] = len(connections)
-				self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
+				self.mainLogger.debug(status)
 
-				# Queues
-				url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
-				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
-				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-				req = urllib2.Request(url, None, headers)
-				# Do the request, log any errors
-				request = urllib2.urlopen(req)
-				response = request.read()
-				
-				if int(pythonVersion[1]) >= 6:
-					self.mainLogger.debug('getRabbitMQStatus: queues json read')
-					queues = json.loads(response)
-				else:
-					self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
-					queues = minjson.safeRead(response)
+				if 'connections' not in status:
+					# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
+					status = {}
+					connections = {}
+					queues = {}
+					self.mainLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
+					import urlparse
+					
+					split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
+					
+					# Connections
+					url = split_url.scheme + '://' + split_url.netloc + '/api/connections'
+					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+					req = urllib2.Request(url, None, headers)
+					# Do the request, log any errors
+					request = urllib2.urlopen(req)
+					response = request.read()
+					
+					if int(pythonVersion[1]) >= 6:
+						self.mainLogger.debug('getRabbitMQStatus: connections json read')
+						connections = json.loads(response)
+					else:
+						self.mainLogger.debug('getRabbitMQStatus: connections minjson read')
+						connections = minjson.safeRead(response)
 
-				status['queues'] = queues
-				self.mainLogger.debug(status['queues'])
+					status['connections'] = len(connections)
+					self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
 
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
-			return False
-				
+					# Queues
+					url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
+					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+					req = urllib2.Request(url, None, headers)
+					# Do the request, log any errors
+					request = urllib2.urlopen(req)
+					response = request.read()
+					
+					if int(pythonVersion[1]) >= 6:
+						self.mainLogger.debug('getRabbitMQStatus: queues json read')
+						queues = json.loads(response)
+					else:
+						self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
+						queues = minjson.safeRead(response)
+
+					status['queues'] = queues
+					self.mainLogger.debug(status['queues'])
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
+				return False				
 		finally:
 			if not python24:
 				signal.alarm(0)
@@ -2262,39 +2262,39 @@ class checks:
 		self.mainLogger.debug('doPostBack: start')	
 		
 				
-		try: 
-			self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
-			
-			# Force timeout using signals
-			if not python24:
-				signal.signal(signal.SIGALRM, self.signalHandler)
-				signal.alarm(15)
-			
-			# Build the request handler
-			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
-			
-			# Do the request, log any errors
-			response = urllib2.urlopen(request)
-			
-			self.mainLogger.info('Postback response: %s', response.read())
+		try:
+			try: 
+				self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 				
-		except urllib2.HTTPError, e:
-			self.mainLogger.error('doPostBack: HTTPError = %s', e)
-			return False
-			
-		except urllib2.URLError, e:
-			self.mainLogger.error('doPostBack: URLError = %s', e)
-			return False
-			
-		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException = %s', e)
-			return False
+				# Force timeout using signals
+				if not python24:
+					signal.signal(signal.SIGALRM, self.signalHandler)
+					signal.alarm(15)
 				
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
-			return False
-
+				# Build the request handler
+				request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+				
+				# Do the request, log any errors
+				response = urllib2.urlopen(request)
+				
+				self.mainLogger.info('Postback response: %s', response.read())
+					
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('doPostBack: HTTPError = %s', e)
+				return False
+				
+			except urllib2.URLError, e:
+				self.mainLogger.error('doPostBack: URLError = %s', e)
+				return False
+				
+			except httplib.HTTPException, e: # Added for case #26701
+				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+				return False
+					
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
+				return False
 		finally:
 			if not python24:
 				signal.alarm(0)
