@@ -1386,7 +1386,7 @@ class checks:
 			
 				# Connect
 				try:
-					db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'])
+					db = MySQLdb.connect(host=self.agentConfig['MySQLServer'], user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=int(self.agentConfig['MySQLPort']))
 					
 				except MySQLdb.OperationalError, message:
 					
@@ -1397,7 +1397,7 @@ class checks:
 
 				# Connect
 				try:
-					db = MySQLdb.connect(host='localhost', user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=self.agentConfig['MySQLPort'], unix_socket=self.agentConfig['MySQLSocket'])
+					db = MySQLdb.connect(host='localhost', user=self.agentConfig['MySQLUser'], passwd=self.agentConfig['MySQLPass'], port=int(self.agentConfig['MySQLPort']), unix_socket=self.agentConfig['MySQLSocket'])
 					
 				except MySQLdb.OperationalError, message:
 					
