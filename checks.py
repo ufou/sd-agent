@@ -2082,7 +2082,7 @@ class checks:
 					split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
 					
 					# Connections
-					url = split_url.scheme + '://' + split_url.netloc + '/api/connections'
+					url = split_url[0] + '://' + split_url[1] + '/api/connections'
 					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
 					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
 					req = urllib2.Request(url, None, headers)
@@ -2101,7 +2101,7 @@ class checks:
 					self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
 
 					# Queues
-					url = split_url.scheme + '://' + split_url.netloc + '/api/queues'
+					url = split_url[0] + '://' + split_url[1] + '/api/queues'
 					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
 					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
 					req = urllib2.Request(url, None, headers)
