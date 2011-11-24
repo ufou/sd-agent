@@ -397,6 +397,8 @@ class checks:
 				if int(pythonVersion[1]) >= 6:
 					try:
 						proc.kill()
+					except UnboundLocalError, e:
+						self.mainLogger.debug('Process already terminated')
 					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 
