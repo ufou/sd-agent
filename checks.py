@@ -1714,6 +1714,10 @@ class checks:
 						self.networkTrafficStore[key] = {}
 						self.networkTrafficStore[key]['recv_bytes'] = faces[face]['recv_bytes']
 						self.networkTrafficStore[key]['trans_bytes'] = faces[face]['trans_bytes']
+
+					# Logging
+					self.mainLogger.debug('getNetworkTraffic: %s = recv_bytes', key, self.networkTrafficStore[key]['recv_bytes'])
+					self.mainLogger.debug('getNetworkTraffic: %s = trans_bytes', key, self.networkTrafficStore[key]['trans_bytes'])
 				
 				except KeyError, ex:
 					self.mainLogger.error('getNetworkTraffic: no data for %s', key)
