@@ -506,6 +506,9 @@ class checks:
 				except KeyError:
 					self.mainLogger.error('getDiskUsage: parsing, loop KeyError - Used or Available not present')
 
+				except ValueError:
+					self.mainLogger.error('getDiskUsage: parsing, loop ValueError - Used or Available not present')
+
 				usageData.append(volume)
 
 		self.mainLogger.debug('getDiskUsage: completed, returning')
