@@ -2471,7 +2471,7 @@ class checks:
 		if int(pythonVersion[1]) >= 6:
 			self.mainLogger.debug('doChecks: json convert')
 			
-			payload = json.dumps(checksData)
+			payload = json.dumps(checksData, encoding='latin1')
 		
 		else:
 			self.mainLogger.debug('doChecks: minjson convert')
