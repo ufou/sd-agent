@@ -1633,34 +1633,35 @@ class checks:
 
 			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master')
 
-			# Seconds_Behind_Master
-			try:
-				cursor = db.cursor(MySQLdb.cursors.DictCursor)
-				cursor.execute('SHOW SLAVE STATUS')
-				result = cursor.fetchone()
-
-			except MySQLdb.OperationalError, message:
-
-				self.mainLogger.error('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
-				result = None
-
-			if result != None:
+			if 'MySQLNoRepl' not in self.agentConfig:
+				# Seconds_Behind_Master
 				try:
-					secondsBehindMaster = result['Seconds_Behind_Master']
+					cursor = db.cursor(MySQLdb.cursors.DictCursor)
+					cursor.execute('SHOW SLAVE STATUS')
+					result = cursor.fetchone()
 
-					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = ' + str(secondsBehindMaster))
+				except MySQLdb.OperationalError, message:
 
-				except IndexError, e:
+					self.mainLogger.error('getMySQLStatus: MySQL query error when getting SHOW SLAVE STATUS: ' + str(message))
+					result = None
+
+				if result != None:
+					try:
+						secondsBehindMaster = result['Seconds_Behind_Master']
+
+						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = ' + str(secondsBehindMaster))
+
+					except IndexError, e:
+						secondsBehindMaster = None
+
+						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
+
+				else:
 					secondsBehindMaster = None
 
 					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
 
-			else:
-				secondsBehindMaster = None
-
-				self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
-
-			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
+				self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
 
 			return {'connections' : connections, 'createdTmpDiskTables' : createdTmpDiskTables, 'maxUsedConnections' : maxUsedConnections, 'openFiles' : openFiles, 'slowQueries' : slowQueries, 'tableLocksWaited' : tableLocksWaited, 'threadsConnected' : threadsConnected, 'secondsBehindMaster' : secondsBehindMaster}
 
