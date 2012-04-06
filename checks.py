@@ -164,7 +164,7 @@ class checks:
 
 					totalAccesses = float(apacheStatus['Total Accesses'])
 
-					if self.apacheTotalAccesses is None or totalAccesses <= 0:
+					if self.apacheTotalAccesses is None or self.apacheTotalAccesses <= 0 or totalAccesses <= 0:
 
 						apacheStatusReturn['reqPerSec'] = 0.0
 
