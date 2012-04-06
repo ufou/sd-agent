@@ -2499,8 +2499,11 @@ class checks:
 	
 			try:
 				payload = json.dumps(checksData, encoding='latin1').encode('utf-8')
-			except:
-				self.mainLogger.debug('doChecks: failed encoding payload to json')
+			
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doChecks: failed encoding payload to json. Exception = ' + traceback.format_exc())
+				return False
 		
 		else:
 			self.mainLogger.debug('doChecks: minjson convert')
