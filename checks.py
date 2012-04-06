@@ -510,7 +510,8 @@ class checks:
 			# Sometimes the first column will have a space, which is usually a system line that isn't relevant
 			# e.g. map -hosts              0         0          0   100%    /net
 			# so we just get rid of it
-			if re.match(regexp, volume[1]) == None:
+			# Also ignores lines with no values (AGENT-189)
+    		if re.match(number, volume[1]) == None or re.match(number, volume[2]) == None or re.match(number, volume[3]) == None:
 
 				pass
 
