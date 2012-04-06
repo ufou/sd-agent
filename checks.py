@@ -511,7 +511,7 @@ class checks:
 			# e.g. map -hosts              0         0          0   100%    /net
 			# so we just get rid of it
 			# Also ignores lines with no values (AGENT-189)
-			if re.match(number, volume[1]) == None or re.match(number, volume[2]) == None or re.match(number, volume[3]) == None:
+			if re.match(regexp, volume[1]) == None or re.match(regexp, volume[2]) == None or re.match(regexp, volume[3]) == None:
 
 				pass
 
