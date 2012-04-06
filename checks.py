@@ -90,6 +90,24 @@ class checks:
 						signal.signal(signal.SIGALRM, self.signalHandler)
 						signal.alarm(15)
 
+					if 'apacheStatusUser' in self.agentConfig and 'apacheStatusPass' in self.agentConfig and self.agentConfig['apacheStatusUrl'] != '' and self.agentConfig['apacheStatusPass'] != '':
+						self.mainLogger.debug('getApacheStatus: u/p config set')
+
+						passwordMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+						passwordMgr.add_password(None, self.agentConfig['apacheStatusUrl'], self.agentConfig['apacheStatusUser'], self.agentConfig['apacheStatusPass'])
+
+						handler = urllib2.HTTPBasicAuthHandler(passwordMgr)
+
+						# create "opener" (OpenerDirector instance)
+						opener = urllib2.build_opener(handler)
+
+						# use the opener to fetch a URL
+						opener.open(self.agentConfig['apacheStatusUrl'])
+
+						# Install the opener.
+						# Now all calls to urllib2.urlopen use our opener.
+						urllib2.install_opener(opener)
+
 					req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
 					request = urllib2.urlopen(req)
 					response = request.read()

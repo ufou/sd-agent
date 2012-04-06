@@ -84,6 +84,12 @@ try:
 	# Also do not need to be present in the config file (case 28326).
 	if config.has_option('Main', 'apache_status_url'):
 		agentConfig['apacheStatusUrl'] = config.get('Main', 'apache_status_url')
+
+	if config.has_option('Main', 'apache_status_user'):
+		agentConfig['apacheStatusUser'] = config.get('Main', 'apache_status_user')
+
+	if config.has_option('Main', 'apache_status_pass'):
+		agentConfig['apacheStatusPass'] = config.get('Main', 'apache_status_pass')
 		
 	if config.has_option('Main', 'logging_level'):
 		# Maps log levels from the configuration file to Python log levels
