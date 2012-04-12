@@ -438,12 +438,8 @@ class checks:
 			try:
 				self.mainLogger.debug('getDiskUsage: attempting Popen')
 
-				# handle failure to get output from df -k
-				def handler(signum, frame):
-					raise IOError("Unable to get output from df -k")
-
 				proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
-				signal.signal(signal.SIGALRM, handler)
+				signal.signal(signal.SIGALRM, self.signalHandler)
 
 				# wait 10 seconds for df to return
 				signal.alarm(10)
