@@ -19,7 +19,6 @@ import logging.handlers
 import os
 import platform
 import re
-import signal
 import subprocess
 import sys
 import urllib
@@ -82,55 +81,46 @@ class checks:
 			self.mainLogger.debug('getApacheStatus: config set')
 
 			try:
-				try:
-					self.mainLogger.debug('getApacheStatus: attempting urlopen')
+				self.mainLogger.debug('getApacheStatus: attempting urlopen')
 
-					# Force timeout using signals
-					if not python24:
-						signal.signal(signal.SIGALRM, self.signalHandler)
-						signal.alarm(15)
+				if 'apacheStatusUser' in self.agentConfig and 'apacheStatusPass' in self.agentConfig and self.agentConfig['apacheStatusUrl'] != '' and self.agentConfig['apacheStatusPass'] != '':
+					self.mainLogger.debug('getApacheStatus: u/p config set')
 
-					if 'apacheStatusUser' in self.agentConfig and 'apacheStatusPass' in self.agentConfig and self.agentConfig['apacheStatusUrl'] != '' and self.agentConfig['apacheStatusPass'] != '':
-						self.mainLogger.debug('getApacheStatus: u/p config set')
+					passwordMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+					passwordMgr.add_password(None, self.agentConfig['apacheStatusUrl'], self.agentConfig['apacheStatusUser'], self.agentConfig['apacheStatusPass'])
 
-						passwordMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-						passwordMgr.add_password(None, self.agentConfig['apacheStatusUrl'], self.agentConfig['apacheStatusUser'], self.agentConfig['apacheStatusPass'])
+					handler = urllib2.HTTPBasicAuthHandler(passwordMgr)
 
-						handler = urllib2.HTTPBasicAuthHandler(passwordMgr)
+					# create "opener" (OpenerDirector instance)
+					opener = urllib2.build_opener(handler)
 
-						# create "opener" (OpenerDirector instance)
-						opener = urllib2.build_opener(handler)
+					# use the opener to fetch a URL
+					opener.open(self.agentConfig['apacheStatusUrl'])
 
-						# use the opener to fetch a URL
-						opener.open(self.agentConfig['apacheStatusUrl'])
+					# Install the opener.
+					# Now all calls to urllib2.urlopen use our opener.
+					urllib2.install_opener(opener)
 
-						# Install the opener.
-						# Now all calls to urllib2.urlopen use our opener.
-						urllib2.install_opener(opener)
+				req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
+				request = urllib2.urlopen(req)
+				response = request.read()
 
-					req = urllib2.Request(self.agentConfig['apacheStatusUrl'], None, headers)
-					request = urllib2.urlopen(req)
-					response = request.read()
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
+				return False
 
-				except urllib2.HTTPError, e:
-					self.mainLogger.error('Unable to get Apache status - HTTPError = ' + str(e))
-					return False
+			except urllib2.URLError, e:
+				self.mainLogger.error('Unable to get Apache status - URLError = ' + str(e))
+				return False
 
-				except urllib2.URLError, e:
-					self.mainLogger.error('Unable to get Apache status - URLError = ' + str(e))
-					return False
+			except httplib.HTTPException, e:
+				self.mainLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
+				return False
 
-				except httplib.HTTPException, e:
-					self.mainLogger.error('Unable to get Apache status - HTTPException = ' + str(e))
-					return False
-
-				except Exception, e:
-					import traceback
-					self.mainLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
-					return False
-			finally:
-				if not python24:
-					signal.alarm(0)
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Unable to get Apache status - Exception = ' + traceback.format_exc())
+				return False
 
 			self.mainLogger.debug('getApacheStatus: urlopen success, start parsing')
 
@@ -439,10 +429,7 @@ class checks:
 				self.mainLogger.debug('getDiskUsage: attempting Popen')
 
 				proc = subprocess.Popen(['df', '-k'], stdout=subprocess.PIPE, close_fds=True) # -k option uses 1024 byte blocks so we can calculate into MB
-				signal.signal(signal.SIGALRM, self.signalHandler)
-
-				# wait 10 seconds for df to return
-				signal.alarm(10)
+				
 				df = proc.communicate()[0]
 
 				if int(pythonVersion[1]) >= 6:
@@ -455,6 +442,7 @@ class checks:
 				import traceback
 				self.mainLogger.error('getDiskUsage: df -k exception = ' + traceback.format_exc())
 				return False
+
 		finally:
 			if int(pythonVersion[1]) >= 6:
 				try:
@@ -1870,41 +1858,31 @@ class checks:
 		if 'nginxStatusUrl' in self.agentConfig and self.agentConfig['nginxStatusUrl'] != 'http://www.example.com/nginx_status':	# Don't do it if the status URL hasn't been provided
 			self.mainLogger.debug('getNginxStatus: config set')
 
-
 			try:
-				try:
-					self.mainLogger.debug('getNginxStatus: attempting urlopen')
+				self.mainLogger.debug('getNginxStatus: attempting urlopen')
 
-					# Force timeout using signals
-					if not python24:
-						signal.signal(signal.SIGALRM, self.signalHandler)
-						signal.alarm(15)
+				req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
 
-					req = urllib2.Request(self.agentConfig['nginxStatusUrl'], None, headers)
+				# Do the request, log any errors
+				request = urllib2.urlopen(req)
+				response = request.read()
 
-					# Do the request, log any errors
-					request = urllib2.urlopen(req)
-					response = request.read()
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
+				return False
 
-				except urllib2.HTTPError, e:
-					self.mainLogger.error('Unable to get Nginx status - HTTPError = ' + str(e))
-					return False
+			except urllib2.URLError, e:
+				self.mainLogger.error('Unable to get Nginx status - URLError = ' + str(e))
+				return False
 
-				except urllib2.URLError, e:
-					self.mainLogger.error('Unable to get Nginx status - URLError = ' + str(e))
-					return False
+			except httplib.HTTPException, e:
+				self.mainLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
+				return False
 
-				except httplib.HTTPException, e:
-					self.mainLogger.error('Unable to get Nginx status - HTTPException = ' + str(e))
-					return False
-
-				except Exception, e:
-					import traceback
-					self.mainLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
-					return False
-			finally:
-				if not python24:
-					signal.alarm(0)
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('Unable to get Nginx status - Exception = ' + traceback.format_exc())
+				return False
 
 			self.mainLogger.debug('getNginxStatus: urlopen success, start parsing')
 
@@ -2041,119 +2019,101 @@ class checks:
 		self.mainLogger.debug('getRabbitMQStatus: config set')
 
 		try:
-			try:
-				self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
+			self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
-				# Force timeout using signals
-				if not python24:
-					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(15)
+			manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+			manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+			handler = urllib2.HTTPBasicAuthHandler(manager)
+			opener = urllib2.build_opener(handler)
+			urllib2.install_opener(opener)
 
-				manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
-				manager.add_password(None, self.agentConfig['rabbitMQStatusUrl'], self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-				handler = urllib2.HTTPBasicAuthHandler(manager)
-				opener = urllib2.build_opener(handler)
-				urllib2.install_opener(opener)
+			self.mainLogger.debug('getRabbitMQStatus: attempting urlopen')
+			req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
 
-				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen')
-				req = urllib2.Request(self.agentConfig['rabbitMQStatusUrl'], None, headers)
+			# Do the request, log any errors
+			request = urllib2.urlopen(req)
+			response = request.read()
 
+		except urllib2.HTTPError, e:
+			self.mainLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
+			return False
+
+		except urllib2.URLError, e:
+			self.mainLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
+			return False
+
+		except httplib.HTTPException, e:
+			self.mainLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
+			return False
+
+		except Exception, e:
+			import traceback
+			self.mainLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
+			return False
+
+		try:				
+			if int(pythonVersion[1]) >= 6:
+				self.mainLogger.debug('getRabbitMQStatus: json read')
+				status = json.loads(response)
+
+			else:
+				self.mainLogger.debug('getRabbitMQStatus: minjson read')
+				status = minjson.safeRead(response)
+
+			self.mainLogger.debug(status)
+
+			if 'connections' not in status:
+				# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
+				status = {}
+				connections = {}
+				queues = {}
+				self.mainLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
+				import urlparse
+
+				split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
+
+				# Connections
+				url = split_url[0] + '://' + split_url[1] + '/api/connections'
+				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+				req = urllib2.Request(url, None, headers)
 				# Do the request, log any errors
 				request = urllib2.urlopen(req)
 				response = request.read()
 
-			except urllib2.HTTPError, e:
-				self.mainLogger.error('Unable to get RabbitMQ status - HTTPError = ' + str(e))
-				return False
+				if int(pythonVersion[1]) >= 6:
+					self.mainLogger.debug('getRabbitMQStatus: connections json read')
+					connections = json.loads(response)
+				else:
+					self.mainLogger.debug('getRabbitMQStatus: connections minjson read')
+					connections = minjson.safeRead(response)
 
-			except urllib2.URLError, e:
-				self.mainLogger.error('Unable to get RabbitMQ status - URLError = ' + str(e))
-				return False
+				status['connections'] = len(connections)
+				self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
 
-			except httplib.HTTPException, e:
-				self.mainLogger.error('Unable to get RabbitMQ status - HTTPException = ' + str(e))
-				return False
-
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('Unable to get RabbitMQ status - Exception = ' + traceback.format_exc())
-				return False
-		finally:
-			if not python24:
-				signal.alarm(0)
-
-		try:
-			try:
-				# Force timeout using signals
-				if not python24:
-					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(15)
+				# Queues
+				url = split_url[0] + '://' + split_url[1] + '/api/queues'
+				self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+				manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
+				req = urllib2.Request(url, None, headers)
+				# Do the request, log any errors
+				request = urllib2.urlopen(req)
+				response = request.read()
 
 				if int(pythonVersion[1]) >= 6:
-					self.mainLogger.debug('getRabbitMQStatus: json read')
-					status = json.loads(response)
-
+					self.mainLogger.debug('getRabbitMQStatus: queues json read')
+					queues = json.loads(response)
 				else:
-					self.mainLogger.debug('getRabbitMQStatus: minjson read')
-					status = minjson.safeRead(response)
+					self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
+					queues = minjson.safeRead(response)
 
-				self.mainLogger.debug(status)
+				status['queues'] = queues
+				self.mainLogger.debug(status['queues'])
 
-				if 'connections' not in status:
-					# We are probably using the newer RabbitMQ 2.x status plugin, so try to parse that instead.
-					status = {}
-					connections = {}
-					queues = {}
-					self.mainLogger.debug('getRabbitMQStatus: using 2.x management plugin data')
-					import urlparse
-
-					split_url = urlparse.urlsplit(self.agentConfig['rabbitMQStatusUrl'])
-
-					# Connections
-					url = split_url[0] + '://' + split_url[1] + '/api/connections'
-					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
-					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-					req = urllib2.Request(url, None, headers)
-					# Do the request, log any errors
-					request = urllib2.urlopen(req)
-					response = request.read()
-
-					if int(pythonVersion[1]) >= 6:
-						self.mainLogger.debug('getRabbitMQStatus: connections json read')
-						connections = json.loads(response)
-					else:
-						self.mainLogger.debug('getRabbitMQStatus: connections minjson read')
-						connections = minjson.safeRead(response)
-
-					status['connections'] = len(connections)
-					self.mainLogger.debug('getRabbitMQStatus: connections = %s', status['connections'])
-
-					# Queues
-					url = split_url[0] + '://' + split_url[1] + '/api/queues'
-					self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
-					manager.add_password(None, url, self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])
-					req = urllib2.Request(url, None, headers)
-					# Do the request, log any errors
-					request = urllib2.urlopen(req)
-					response = request.read()
-
-					if int(pythonVersion[1]) >= 6:
-						self.mainLogger.debug('getRabbitMQStatus: queues json read')
-						queues = json.loads(response)
-					else:
-						self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
-						queues = minjson.safeRead(response)
-
-					status['queues'] = queues
-					self.mainLogger.debug(status['queues'])
-
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
-				return False
-		finally:
-			if not python24:
-				signal.alarm(0)
+		except Exception, e:
+			import traceback
+			self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = ' + traceback.format_exc())
+			return False
 
 		self.mainLogger.debug('getRabbitMQStatus: completed, returning')
 
@@ -2289,48 +2249,35 @@ class checks:
 	def doPostBack(self, postBackData):
 		self.mainLogger.debug('doPostBack: start')
 
-
 		try:
-			try:
-				self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
+			self.mainLogger.debug('doPostBack: attempting postback: ' + self.agentConfig['sdUrl'])
 
-				# Force timeout using signals
-				if not python24:
-					signal.signal(signal.SIGALRM, self.signalHandler)
-					signal.alarm(15)
+			# Build the request handler
+			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 
-				# Build the request handler
-				request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+			# Do the request, log any errors
+			response = urllib2.urlopen(request)
 
-				# Do the request, log any errors
-				response = urllib2.urlopen(request)
+			self.mainLogger.info('Postback response: %s', response.read())
 
-				self.mainLogger.info('Postback response: %s', response.read())
+		except urllib2.HTTPError, e:
+			self.mainLogger.error('doPostBack: HTTPError = %s', e)
+			return False
 
-			except urllib2.HTTPError, e:
-				self.mainLogger.error('doPostBack: HTTPError = %s', e)
-				return False
+		except urllib2.URLError, e:
+			self.mainLogger.error('doPostBack: URLError = %s', e)
+			return False
 
-			except urllib2.URLError, e:
-				self.mainLogger.error('doPostBack: URLError = %s', e)
-				return False
+		except httplib.HTTPException, e: # Added for case #26701
+			self.mainLogger.error('doPostBack: HTTPException = %s', e)
+			return False
 
-			except httplib.HTTPException, e: # Added for case #26701
-				self.mainLogger.error('doPostBack: HTTPException = %s', e)
-				return False
-
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
-				return False
-		finally:
-			if not python24:
-				signal.alarm(0)
+		except Exception, e:
+			import traceback
+			self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
+			return False
 
 		self.mainLogger.debug('doPostBack: completed')
-
-	def signalHandler(self, signum, frame):
-		raise Exception('Signal timeout')
 
 	def doChecks(self, sc, firstRun, systemStats=False):
 		macV = None
