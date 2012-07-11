@@ -2277,7 +2277,9 @@ class checks:
 			self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
 			return False
 
-		self.mainLogger.debug('doPostBack: completed')
+		finally:
+			response.close()
+			self.mainLogger.debug('doPostBack: completed')
 
 	def doChecks(self, sc, firstRun, systemStats=False):
 		macV = None
