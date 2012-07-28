@@ -2278,7 +2278,13 @@ class checks:
 			return False
 
 		finally:
-			response.close()
+			try:
+				response.close()
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doPostBack: Exception = ' + traceback.format_exc())
+				return False
+			
 			self.mainLogger.debug('doPostBack: completed')
 
 	def doChecks(self, sc, firstRun, systemStats=False):
