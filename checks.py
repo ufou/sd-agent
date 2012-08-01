@@ -2250,7 +2250,7 @@ class checks:
 		self.mainLogger.debug('doPostBack: start')
 
 		try:
-			self.mainLogger.debug('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
+			self.mainLogger.info('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
 
 			# Build the request handler
 			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
