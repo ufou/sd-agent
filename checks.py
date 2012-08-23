@@ -1647,12 +1647,12 @@ class checks:
 					except IndexError, e:
 						secondsBehindMaster = None
 
-						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
+						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. %s', e)
 
 				else:
 					secondsBehindMaster = None
 
-					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty')
+					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. Result = None.')
 
 				self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
 
