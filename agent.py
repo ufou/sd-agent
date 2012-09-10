@@ -169,17 +169,6 @@ except ConfigParser.ParsingError, e:
 except ConfigParser.NoOptionError, e:
 	print 'There are some items missing from your config file, but nothing fatal'
 	
-# Check to make sure the default config values have been changed (only core config values)
-if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['agentKey'] == 'keyHere':
-	print 'You have not modified config.cfg for your server'
-	print 'Agent will now quit'
-	sys.exit(1)
-
-# Check to make sure sd_url is in correct
-if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
-	print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
-	print 'Agent will now quit'
-	sys.exit(1)
 
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] == None:
