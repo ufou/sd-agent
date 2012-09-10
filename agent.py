@@ -28,6 +28,7 @@ if int(sys.version_info[1]) <= 3:
 
 # Core modules
 import ConfigParser
+import glob
 import os
 import re
 import sched
@@ -48,7 +49,9 @@ try:
 	
 	config = ConfigParser.ConfigParser()
 	
-	if os.path.exists('/etc/sd-agent/config.cfg'):
+	if os.path.exists('/etc/sd-agent/conf.d/'):
+		configPath = '/etc/sd-agent/conf.d/'
+	elif os.path.exists('/etc/sd-agent/config.cfg'):
 		configPath = '/etc/sd-agent/config.cfg'		
 	else:
 		configPath = path + '/config.cfg'
@@ -58,7 +61,11 @@ try:
 		print 'Agent will now quit'
 		sys.exit(1)
 	
-	config.read(configPath)
+	if os.path.isdir(configPath):
+	   for configFile in glob.glob(os.path.join(configPath, "*.cfg")):
+		   config.read(configFile)
+	else:
+	   config.read(configPath)
 	
 	# Core config
 	agentConfig['sdUrl'] = config.get('Main', 'sd_url')
