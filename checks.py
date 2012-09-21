@@ -2288,12 +2288,13 @@ class checks:
 			return False
 
 		finally:
-			try:
-				response.close()
-			except Exception, e:
-				import traceback
-				self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
-				return False
+			if int(pythonVersion[1]) >= 6:
+				try:
+					response.close()
+				except Exception, e:
+					import traceback
+					self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
+					return False
 			
 			self.mainLogger.debug('doPostBack: completed')
 
