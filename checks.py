@@ -2145,12 +2145,16 @@ class checks:
 
 		if 'pluginDirectory' in self.agentConfig and self.agentConfig['pluginDirectory'] != '':
 
+			self.mainLogger.info('getPlugins: pluginDirectory %s', self.agentConfig['pluginDirectory'])
+
 			if os.access(self.agentConfig['pluginDirectory'], os.R_OK) == False:
 				self.mainLogger.warning('getPlugins: Plugin path %s is set but not readable by agent. Skipping plugins.', self.agentConfig['pluginDirectory'])
 
 				return False
 
 		else:
+			self.mainLogger.debug('getPlugins: pluginDirectory not set')
+
 			return False
 
 		# Have we already imported the plugins?
