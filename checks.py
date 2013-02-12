@@ -2317,8 +2317,14 @@ class checks:
 			# attempt a lookup, in case of DNS fail
 			# https://github.com/serverdensity/sd-agent/issues/47 
 			if not retry:
+
+				timeout = socket.getdefaulttimeout()
+				socket.setdefaulttimeout(5)
+
 				self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
 				[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+				socket.setdefaulttimeout(timeout)
+
 				return self.doPostBack(postBackData, retry=True)
 			return False
 
