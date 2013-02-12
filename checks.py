@@ -1056,12 +1056,23 @@ class checks:
 
 			# Deal with top
 			lines = top.split('\n')
-			physParts = re.findall(r'([0-9]\d+)', lines[self.topIndex])
+			physParts = re.findall(r'([0-9]\d+[A-Z])', lines[self.topIndex])
 
+			self.mainLogger.debug('getMemoryUsage: lines to parse: ' + lines[self.topIndex])
 			self.mainLogger.debug('getMemoryUsage: parsed top')
 
 			# Deal with sysctl
 			swapParts = re.findall(r'([0-9]+\.\d+)', sysctl)
+
+			# large values become G, rather than M
+			finalParts = []
+			for part in physParts:
+				if 'G' in part:
+					finalParts.append(str(int(part[:-1]) * 1024))
+				else:
+					finalParts.append(part[:-1])
+			physParts = finalParts
+
 
 			self.mainLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
 
@@ -2315,7 +2326,8 @@ class checks:
 		finally:
 			if int(pythonVersion[1]) >= 6:
 				try:
-					response.close()
+					if 'response' in locals():
+						response.close()
 				except Exception, e:
 					import traceback
 					self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
