@@ -1485,6 +1485,12 @@ class checks:
 
 				connections = float(float(result[1]) - float(self.mysqlConnectionsStore)) / 60
 
+				# we can't have negative connections
+				# causes weirdness
+				# UV386
+				if connections < 0:
+					connections = 0
+
 				self.mysqlConnectionsStore = result[1]
 
 			self.mainLogger.debug('getMySQLStatus: connections  = %s', connections)
@@ -1588,6 +1594,10 @@ class checks:
 				self.mainLogger.debug('getMySQLStatus: result = %s', result[1])
 
 				slowQueries = float(float(result[1]) - float(self.mysqlSlowQueriesStore)) / 60
+
+				# this can't be < 0
+				if slowQueries < 0:
+					slowQueries = 0
 
 				self.mysqlSlowQueriesStore = result[1]
 
