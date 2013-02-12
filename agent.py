@@ -481,7 +481,7 @@ if __name__ == '__main__':
                 for agentFile in updateInfo['files']:
                     mainLogger.debug('Update: updating ' + agentFile['name'])
                     print 'Updating ' + agentFile['name']
-                    installation_path = os.path.dirname(os.abspath(__file__))
+                    installation_path = os.path.dirname(os.path.abspath(__file__))
                     mainLogger.debug('Update: installation path: ' + installation_path)
                     
                     try:
