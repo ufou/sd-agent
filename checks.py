@@ -1152,15 +1152,22 @@ class checks:
 
 			# Global locks
 			try:
-				self.mainLogger.debug('getMongoDBStatus: globalLock')
+				split_version = status['version'].split('.')
+				split_version = map(lambda x: int(x), split_version)
 
-				status['globalLock'] = {}
-				status['globalLock']['ratio'] = statusOutput['globalLock']['ratio']
+				if (split_version[0] <= 2) and (split_version[1] < 2):
 
-				status['globalLock']['currentQueue'] = {}
-				status['globalLock']['currentQueue']['total'] = statusOutput['globalLock']['currentQueue']['total']
-				status['globalLock']['currentQueue']['readers'] = statusOutput['globalLock']['currentQueue']['readers']
-				status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
+					self.mainLogger.debug('getMongoDBStatus: globalLock')
+
+					status['globalLock'] = {}
+					status['globalLock']['ratio'] = statusOutput['globalLock']['ratio']
+
+					status['globalLock']['currentQueue'] = {}
+					status['globalLock']['currentQueue']['total'] = statusOutput['globalLock']['currentQueue']['total']
+					status['globalLock']['currentQueue']['readers'] = statusOutput['globalLock']['currentQueue']['readers']
+					status['globalLock']['currentQueue']['writers'] = statusOutput['globalLock']['currentQueue']['writers']
+				else:
+					self.mainLogger.debug('getMongoDBStatus: version >= 2.2, not getting globalLock status')
 
 			except KeyError, ex:
 				self.mainLogger.error('getMongoDBStatus: globalLock KeyError exception = %s', ex)
