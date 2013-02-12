@@ -23,6 +23,7 @@ import subprocess
 import sys
 import urllib
 import urllib2
+import socket
 
 try:
     from hashlib import md5
@@ -2292,7 +2293,7 @@ class checks:
 	# Postback
 	#
 
-	def doPostBack(self, postBackData):
+	def doPostBack(self, postBackData, retry=False):
 		self.mainLogger.debug('doPostBack: start')
 
 		try:
@@ -2312,6 +2313,13 @@ class checks:
 
 		except urllib2.URLError, e:
 			self.mainLogger.error('doPostBack: URLError = %s', e)
+
+			# attempt a lookup, in case of DNS fail
+			# https://github.com/serverdensity/sd-agent/issues/47 
+			if not retry:
+				self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
+				[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+				return self.doPostBack(postBackData, retry=True)
 			return False
 
 		except httplib.HTTPException, e: # Added for case #26701
