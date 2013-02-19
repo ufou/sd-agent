@@ -183,8 +183,9 @@ if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['ag
     sys.exit(1)
 
 # Check to make sure sd_url is in correct
-if re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None:
-    print 'Your sd_url is incorrect. It needs to be in the form http://example.serverdensity.com (or using https)'
+if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) == None) \
+   and (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.io)', agentConfig['sdUrl']) == None):
+    print 'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or https://example.serverdensity.io'
     print 'Agent will now quit'
     sys.exit(1)
 
