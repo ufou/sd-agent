@@ -2322,10 +2322,19 @@ class checks:
 				socket.setdefaulttimeout(5)
 
 				self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
-				[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+				try:
+					[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+				except:
+					# this can raise, if the dns lookup doesn't work
+					pass
 				socket.setdefaulttimeout(timeout)
 
+				self.mainLogger.info("doPostBack: Executing retry")
 				return self.doPostBack(postBackData, retry=True)
+			else:
+				# if we get here, the retry has failed, so we need to reschedule
+				self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+				return False
 			return False
 
 		except httplib.HTTPException, e: # Added for case #26701
