@@ -1245,32 +1245,66 @@ class checks:
 				else:
 					self.mainLogger.debug('getMongoDBStatus: per second metrics cached data exists')
 
-					accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
+					if (split_version[0] <= 2) and (split_version[1] < 4):
 
-					if accessesPS >= 0:
-						status['indexCounters'] = {}
-						status['indexCounters']['btree'] = {}
-						status['indexCounters']['btree']['accessesPS'] = accessesPS
-						status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
-						status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
-						status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
+						self.mainLogger.debug("getMongoDBStatus: version < 2.4, using btree")
 
-						status['opcounters'] = {}
-						status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
-						status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
-						status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
-						status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
-						status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
-						status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+						accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
 
-						status['asserts'] = {}
-						status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
-						status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
-						status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
-						status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
-						status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+						if accessesPS >= 0:
+							status['indexCounters'] = {}
+							status['indexCounters']['btree'] = {}
+							status['indexCounters']['btree']['accessesPS'] = accessesPS
+							status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
+							status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
+							status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
 
-						self.setMongoDBStore(statusOutput)
+							status['opcounters'] = {}
+							status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
+							status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
+							status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
+							status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
+							status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
+							status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+
+							status['asserts'] = {}
+							status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
+							status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
+							status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
+							status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
+							status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+
+							self.setMongoDBStore(statusOutput)
+					elif (split_version[0] <= 2) and (split_version[1] >= 4):
+
+						self.mainLogger.debug("getMongoDBStatus: version >= 2.4, not using btree")
+
+						accessesPS = float(statusOutput['indexCounters']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
+
+						if accessesPS >= 0:
+							status['indexCounters'] = {}
+							status['indexCounters']['btree'] = {}
+							status['indexCounters']['btree']['accessesPS'] = accessesPS
+							status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
+							status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
+							status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
+
+							status['opcounters'] = {}
+							status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
+							status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
+							status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
+							status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
+							status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
+							status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+
+							status['asserts'] = {}
+							status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
+							status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
+							status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
+							status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
+							status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+
+							self.setMongoDBStore(statusOutput)
 					else:
 						self.mainLogger.debug('getMongoDBStatus: per second metrics negative value calculated, mongod likely restarted, so clearing cache')
 						self.setMongoDBStore(statusOutput)
@@ -1377,29 +1411,63 @@ class checks:
 		return status
 
 	def setMongoDBStore(self, statusOutput):
-		self.mongoDBStore = {}
 
-		self.mongoDBStore['indexCounters'] = {}
-		self.mongoDBStore['indexCounters']['btree'] = {}
-		self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['btree']['accesses']
-		self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['btree']['hits']
-		self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['btree']['misses']
-		self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['btree']['missRatio']
+		split_version = statusOutput['version'].split('.')
+		split_version = map(lambda x: int(x), split_version)
 
-		self.mongoDBStore['opcounters'] = {}
-		self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
-		self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
-		self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
-		self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
-		self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
-		self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+		if (split_version[0] <= 2) and (split_version[1] < 4):
 
-		self.mongoDBStore['asserts'] = {}
-		self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
-		self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
-		self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
-		self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
-		self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
+			self.mainLogger.debug("getMongoDBStatus: version < 2.4, using btree")
+			self.mongoDBStore = {}
+
+			self.mongoDBStore['indexCounters'] = {}
+			self.mongoDBStore['indexCounters']['btree'] = {}
+			self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['btree']['accesses']
+			self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['btree']['hits']
+			self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['btree']['misses']
+			self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['btree']['missRatio']
+
+			self.mongoDBStore['opcounters'] = {}
+			self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
+			self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
+			self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
+			self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
+			self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
+			self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+
+			self.mongoDBStore['asserts'] = {}
+			self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
+			self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
+			self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
+			self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
+			self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
+
+		elif (split_version[0] <= 2) and (split_version[1] >= 4):
+
+			self.mainLogger.debug("getMongoDBStatus: version >= 2.4, not using btree")
+			self.mongoDBStore = {}
+
+			self.mongoDBStore['indexCounters'] = {}
+			self.mongoDBStore['indexCounters']['btree'] = {}
+			self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['accesses']
+			self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['hits']
+			self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['misses']
+			self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['missRatio']
+
+			self.mongoDBStore['opcounters'] = {}
+			self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
+			self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
+			self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
+			self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
+			self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
+			self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+
+			self.mongoDBStore['asserts'] = {}
+			self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
+			self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
+			self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
+			self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
+			self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
 
 	def getMySQLStatus(self):
 		self.mainLogger.debug('getMySQLStatus: start')
@@ -2315,7 +2383,7 @@ class checks:
 			self.mainLogger.error('doPostBack: URLError = %s', e)
 
 			# attempt a lookup, in case of DNS fail
-			# https://github.com/serverdensity/sd-agent/issues/47 
+			# https://github.com/serverdensity/sd-agent/issues/47
 			if not retry:
 
 				timeout = socket.getdefaulttimeout()
