@@ -15,7 +15,7 @@ agentConfig = {}
 agentConfig['logging'] = logging.DEBUG
 agentConfig['checkFreq'] = 60
 
-agentConfig['version'] = '1.12.2'
+agentConfig['version'] = '1.12.3'
 
 rawConfig = {}
 
