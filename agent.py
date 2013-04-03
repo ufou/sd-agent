@@ -12,10 +12,10 @@ import logging
 
 # General config
 agentConfig = {}
-agentConfig['logging'] = logging.DEBUG
+agentConfig['logging'] = logging.INFO
 agentConfig['checkFreq'] = 60
 
-agentConfig['version'] = '1.12.3'
+agentConfig['version'] = '1.12.4'
 
 rawConfig = {}
 
