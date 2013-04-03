@@ -2365,54 +2365,56 @@ class checks:
 		self.mainLogger.debug('doPostBack: start')
 
 		try:
-			self.mainLogger.info('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
 
-			# Build the request handler
-			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+			try:
+				self.mainLogger.info('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
 
-			# Do the request, log any errors
-			response = urllib2.urlopen(request)
+				# Build the request handler
+				request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 
-			self.mainLogger.info('Postback response: %s', response.read())
+				# Do the request, log any errors
+				response = urllib2.urlopen(request)
 
-		except urllib2.HTTPError, e:
-			self.mainLogger.error('doPostBack: HTTPError = %s', e)
-			return False
+				self.mainLogger.info('Postback response: %s', response.read())
 
-		except urllib2.URLError, e:
-			self.mainLogger.error('doPostBack: URLError = %s', e)
-
-			# attempt a lookup, in case of DNS fail
-			# https://github.com/serverdensity/sd-agent/issues/47
-			if not retry:
-
-				timeout = socket.getdefaulttimeout()
-				socket.setdefaulttimeout(5)
-
-				self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
-				try:
-					[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
-				except:
-					# this can raise, if the dns lookup doesn't work
-					pass
-				socket.setdefaulttimeout(timeout)
-
-				self.mainLogger.info("doPostBack: Executing retry")
-				return self.doPostBack(postBackData, retry=True)
-			else:
-				# if we get here, the retry has failed, so we need to reschedule
-				self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('doPostBack: HTTPError = %s', e)
 				return False
-			return False
 
-		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException = %s', e)
-			return False
+			except urllib2.URLError, e:
+				self.mainLogger.error('doPostBack: URLError = %s', e)
 
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
-			return False
+				# attempt a lookup, in case of DNS fail
+				# https://github.com/serverdensity/sd-agent/issues/47
+				if not retry:
+
+					timeout = socket.getdefaulttimeout()
+					socket.setdefaulttimeout(5)
+
+					self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
+					try:
+						[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+					except:
+						# this can raise, if the dns lookup doesn't work
+						pass
+					socket.setdefaulttimeout(timeout)
+
+					self.mainLogger.info("doPostBack: Executing retry")
+					return self.doPostBack(postBackData, retry=True)
+				else:
+					# if we get here, the retry has failed, so we need to reschedule
+					self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+					return False
+				return False
+
+			except httplib.HTTPException, e: # Added for case #26701
+				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+				return False
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
+				return False
 
 		finally:
 			if int(pythonVersion[1]) >= 6:
