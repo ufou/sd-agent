@@ -121,8 +121,8 @@ function check_distro_version() {
 }
 
 function print_help() {
-    echo "   $0 -a example.serverdensity.io -k agentKey"
-    echo "      -a: Required. Account URL in form example.serverdensity.io"
+    echo "   $0 -a https://example.serverdensity.io -k agentKey"
+    echo "      -a: Required. Account URL in form https://example.serverdensity.io"
     echo "      -k: Required. Agent key."
     exit 0
 }
@@ -182,7 +182,7 @@ function configure_agent() {
 #
 
 [Main]
-sd_url: https://$ACCOUNT
+sd_url: $ACCOUNT
 agent_key: $AGENTKEY
 
 #
@@ -439,4 +439,4 @@ fi
 
 echo ""
 echo "The agent has been installed successfully!"
-echo "Head back to https://$ACCOUNT to see your stats and set up some alerts."
+echo "Head back to $ACCOUNT to see your stats and set up some alerts."
