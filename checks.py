@@ -438,7 +438,7 @@ class checks:
 						values = re.findall(itemRegexp, line)
 
 				if values and headers:
-					cpuStats['CPU0'] = dict(zip(headers, values))
+					cpuStats['CPUs'] = dict(zip(headers, values))
 
 			except Exception, ex:
 				import traceback
