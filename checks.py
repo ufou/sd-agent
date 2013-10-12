@@ -419,6 +419,32 @@ class checks:
 				import traceback
 				self.mainLogger.error('getCPUStats: exception = %s', traceback.format_exc())
 				return False
+		elif sys.platform == 'darwin':
+			self.mainLogger.debug('getCPUStats: darwin')
+
+			try:
+				proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, close_fds=True)
+				stats = proc.communicate()[0]
+
+				itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
+				headerRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
+				headers = []
+				values = []
+				for line in stats.split('\n'):
+					# top line with the headers in
+					if '%' in line:
+						headers = re.findall(headerRegexp, line)
+					if line and line.startswith('Average:'):
+						values = re.findall(itemRegexp, line)
+
+				if values and headers:
+					cpuStats['CPU'] = dict(zip(headers, values))
+
+			except Exception, ex:
+				import traceback
+				self.mainLogger.error('getCPUStats: exception = %s', traceback.format_exc())
+				return False
+
 		else:
 			self.mainLogger.debug('getCPUStats: unsupported platform')
 			return False
