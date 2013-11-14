@@ -2386,14 +2386,8 @@ class checks:
 				self.mainLogger.error('doPostBack: HTTPError = %s', e)
 				return False
 
-<<<<<<< Updated upstream
 			except urllib2.URLError, e:
 				self.mainLogger.error('doPostBack: URLError = %s', e)
-=======
-			# attempt a lookup, in case of DNS fail
-			# https://github.com/serverdensity/sd-agent/issues/47
-			if not retry:
->>>>>>> Stashed changes
 
 				# attempt a lookup, in case of DNS fail
 				# https://github.com/serverdensity/sd-agent/issues/47
