@@ -1077,7 +1077,12 @@ class checks:
 
 			self.mainLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
 
-			return {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			# Format changed in OSX Mavericks
+			if len(physParts) > 3:
+				data = {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			else:
+				data = {'physUsed' : physParts[0], 'physFree' : physParts[2], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			return data
 
 		else:
 			self.mainLogger.debug('getMemoryUsage: other platform, returning')
@@ -2381,8 +2386,14 @@ class checks:
 				self.mainLogger.error('doPostBack: HTTPError = %s', e)
 				return False
 
+<<<<<<< Updated upstream
 			except urllib2.URLError, e:
 				self.mainLogger.error('doPostBack: URLError = %s', e)
+=======
+			# attempt a lookup, in case of DNS fail
+			# https://github.com/serverdensity/sd-agent/issues/47
+			if not retry:
+>>>>>>> Stashed changes
 
 				# attempt a lookup, in case of DNS fail
 				# https://github.com/serverdensity/sd-agent/issues/47
