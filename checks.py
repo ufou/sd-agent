@@ -613,6 +613,50 @@ class checks:
 					except Exception, e:
 						self.mainLogger.debug('Process already terminated')
 
+		elif sys.platform == 'darwin':
+			self.mainLogger.debug('getIOStats: darwin')
+
+			try:
+				try:
+					proc1 = subprocess.Popen(["iostat", "-d", "disk0"], stdout=subprocess.PIPE, close_fds=True)
+					proc2 = subprocess.Popen(["tail", "-1"], stdin=proc1.stdout, stdout=subprocess.PIPE, close_fds=True)
+					proc1.stdout.close()
+					proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
+					proc2.stdout.close()
+					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)				
+					proc3.stdout.close()
+
+					stats = proc4.communicate()[0]
+
+					stats = stats.split(':')
+
+					ioStats = {}
+					ioStats['disk0'] = {}
+					ioStats['disk0']['KBt'] = stats[3] # kilobytes per transfer
+					ioStats['disk0']['tps'] = stats[5] # transfers per second
+					ioStats['disk0']['MBs'] = stats[7] # megabytes per second
+
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
+
+				except OSError, ex:
+					# we don't have iostats installed just return false
+					return False
+
+				except Exception, ex:
+					import traceback
+					self.mainLogger.error('getIOStats: exception = %s', traceback.format_exc())
+					return False
+			finally:
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+
 		else:
 			self.mainLogger.debug('getIOStats: unsupported platform')
 			return False
