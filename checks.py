@@ -2197,6 +2197,14 @@ class checks:
 		self.mainLogger.debug('getRabbitMQStatus: start')
 		self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
+		if 'rabbitMQStatusUrl' not in self.agentConfig or \
+                    'rabbitMQUser' not in self.agentConfig or \
+                    'rabbitMQPass' not in self.agentConfig or \
+			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
+
+			self.mainLogger.debug('getRabbitMQStatus: config not set')
+			return False
+
 		try:
 			import base64
 			credentials = base64.encodestring('%s:%s' % (self.agentConfig['rabbitMQUser'], self.agentConfig['rabbitMQPass'])).replace('\n', '')
@@ -2208,13 +2216,6 @@ class checks:
 		rabbitMQHeaders = headers
 		rabbitMQHeaders["Authorization"] = "Basic %s" % (credentials,)
 
-		if 'rabbitMQStatusUrl' not in self.agentConfig or \
-                    'rabbitMQUser' not in self.agentConfig or \
-                    'rabbitMQPass' not in self.agentConfig or \
-			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
-
-			self.mainLogger.debug('getRabbitMQStatus: config not set')
-			return False
 
 		self.mainLogger.debug('getRabbitMQStatus: config set')
 
