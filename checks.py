@@ -2194,8 +2194,6 @@ class checks:
 		return processes
 
 	def getRabbitMQStatus(self):
-		self.mainLogger.debug('getRabbitMQStatus: start')
-		self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
 		if 'rabbitMQStatusUrl' not in self.agentConfig or \
                     'rabbitMQUser' not in self.agentConfig or \
@@ -2204,6 +2202,9 @@ class checks:
 
 			self.mainLogger.debug('getRabbitMQStatus: config not set')
 			return False
+
+		self.mainLogger.debug('getRabbitMQStatus: start')
+		self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
 		try:
 			import base64
