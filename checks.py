@@ -2195,10 +2195,9 @@ class checks:
 
 	def getRabbitMQStatus(self):
 
-		if 'rabbitMQStatusUrl' not in self.agentConfig or \
-                    'rabbitMQUser' not in self.agentConfig or \
-                    'rabbitMQPass' not in self.agentConfig or \
-			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
+		if not self.agentConfig.get('rabbitMQStatusUrl') or \
+                    not self.agentConfig.get('rabbitMQUser') or \
+                    not self.agentConfig.get('rabbitMQPass') or \
 
 			self.mainLogger.debug('getRabbitMQStatus: config not set')
 			return False
