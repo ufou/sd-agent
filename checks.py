@@ -1222,7 +1222,7 @@ class checks:
 			db = conn['local']
 
 			# Server status
-			statusOutput = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
+			statusOutput = db.command('serverStatus', recordStats=0) # Shorthand for {'serverStatus': 1}
 
 			self.mainLogger.debug('getMongoDBStatus: executed serverStatus')
 
@@ -2195,10 +2195,10 @@ class checks:
 
 	def getRabbitMQStatus(self):
 
-		if 'rabbitMQStatusUrl' not in self.agentConfig or \
-                    'rabbitMQUser' not in self.agentConfig or \
-                    'rabbitMQPass' not in self.agentConfig or \
-			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
+		if not self.agentConfig.get('rabbitMQStatusUrl') or \
+                    not self.agentConfig.get('rabbitMQUser') or \
+                    not self.agentConfig.get('rabbitMQPass') or \
+                    self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/api/overview':
 
 			self.mainLogger.debug('getRabbitMQStatus: config not set')
 			return False
