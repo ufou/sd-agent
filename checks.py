@@ -19,6 +19,7 @@ import logging.handlers
 import os
 import platform
 import re
+import string
 import subprocess
 import sys
 import urllib
@@ -384,7 +385,7 @@ class checks:
 				headerNames = re.findall(headerRegexp, header)
 				device = None
 
-				for statsIndex in range(4, len(stats)): # skip "all"
+				for statsIndex in range(3, len(stats)):
 					row = stats[statsIndex]
 
 					if not row: # skip the averages
@@ -392,7 +393,9 @@ class checks:
 
 					deviceMatch = re.match(itemRegexp, row)
 
-					if deviceMatch is not None:
+					if string.find(row, 'all') is not -1:
+						device = 'ALL'
+					elif deviceMatch is not None:
 						device = 'CPU%s' % deviceMatch.groups()[0]
 
 					values = re.findall(valueRegexp, row.replace(',', '.'))
@@ -1147,7 +1150,12 @@ class checks:
 
 			self.mainLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
 
-			return {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			# Format changed in OSX Mavericks
+			if len(physParts) > 3:
+				data = {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			else:
+				data = {'physUsed' : physParts[0], 'physFree' : physParts[2], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			return data
 
 		else:
 			self.mainLogger.debug('getMemoryUsage: other platform, returning')
@@ -2186,6 +2194,15 @@ class checks:
 		return processes
 
 	def getRabbitMQStatus(self):
+
+		if 'rabbitMQStatusUrl' not in self.agentConfig or \
+                    'rabbitMQUser' not in self.agentConfig or \
+                    'rabbitMQPass' not in self.agentConfig or \
+			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
+
+			self.mainLogger.debug('getRabbitMQStatus: config not set')
+			return False
+
 		self.mainLogger.debug('getRabbitMQStatus: start')
 		self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
@@ -2200,13 +2217,6 @@ class checks:
 		rabbitMQHeaders = headers
 		rabbitMQHeaders["Authorization"] = "Basic %s" % (credentials,)
 
-		if 'rabbitMQStatusUrl' not in self.agentConfig or \
-                    'rabbitMQUser' not in self.agentConfig or \
-                    'rabbitMQPass' not in self.agentConfig or \
-			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
-
-			self.mainLogger.debug('getRabbitMQStatus: config not set')
-			return False
 
 		self.mainLogger.debug('getRabbitMQStatus: config set')
 
