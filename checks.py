@@ -2423,14 +2423,17 @@ class checks:
 				self.mainLogger.info('getPlugins: executing  %s', plugin.__class__.__name__)
 
 				try:
-					output[plugin.__class__.__name__] = plugin.run()
+					value = plugin.run()
+					if value:
+						output[plugin.__class__.__name__] = value
+						self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
+						self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
+					else:
+						self.mainLogger.info('getPlugins: executed %s but returned no data', plugin.__class__.__name__)
 
 				except Exception, ex:
 					import traceback
 					self.mainLogger.error('getPlugins: exception = %s', traceback.format_exc())
-
-				self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
-				self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
 
 			self.mainLogger.debug('getPlugins: returning')
 
