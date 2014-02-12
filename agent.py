@@ -290,6 +290,7 @@ if __name__ == '__main__':
     mainLogger.info('sd-agent %s started', agentConfig['version'])
     mainLogger.info('--')
 
+    mainLogger.info('Reading config from: %s', configPath)
     mainLogger.info('sd_url: %s', agentConfig['sdUrl'])
     mainLogger.info('agent_key: %s', agentConfig['agentKey'])
 
