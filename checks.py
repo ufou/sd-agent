@@ -19,6 +19,7 @@ import logging.handlers
 import os
 import platform
 import re
+import string
 import subprocess
 import sys
 import urllib
@@ -384,7 +385,7 @@ class checks:
 				headerNames = re.findall(headerRegexp, header)
 				device = None
 
-				for statsIndex in range(4, len(stats)): # skip "all"
+				for statsIndex in range(3, len(stats)):
 					row = stats[statsIndex]
 
 					if not row: # skip the averages
@@ -392,7 +393,9 @@ class checks:
 
 					deviceMatch = re.match(itemRegexp, row)
 
-					if deviceMatch is not None:
+					if string.find(row, 'all') is not -1:
+						device = 'ALL'
+					elif deviceMatch is not None:
 						device = 'CPU%s' % deviceMatch.groups()[0]
 
 					values = re.findall(valueRegexp, row.replace(',', '.'))
@@ -419,6 +422,32 @@ class checks:
 				import traceback
 				self.mainLogger.error('getCPUStats: exception = %s', traceback.format_exc())
 				return False
+		elif sys.platform == 'darwin':
+			self.mainLogger.debug('getCPUStats: darwin')
+
+			try:
+				proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, close_fds=True)
+				stats = proc.communicate()[0]
+
+				itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
+				headerRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
+				headers = []
+				values = []
+				for line in stats.split('\n'):
+					# top line with the headers in
+					if '%' in line:
+						headers = re.findall(headerRegexp, line)
+					if line and line.startswith('Average:'):
+						values = re.findall(itemRegexp, line)
+
+				if values and headers:
+					cpuStats['CPUs'] = dict(zip(headers, values))
+
+			except Exception, ex:
+				import traceback
+				self.mainLogger.error('getCPUStats: exception = %s', traceback.format_exc())
+				return False
+
 		else:
 			self.mainLogger.debug('getCPUStats: unsupported platform')
 			return False
@@ -571,6 +600,50 @@ class checks:
 						for headerIndex in range(0, len(headerNames)):
 							headerName = headerNames[headerIndex]
 							ioStats[device][headerName] = values[headerIndex]
+
+				except OSError, ex:
+					# we don't have iostats installed just return false
+					return False
+
+				except Exception, ex:
+					import traceback
+					self.mainLogger.error('getIOStats: exception = %s', traceback.format_exc())
+					return False
+			finally:
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+
+		elif sys.platform == 'darwin':
+			self.mainLogger.debug('getIOStats: darwin')
+
+			try:
+				try:
+					proc1 = subprocess.Popen(["iostat", "-d", "disk0"], stdout=subprocess.PIPE, close_fds=True)
+					proc2 = subprocess.Popen(["tail", "-1"], stdin=proc1.stdout, stdout=subprocess.PIPE, close_fds=True)
+					proc1.stdout.close()
+					proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
+					proc2.stdout.close()
+					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)				
+					proc3.stdout.close()
+
+					stats = proc4.communicate()[0]
+
+					stats = stats.split(':')
+
+					ioStats = {}
+					ioStats['disk0'] = {}
+					ioStats['disk0']['KBt'] = stats[3] # kilobytes per transfer
+					ioStats['disk0']['tps'] = stats[5] # transfers per second
+					ioStats['disk0']['MBs'] = stats[7] # megabytes per second
+
+					if int(pythonVersion[1]) >= 6:
+						try:
+							proc.kill()
+						except Exception, e:
+							self.mainLogger.debug('Process already terminated')
 
 				except OSError, ex:
 					# we don't have iostats installed just return false
@@ -1077,7 +1150,12 @@ class checks:
 
 			self.mainLogger.debug('getMemoryUsage: parsed sysctl, completed, returning')
 
-			return {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			# Format changed in OSX Mavericks
+			if len(physParts) > 3:
+				data = {'physUsed' : physParts[3], 'physFree' : physParts[4], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			else:
+				data = {'physUsed' : physParts[0], 'physFree' : physParts[2], 'swapUsed' : swapParts[1], 'swapFree' : swapParts[2], 'cached' : 'NULL'}
+			return data
 
 		else:
 			self.mainLogger.debug('getMemoryUsage: other platform, returning')
@@ -1144,7 +1222,7 @@ class checks:
 			db = conn['local']
 
 			# Server status
-			statusOutput = db.command('serverStatus') # Shorthand for {'serverStatus': 1}
+			statusOutput = db.command('serverStatus', recordStats=0) # Shorthand for {'serverStatus': 1}
 
 			self.mainLogger.debug('getMongoDBStatus: executed serverStatus')
 
@@ -1245,32 +1323,66 @@ class checks:
 				else:
 					self.mainLogger.debug('getMongoDBStatus: per second metrics cached data exists')
 
-					accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
+					if (split_version[0] <= 2) and (split_version[1] < 4):
 
-					if accessesPS >= 0:
-						status['indexCounters'] = {}
-						status['indexCounters']['btree'] = {}
-						status['indexCounters']['btree']['accessesPS'] = accessesPS
-						status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
-						status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
-						status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
+						self.mainLogger.debug("getMongoDBStatus: version < 2.4, using btree")
 
-						status['opcounters'] = {}
-						status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
-						status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
-						status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
-						status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
-						status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
-						status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+						accessesPS = float(statusOutput['indexCounters']['btree']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
 
-						status['asserts'] = {}
-						status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
-						status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
-						status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
-						status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
-						status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+						if accessesPS >= 0:
+							status['indexCounters'] = {}
+							status['indexCounters']['btree'] = {}
+							status['indexCounters']['btree']['accessesPS'] = accessesPS
+							status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['btree']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
+							status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['btree']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
+							status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['btree']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
 
-						self.setMongoDBStore(statusOutput)
+							status['opcounters'] = {}
+							status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
+							status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
+							status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
+							status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
+							status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
+							status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+
+							status['asserts'] = {}
+							status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
+							status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
+							status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
+							status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
+							status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+
+							self.setMongoDBStore(statusOutput)
+					elif (split_version[0] <= 2) and (split_version[1] >= 4):
+
+						self.mainLogger.debug("getMongoDBStatus: version >= 2.4, not using btree")
+
+						accessesPS = float(statusOutput['indexCounters']['accesses'] - self.mongoDBStore['indexCounters']['btree']['accessesPS']) / 60
+
+						if accessesPS >= 0:
+							status['indexCounters'] = {}
+							status['indexCounters']['btree'] = {}
+							status['indexCounters']['btree']['accessesPS'] = accessesPS
+							status['indexCounters']['btree']['hitsPS'] = float(statusOutput['indexCounters']['hits'] - self.mongoDBStore['indexCounters']['btree']['hitsPS']) / 60
+							status['indexCounters']['btree']['missesPS'] = float(statusOutput['indexCounters']['misses'] - self.mongoDBStore['indexCounters']['btree']['missesPS']) / 60
+							status['indexCounters']['btree']['missRatioPS'] = float(statusOutput['indexCounters']['missRatio'] - self.mongoDBStore['indexCounters']['btree']['missRatioPS']) / 60
+
+							status['opcounters'] = {}
+							status['opcounters']['insertPS'] = float(statusOutput['opcounters']['insert'] - self.mongoDBStore['opcounters']['insertPS']) / 60
+							status['opcounters']['queryPS'] = float(statusOutput['opcounters']['query'] - self.mongoDBStore['opcounters']['queryPS']) / 60
+							status['opcounters']['updatePS'] = float(statusOutput['opcounters']['update'] - self.mongoDBStore['opcounters']['updatePS']) / 60
+							status['opcounters']['deletePS'] = float(statusOutput['opcounters']['delete'] - self.mongoDBStore['opcounters']['deletePS']) / 60
+							status['opcounters']['getmorePS'] = float(statusOutput['opcounters']['getmore'] - self.mongoDBStore['opcounters']['getmorePS']) / 60
+							status['opcounters']['commandPS'] = float(statusOutput['opcounters']['command'] - self.mongoDBStore['opcounters']['commandPS']) / 60
+
+							status['asserts'] = {}
+							status['asserts']['regularPS'] = float(statusOutput['asserts']['regular'] - self.mongoDBStore['asserts']['regularPS']) / 60
+							status['asserts']['warningPS'] = float(statusOutput['asserts']['warning'] - self.mongoDBStore['asserts']['warningPS']) / 60
+							status['asserts']['msgPS'] = float(statusOutput['asserts']['msg'] - self.mongoDBStore['asserts']['msgPS']) / 60
+							status['asserts']['userPS'] = float(statusOutput['asserts']['user'] - self.mongoDBStore['asserts']['userPS']) / 60
+							status['asserts']['rolloversPS'] = float(statusOutput['asserts']['rollovers'] - self.mongoDBStore['asserts']['rolloversPS']) / 60
+
+							self.setMongoDBStore(statusOutput)
 					else:
 						self.mainLogger.debug('getMongoDBStatus: per second metrics negative value calculated, mongod likely restarted, so clearing cache')
 						self.setMongoDBStore(statusOutput)
@@ -1377,29 +1489,63 @@ class checks:
 		return status
 
 	def setMongoDBStore(self, statusOutput):
-		self.mongoDBStore = {}
 
-		self.mongoDBStore['indexCounters'] = {}
-		self.mongoDBStore['indexCounters']['btree'] = {}
-		self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['btree']['accesses']
-		self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['btree']['hits']
-		self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['btree']['misses']
-		self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['btree']['missRatio']
+		split_version = statusOutput['version'].split('.')
+		split_version = map(lambda x: int(x), split_version)
 
-		self.mongoDBStore['opcounters'] = {}
-		self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
-		self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
-		self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
-		self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
-		self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
-		self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+		if (split_version[0] <= 2) and (split_version[1] < 4):
 
-		self.mongoDBStore['asserts'] = {}
-		self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
-		self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
-		self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
-		self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
-		self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
+			self.mainLogger.debug("getMongoDBStatus: version < 2.4, using btree")
+			self.mongoDBStore = {}
+
+			self.mongoDBStore['indexCounters'] = {}
+			self.mongoDBStore['indexCounters']['btree'] = {}
+			self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['btree']['accesses']
+			self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['btree']['hits']
+			self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['btree']['misses']
+			self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['btree']['missRatio']
+
+			self.mongoDBStore['opcounters'] = {}
+			self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
+			self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
+			self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
+			self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
+			self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
+			self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+
+			self.mongoDBStore['asserts'] = {}
+			self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
+			self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
+			self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
+			self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
+			self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
+
+		elif (split_version[0] <= 2) and (split_version[1] >= 4):
+
+			self.mainLogger.debug("getMongoDBStatus: version >= 2.4, not using btree")
+			self.mongoDBStore = {}
+
+			self.mongoDBStore['indexCounters'] = {}
+			self.mongoDBStore['indexCounters']['btree'] = {}
+			self.mongoDBStore['indexCounters']['btree']['accessesPS'] = statusOutput['indexCounters']['accesses']
+			self.mongoDBStore['indexCounters']['btree']['hitsPS'] = statusOutput['indexCounters']['hits']
+			self.mongoDBStore['indexCounters']['btree']['missesPS'] = statusOutput['indexCounters']['misses']
+			self.mongoDBStore['indexCounters']['btree']['missRatioPS'] = statusOutput['indexCounters']['missRatio']
+
+			self.mongoDBStore['opcounters'] = {}
+			self.mongoDBStore['opcounters']['insertPS'] = statusOutput['opcounters']['insert']
+			self.mongoDBStore['opcounters']['queryPS'] = statusOutput['opcounters']['query']
+			self.mongoDBStore['opcounters']['updatePS'] = statusOutput['opcounters']['update']
+			self.mongoDBStore['opcounters']['deletePS'] = statusOutput['opcounters']['delete']
+			self.mongoDBStore['opcounters']['getmorePS'] = statusOutput['opcounters']['getmore']
+			self.mongoDBStore['opcounters']['commandPS'] = statusOutput['opcounters']['command']
+
+			self.mongoDBStore['asserts'] = {}
+			self.mongoDBStore['asserts']['regularPS'] = statusOutput['asserts']['regular']
+			self.mongoDBStore['asserts']['warningPS'] = statusOutput['asserts']['warning']
+			self.mongoDBStore['asserts']['msgPS'] = statusOutput['asserts']['msg']
+			self.mongoDBStore['asserts']['userPS'] = statusOutput['asserts']['user']
+			self.mongoDBStore['asserts']['rolloversPS'] = statusOutput['asserts']['rollovers']
 
 	def getMySQLStatus(self):
 		self.mainLogger.debug('getMySQLStatus: start')
@@ -1669,7 +1815,11 @@ class checks:
 
 				if result != None:
 					try:
-						secondsBehindMaster = result['Seconds_Behind_Master']
+						# Handle the case when Seconds_Behind_Master is NULL
+						if result['Seconds_Behind_Master'] is None:
+							secondsBehindMaster = -1
+						else:
+							secondsBehindMaster = result['Seconds_Behind_Master']
 
 						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = %s', secondsBehindMaster)
 
@@ -2044,6 +2194,16 @@ class checks:
 		return processes
 
 	def getRabbitMQStatus(self):
+
+		if not self.agentConfig.get('rabbitMQStatusUrl') or \
+                    not self.agentConfig.get('rabbitMQUser') or \
+                    not self.agentConfig.get('rabbitMQPass') or \
+                    self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/api/overview' or \
+                    self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
+
+			self.mainLogger.debug('getRabbitMQStatus: config not set')
+			return False
+
 		self.mainLogger.debug('getRabbitMQStatus: start')
 		self.mainLogger.debug('getRabbitMQStatus: attempting authentication setup')
 
@@ -2058,13 +2218,6 @@ class checks:
 		rabbitMQHeaders = headers
 		rabbitMQHeaders["Authorization"] = "Basic %s" % (credentials,)
 
-		if 'rabbitMQStatusUrl' not in self.agentConfig or \
-                    'rabbitMQUser' not in self.agentConfig or \
-                    'rabbitMQPass' not in self.agentConfig or \
-			self.agentConfig['rabbitMQStatusUrl'] == 'http://www.example.com:55672/json':
-
-			self.mainLogger.debug('getRabbitMQStatus: config not set')
-			return False
 
 		self.mainLogger.debug('getRabbitMQStatus: config set')
 
@@ -2297,54 +2450,56 @@ class checks:
 		self.mainLogger.debug('doPostBack: start')
 
 		try:
-			self.mainLogger.info('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
 
-			# Build the request handler
-			request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+			try:
+				self.mainLogger.info('doPostBack: attempting postback: %s', self.agentConfig['sdUrl'])
 
-			# Do the request, log any errors
-			response = urllib2.urlopen(request)
+				# Build the request handler
+				request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 
-			self.mainLogger.info('Postback response: %s', response.read())
+				# Do the request, log any errors
+				response = urllib2.urlopen(request)
 
-		except urllib2.HTTPError, e:
-			self.mainLogger.error('doPostBack: HTTPError = %s', e)
-			return False
+				self.mainLogger.info('Postback response: %s', response.read())
 
-		except urllib2.URLError, e:
-			self.mainLogger.error('doPostBack: URLError = %s', e)
-
-			# attempt a lookup, in case of DNS fail
-			# https://github.com/serverdensity/sd-agent/issues/47 
-			if not retry:
-
-				timeout = socket.getdefaulttimeout()
-				socket.setdefaulttimeout(5)
-
-				self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
-				try:
-					[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
-				except:
-					# this can raise, if the dns lookup doesn't work
-					pass
-				socket.setdefaulttimeout(timeout)
-
-				self.mainLogger.info("doPostBack: Executing retry")
-				return self.doPostBack(postBackData, retry=True)
-			else:
-				# if we get here, the retry has failed, so we need to reschedule
-				self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+			except urllib2.HTTPError, e:
+				self.mainLogger.error('doPostBack: HTTPError = %s', e)
 				return False
-			return False
 
-		except httplib.HTTPException, e: # Added for case #26701
-			self.mainLogger.error('doPostBack: HTTPException = %s', e)
-			return False
+			except urllib2.URLError, e:
+				self.mainLogger.error('doPostBack: URLError = %s', e)
 
-		except Exception, e:
-			import traceback
-			self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
-			return False
+				# attempt a lookup, in case of DNS fail
+				# https://github.com/serverdensity/sd-agent/issues/47
+				if not retry:
+
+					timeout = socket.getdefaulttimeout()
+					socket.setdefaulttimeout(5)
+
+					self.mainLogger.info('doPostBack: Retrying postback with DNS lookup iteration')
+					try:
+						[socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0,2)]
+					except:
+						# this can raise, if the dns lookup doesn't work
+						pass
+					socket.setdefaulttimeout(timeout)
+
+					self.mainLogger.info("doPostBack: Executing retry")
+					return self.doPostBack(postBackData, retry=True)
+				else:
+					# if we get here, the retry has failed, so we need to reschedule
+					self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+					return False
+				return False
+
+			except httplib.HTTPException, e: # Added for case #26701
+				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+				return False
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
+				return False
 
 		finally:
 			if int(pythonVersion[1]) >= 6:
