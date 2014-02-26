@@ -2461,9 +2461,12 @@ class checks:
 				ip = s.getsockname()[0]
 				s.close()
 
-				self.mainLogger.debug('doTraceroute: attempting mtr from %s to %s', ip, self.agentConfig['sdUrl'])
+				sdUrl = string.replace(self.agentConfig['sdUrl'], 'https://', '')
+				sdUrl = string.replace(sdUrl, 'http://', '')
 
-				proc = subprocess.Popen(['mtr', '-c 100', '-r', '-n', self.agentConfig['sdUrl']], stdout=subprocess.PIPE, close_fds=True)
+				self.mainLogger.debug('doTraceroute: attempting mtr from %s to %s', ip, sdUrl)
+
+				proc = subprocess.Popen(['mtr', '-c 100', '-r', '-n', sdUrl], stdout=subprocess.PIPE, close_fds=True)
 				mtr = proc.communicate()[0]
 
 				if int(pythonVersion[1]) >= 6:
@@ -2486,10 +2489,7 @@ class checks:
 
 		self.mainLogger.debug('doTraceroute: success, parsing')
 
-		lines = mtr.split('\n')
-
-		for line in lines:
-			self.mainLogger.debug('doTraceroute: %s', line)
+		self.mainLogger.debug('doTraceroute: %s', mtr)
 
 	def doPostBack(self, postBackData, retry=False):
 		self.mainLogger.debug('doPostBack: start')
