@@ -2446,6 +2446,51 @@ class checks:
 	# Postback
 	#
 
+	def doTraceroute(self):
+		
+		if self.agentConfig['logging'] != logging.DEBUG:
+			return False
+
+		self.mainLogger.debug('doTraceroute: start')
+
+		try:
+			try:
+				import socket
+				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+				s.connect(("serverdensity.com", 80))
+				ip = s.getsockname()[0]
+				s.close()
+
+				sdUrl = string.replace(self.agentConfig['sdUrl'], 'https://', '')
+				sdUrl = string.replace(sdUrl, 'http://', '')
+
+				self.mainLogger.debug('doTraceroute: attempting mtr from %s to %s', ip, sdUrl)
+
+				proc = subprocess.Popen(['mtr', '-c 100', '-r', '-n', sdUrl], stdout=subprocess.PIPE, close_fds=True)
+				mtr = proc.communicate()[0]
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doTraceroute: exception = %s', traceback.format_exc())
+
+				return False
+		finally:
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except Exception, e:
+					self.mainLogger.debug('Process already terminated')
+
+		self.mainLogger.debug('doTraceroute: success, parsing')
+
+		self.mainLogger.debug('doTraceroute: %s', mtr)
+
 	def doPostBack(self, postBackData, retry=False):
 		self.mainLogger.debug('doPostBack: start')
 
@@ -2464,6 +2509,9 @@ class checks:
 
 			except urllib2.HTTPError, e:
 				self.mainLogger.error('doPostBack: HTTPError = %s', e)
+
+				self.doTraceroute()
+
 				return False
 
 			except urllib2.URLError, e:
@@ -2489,16 +2537,25 @@ class checks:
 				else:
 					# if we get here, the retry has failed, so we need to reschedule
 					self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+
+					self.doTraceroute()
+
 					return False
 				return False
 
 			except httplib.HTTPException, e: # Added for case #26701
 				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+
+				self.doTraceroute()
+
 				return False
 
 			except Exception, e:
 				import traceback
 				self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
+
+				self.doTraceroute()
+
 				return False
 
 		finally:
