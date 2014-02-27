@@ -2171,27 +2171,34 @@ class checks:
 
 		self.mainLogger.debug('getProcesses: Popen success, parsing')
 
-		# Split out each process
-		processLines = ps.split('\n')
+		try:
 
-		del processLines[0] # Removes the headers
-		processLines.pop() # Removes a trailing empty line
+			# Split out each process
+			processLines = ps.split('\n')
 
-		processes = []
+			del processLines[0] # Removes the headers
+			processLines.pop() # Removes a trailing empty line
 
-		self.mainLogger.debug('getProcesses: Popen success, parsing, looping')
+			processes = []
 
-		for line in processLines:
-			self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
-			line = line.replace("'", '') # These will break JSON. ZD38282
-			line = line.replace('"', '')
-			line = line.replace('\\', '\\\\')
-			line = line.split(None, 10)
-			processes.append(line)
+			self.mainLogger.debug('getProcesses: Popen success, parsing, looping')
 
-		self.mainLogger.debug('getProcesses: completed, returning')
+			for line in processLines:
+				self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
+				line = line.replace("'", '') # These will break JSON. ZD38282
+				line = line.replace('"', '')
+				line = line.replace('\\', '\\\\')
+				line = line.split(None, 10)
+				processes.append(line)
 
-		return processes
+			self.mainLogger.debug('getProcesses: completed, returning')
+
+			return processes
+
+		except Exception, e:
+			import traceback
+			self.mainLogger.error('getProcesses: exception = %s', traceback.format_exc())
+			return False
 
 	def getRabbitMQStatus(self):
 
