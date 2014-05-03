@@ -430,18 +430,18 @@ class checks:
 				stats = proc.communicate()[0]
 
 				itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
-				headerRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
-				headers = []
+				titleRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
+				titles = []
 				values = []
 				for line in stats.split('\n'):
-					# top line with the headers in
+					# top line with the titles in
 					if '%' in line:
-						headers = re.findall(headerRegexp, line)
+						titles = re.findall(titleRegexp, line)
 					if line and line.startswith('Average:'):
 						values = re.findall(itemRegexp, line)
 
-				if values and headers:
-					cpuStats['CPUs'] = dict(zip(headers, values))
+				if values and titles:
+					cpuStats['CPUs'] = dict(zip(titles, values))
 
 			except Exception, ex:
 				import traceback
@@ -2222,7 +2222,11 @@ class checks:
 			return False
 
 		# make sure we only append for the rabbit checks
-		rabbitMQHeaders = headers
+		rabbitMQHeaders = headers = {
+								'User-Agent': 'Server Density Agent',
+								'Content-Type': 'application/x-www-form-urlencoded',
+								'Accept': 'text/html, */*',
+							}
 		rabbitMQHeaders["Authorization"] = "Basic %s" % (credentials,)
 
 
