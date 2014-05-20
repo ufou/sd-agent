@@ -549,7 +549,7 @@ class checks:
 		return usageData
 
 	def getDiskMetaData(self):
-		disks = {}
+		disks = []
 
 		try:
 			for device in glob.glob('/dev/disk/by-id/google*'):
@@ -557,7 +557,9 @@ class checks:
 					continue
 
 				diskNameFull = device.split('/')[-1]
-				disks[diskNameFull.split('-')[1]] = os.path.realpath(device)
+				disks.append({
+					'volumeName': diskNameFull.split('-')[1], 'device' : os.path.realpath(device).split('/')[-1]
+				})
 
 		except Exception, ex:
 			import traceback
