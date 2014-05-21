@@ -556,9 +556,15 @@ class checks:
 				if not device or not device.startswith('/dev/disk/by-id/google-'):
 					continue
 
+				deviceName = os.path.realpath(device).split('/')[-1]
+				match = re.search(r'\d+$', deviceName)
+
+				if match:
+					continue
+
 				diskNameFull = device.split('/')[-1]
 				disks.append({
-					'volumeName': diskNameFull.split('-')[1], 'device' : os.path.realpath(device).split('/')[-1]
+					'volumeName': diskNameFull.split('-')[1], 'device' : deviceName
 				})
 
 		except Exception, ex:
