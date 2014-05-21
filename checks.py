@@ -2665,9 +2665,9 @@ class checks:
 		checksData['agentKey'] = self.agentConfig['agentKey']
 		checksData['agentVersion'] = self.agentConfig['version']
 
-		if diskMetaData != False:
+		if diskMetaData:
 
-			if not 'meta' in  checksData.keys():
+			if not 'meta' in checksData.keys():
 				checksData['meta'] = {}
 			checksData['meta']['volumes'] = diskMetaData
 
