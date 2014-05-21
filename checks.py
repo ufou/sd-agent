@@ -25,7 +25,6 @@ import sys
 import urllib
 import urllib2
 import socket
-import glob
 
 try:
     from hashlib import md5
@@ -550,7 +549,10 @@ class checks:
 
 	def getDiskMetaData(self):
 		disks = []
-
+		try:
+			import glob
+		except:
+			return False
 		try:
 			for device in glob.glob('/dev/disk/by-id/google*'):
 				if not device or not device.startswith('/dev/disk/by-id/google-'):
