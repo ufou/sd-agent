@@ -547,6 +547,35 @@ class checks:
 
 		return usageData
 
+	def getDiskMetaData(self):
+		disks = []
+		try:
+			import glob
+		except:
+			return False
+		try:
+			for device in glob.glob('/dev/disk/by-id/google*'):
+				if not device or not device.startswith('/dev/disk/by-id/google-'):
+					continue
+
+				deviceName = os.path.realpath(device).split('/')[-1]
+				match = re.search(r'\d+$', deviceName)
+
+				if match:
+					continue
+
+				diskNameFull = device.split('/')[-1]
+				disks.append({
+					'volumeName': diskNameFull.split('-')[1], 'device' : deviceName
+				})
+
+		except Exception, ex:
+			import traceback
+			self.mainLogger.error('getDiskMetaData: exception = %s', traceback.format_exc())
+			return False
+
+		return disks
+
 	def getIOStats(self):
 		self.mainLogger.debug('getIOStats: start')
 
@@ -626,7 +655,7 @@ class checks:
 					proc1.stdout.close()
 					proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
 					proc2.stdout.close()
-					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)				
+					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)
 					proc3.stdout.close()
 
 					stats = proc4.communicate()[0]
@@ -2458,7 +2487,7 @@ class checks:
 	#
 
 	def doTraceroute(self):
-		
+
 		if self.agentConfig['logging'] != logging.DEBUG:
 			return False
 
@@ -2625,6 +2654,9 @@ class checks:
 		ioStats = self.getIOStats();
 		cpuStats = self.getCPUStats();
 
+		# Fetch disk info
+		diskMetaData = self.getDiskMetaData();
+
 		if processes is not False and len(processes) > 4194304:
 			self.mainLogger.warn('doChecks: process list larger than 4MB limit, so it has been stripped')
 
@@ -2640,6 +2672,12 @@ class checks:
 		checksData['os'] = self.os
 		checksData['agentKey'] = self.agentConfig['agentKey']
 		checksData['agentVersion'] = self.agentConfig['version']
+
+		if diskMetaData:
+
+			if not 'meta' in checksData.keys():
+				checksData['meta'] = {}
+			checksData['meta']['volumes'] = diskMetaData
 
 		if diskUsage != False:
 
