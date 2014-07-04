@@ -1830,6 +1830,7 @@ class checks:
 
 			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master')
 
+			secondsBehindMaster = None
 			if 'MySQLNoRepl' not in self.agentConfig:
 				# Seconds_Behind_Master
 				try:
@@ -1853,13 +1854,9 @@ class checks:
 						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = %s', secondsBehindMaster)
 
 					except IndexError, e:
-						secondsBehindMaster = None
-
 						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. %s', e)
 
 				else:
-					secondsBehindMaster = None
-
 					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. Result = None.')
 
 				self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
