@@ -430,18 +430,18 @@ class checks:
 				stats = proc.communicate()[0]
 
 				itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
-				headerRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
-				headers = []
+				titleRegexp = re.compile(r'.*?([%][a-zA-Z0-9]+)[\s+]?')
+				titles = []
 				values = []
 				for line in stats.split('\n'):
-					# top line with the headers in
+					# top line with the titles in
 					if '%' in line:
-						headers = re.findall(headerRegexp, line)
+						titles = re.findall(titleRegexp, line)
 					if line and line.startswith('Average:'):
 						values = re.findall(itemRegexp, line)
 
-				if values and headers:
-					cpuStats['CPUs'] = dict(zip(headers, values))
+				if values and titles:
+					cpuStats['CPUs'] = dict(zip(titles, values))
 
 			except Exception, ex:
 				import traceback
@@ -547,6 +547,35 @@ class checks:
 
 		return usageData
 
+	def getDiskMetaData(self):
+		disks = []
+		try:
+			import glob
+		except:
+			return False
+		try:
+			for device in glob.glob('/dev/disk/by-id/google*'):
+				if not device or not device.startswith('/dev/disk/by-id/google-'):
+					continue
+
+				deviceName = os.path.realpath(device).split('/')[-1]
+				match = re.search(r'\d+$', deviceName)
+
+				if match:
+					continue
+
+				diskNameFull = device.split('/')[-1]
+				disks.append({
+					'volumeName': diskNameFull.split('-')[1], 'device' : deviceName
+				})
+
+		except Exception, ex:
+			import traceback
+			self.mainLogger.error('getDiskMetaData: exception = %s', traceback.format_exc())
+			return False
+
+		return disks
+
 	def getIOStats(self):
 		self.mainLogger.debug('getIOStats: start')
 
@@ -626,7 +655,7 @@ class checks:
 					proc1.stdout.close()
 					proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
 					proc2.stdout.close()
-					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)				
+					proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)
 					proc3.stdout.close()
 
 					stats = proc4.communicate()[0]
@@ -1801,6 +1830,7 @@ class checks:
 
 			self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master')
 
+			secondsBehindMaster = None
 			if 'MySQLNoRepl' not in self.agentConfig:
 				# Seconds_Behind_Master
 				try:
@@ -1824,13 +1854,9 @@ class checks:
 						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster = %s', secondsBehindMaster)
 
 					except IndexError, e:
-						secondsBehindMaster = None
-
 						self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. %s', e)
 
 				else:
-					secondsBehindMaster = None
-
 					self.mainLogger.debug('getMySQLStatus: secondsBehindMaster empty. Result = None.')
 
 				self.mainLogger.debug('getMySQLStatus: getting Seconds_Behind_Master - done')
@@ -2171,27 +2197,34 @@ class checks:
 
 		self.mainLogger.debug('getProcesses: Popen success, parsing')
 
-		# Split out each process
-		processLines = ps.split('\n')
+		try:
 
-		del processLines[0] # Removes the headers
-		processLines.pop() # Removes a trailing empty line
+			# Split out each process
+			processLines = ps.split('\n')
 
-		processes = []
+			del processLines[0] # Removes the headers
+			processLines.pop() # Removes a trailing empty line
 
-		self.mainLogger.debug('getProcesses: Popen success, parsing, looping')
+			processes = []
 
-		for line in processLines:
-			self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
-			line = line.replace("'", '') # These will break JSON. ZD38282
-			line = line.replace('"', '')
-			line = line.replace('\\', '\\\\')
-			line = line.split(None, 10)
-			processes.append(line)
+			self.mainLogger.debug('getProcesses: Popen success, parsing, looping')
 
-		self.mainLogger.debug('getProcesses: completed, returning')
+			for line in processLines:
+				self.mainLogger.debug('getProcesses: Popen success, parsing, loop...')
+				line = line.replace("'", '') # These will break JSON. ZD38282
+				line = line.replace('"', '')
+				line = line.replace('\\', '\\\\')
+				line = line.split(None, 10)
+				processes.append(line)
 
-		return processes
+			self.mainLogger.debug('getProcesses: completed, returning')
+
+			return processes
+
+		except Exception, e:
+			import traceback
+			self.mainLogger.error('getProcesses: exception = %s', traceback.format_exc())
+			return False
 
 	def getRabbitMQStatus(self):
 
@@ -2215,7 +2248,11 @@ class checks:
 			return False
 
 		# make sure we only append for the rabbit checks
-		rabbitMQHeaders = headers
+		rabbitMQHeaders = headers = {
+								'User-Agent': 'Server Density Agent',
+								'Content-Type': 'application/x-www-form-urlencoded',
+								'Accept': 'text/html, */*',
+							}
 		rabbitMQHeaders["Authorization"] = "Basic %s" % (credentials,)
 
 
@@ -2446,6 +2483,51 @@ class checks:
 	# Postback
 	#
 
+	def doTraceroute(self):
+
+		if self.agentConfig['logging'] != logging.DEBUG:
+			return False
+
+		self.mainLogger.debug('doTraceroute: start')
+
+		try:
+			try:
+				import socket
+				s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+				s.connect(("serverdensity.com", 80))
+				ip = s.getsockname()[0]
+				s.close()
+
+				sdUrl = string.replace(self.agentConfig['sdUrl'], 'https://', '')
+				sdUrl = string.replace(sdUrl, 'http://', '')
+
+				self.mainLogger.debug('doTraceroute: attempting mtr from %s to %s', ip, sdUrl)
+
+				proc = subprocess.Popen(['mtr', '-c 100', '-r', '-n', sdUrl], stdout=subprocess.PIPE, close_fds=True)
+				mtr = proc.communicate()[0]
+
+				if int(pythonVersion[1]) >= 6:
+					try:
+						proc.kill()
+					except Exception, e:
+						self.mainLogger.debug('Process already terminated')
+
+			except Exception, e:
+				import traceback
+				self.mainLogger.error('doTraceroute: exception = %s', traceback.format_exc())
+
+				return False
+		finally:
+			if int(pythonVersion[1]) >= 6:
+				try:
+					proc.kill()
+				except Exception, e:
+					self.mainLogger.debug('Process already terminated')
+
+		self.mainLogger.debug('doTraceroute: success, parsing')
+
+		self.mainLogger.debug('doTraceroute: %s', mtr)
+
 	def doPostBack(self, postBackData, retry=False):
 		self.mainLogger.debug('doPostBack: start')
 
@@ -2464,6 +2546,9 @@ class checks:
 
 			except urllib2.HTTPError, e:
 				self.mainLogger.error('doPostBack: HTTPError = %s', e)
+
+				self.doTraceroute()
+
 				return False
 
 			except urllib2.URLError, e:
@@ -2489,16 +2574,25 @@ class checks:
 				else:
 					# if we get here, the retry has failed, so we need to reschedule
 					self.mainLogger.info("doPostBack: Retry failed, rescheduling")
+
+					self.doTraceroute()
+
 					return False
 				return False
 
 			except httplib.HTTPException, e: # Added for case #26701
 				self.mainLogger.error('doPostBack: HTTPException = %s', e)
+
+				self.doTraceroute()
+
 				return False
 
 			except Exception, e:
 				import traceback
 				self.mainLogger.error('doPostBack: Exception = %s', traceback.format_exc())
+
+				self.doTraceroute()
+
 				return False
 
 		finally:
@@ -2557,6 +2651,9 @@ class checks:
 		ioStats = self.getIOStats();
 		cpuStats = self.getCPUStats();
 
+		# Fetch disk info
+		diskMetaData = self.getDiskMetaData();
+
 		if processes is not False and len(processes) > 4194304:
 			self.mainLogger.warn('doChecks: process list larger than 4MB limit, so it has been stripped')
 
@@ -2572,6 +2669,12 @@ class checks:
 		checksData['os'] = self.os
 		checksData['agentKey'] = self.agentConfig['agentKey']
 		checksData['agentVersion'] = self.agentConfig['version']
+
+		if diskMetaData:
+
+			if not 'meta' in checksData.keys():
+				checksData['meta'] = {}
+			checksData['meta']['volumes'] = diskMetaData
 
 		if diskUsage != False:
 
