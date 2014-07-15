@@ -9,7 +9,8 @@ Classes for plugin download, installation, and registration.
 import ConfigParser
 import os
 import platform
-import urllib, urllib2
+import urllib
+import urllib2
 from optparse import OptionParser
 from zipfile import ZipFile
 
@@ -61,6 +62,7 @@ class App(object):
             downloader = PluginDownloader(key=args[0], verbose=options.verbose)
             downloader.start()
 
+
 class PluginMetadata(object):
     def __init__(self, downloader=None):
         self.downloader = downloader
@@ -77,6 +79,7 @@ class PluginMetadata(object):
         else:
             return minjson.safeRead(metadata)
 
+
 class FilePluginMetadata(PluginMetadata):
     """
     File-based metadata provider, for testing purposes.
@@ -90,6 +93,7 @@ class FilePluginMetadata(PluginMetadata):
         data = f.read()
         f.close()
         return data
+
 
 class WebPluginMetadata(PluginMetadata):
     """
@@ -112,6 +116,7 @@ class WebPluginMetadata(PluginMetadata):
         response = request.read()
         return response
 
+
 class Action(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
@@ -119,6 +124,7 @@ class Action(object):
 
     def start(self):
         raise Exception, 'sub-classes to provide implementation.'
+
 
 class PluginUpdater(Action):
     def __init__(self, verbose=True):
@@ -143,6 +149,7 @@ class PluginUpdater(Action):
         installs = self.__get_installs()
         for install_id in installs['installIds']:
             PluginDownloader(key=install_id, verbose=self.verbose).start()
+
 
 class PluginRemover(Action):
     """
@@ -185,6 +192,7 @@ class PluginRemover(Action):
         self.__remove_file(response['name'])
         print 'plugin removed successfully.'
 
+
 class PluginDownloader(Action):
     """
     Class for downloading a plugin.
@@ -214,7 +222,7 @@ class PluginDownloader(Action):
         f.write(data)
         f.close()
         z = ZipFile(path, 'r')
-        
+
         try:
             if json:
                 if self.verbose:
@@ -228,7 +236,7 @@ class PluginDownloader(Action):
                     f = open(os.path.join(os.path.dirname(path), name), 'w')
                     f.write(data)
                     f.close()
-        
+
         except Exception, ex:
             print ex
 
@@ -247,6 +255,7 @@ class PluginDownloader(Action):
         self.__download()
         self.config.prompt(metadata['configKeys'])
         print 'plugin installed; please restart your agent'
+
 
 class AgentConfig(object):
     """
@@ -275,7 +284,7 @@ class AgentConfig(object):
                 return path
 
     def __parse(self):
-        if os.access(self.path, os.R_OK) == False:
+        if os.access(self.path, os.R_OK) is False:
             if self.action.verbose:
                 print 'cannot access config'
             raise Exception, 'cannot access config'
@@ -288,7 +297,7 @@ class AgentConfig(object):
         return config
 
     def __write(self, values):
-        for key in values.keys():   
+        for key in values.keys():
             self.config.set('Main', key, values[key])
         try:
             f = open(self.path, 'w')
