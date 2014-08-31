@@ -1236,7 +1236,16 @@ class checks:
 
 			self.mainLogger.debug('-- mongoURI: %s', mongoURI)
 
-			conn = Connection(mongoURI, slave_okay=True)
+			if 'MongoDBKeyfile' in self.agentConfig and 'MongoDBCertfile' in self.agentConfig:
+				self.mainLogger.debug('getMongoDBStatus: MongoDBKeyfile: %s', self.agentConfig['MongoDBKeyfile'])
+				self.mainLogger.debug('getMongoDBStatus: MongoDBCertfile: %s', self.agentConfig['MongoDBCertfile'])
+
+				conn = Connection(mongoURI, slave_okay=True, ssl=True, ssl_keyfile=self.agentConfig['MongoDBKeyfile'], ssl_certfile=self.agentConfig['MongoDBCertfile'])
+
+			else:
+				self.mainLogger.debug('getMongoDBStatus: MongoDBKeyfile and/or MongoDBCertfile not set')
+				
+				conn = Connection(mongoURI, slave_okay=True)
 
 			self.mainLogger.debug('Connected to MongoDB')
 
