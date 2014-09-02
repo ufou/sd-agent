@@ -121,6 +121,12 @@ try:
     if config.has_option('Main', 'mongodb_server'):
         agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
 
+    if config.has_option('Main', 'mongodb_keyfile'):
+        agentConfig['MongoDBKeyfile'] = config.get('Main', 'mongodb_keyfile')
+
+    if config.has_option('Main', 'mongodb_certfile'):
+        agentConfig['MongoDBCertfile'] = config.get('Main', 'mongodb_certfile')
+
     if config.has_option('Main', 'mongodb_dbstats'):
         agentConfig['MongoDBDBStats'] = config.get('Main', 'mongodb_dbstats')
 
