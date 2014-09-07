@@ -4,18 +4,18 @@
     ***
 
     Author: http://www.jejik.com/articles/2007/02/a_simple_unix_linux_daemon_in_python/
-            www.boxedice.com
+            www.serverdensity.com
 
     License: http://creativecommons.org/licenses/by-sa/3.0/
 
-    Changes: 23rd Jan 2009 (David Mytton <david@boxedice.com>)
+    Changes: 23rd Jan 2009 (David Mytton <david@serverdensity.com>)
                  - Replaced hard coded '/dev/null in __init__ with os.devnull
                  - Added OS check to conditionally remove code that doesn't work on OS X
                  - Added output to console on completion
                  - Tidied up formatting
-             11th Mar 2009 (David Mytton <david@boxedice.com>)
+             11th Mar 2009 (David Mytton <david@serverdensity.com>)
                  - Fixed problem with daemon exiting on Python 2.4 (before SystemExit was part of the Exception base)
-             13th Aug 2010 (David Mytton <david@boxedice.com>
+             13th Aug 2010 (David Mytton <david@serverdensity.com>
                  - Fixed unhandled exception if PID file is empty
 '''
 
