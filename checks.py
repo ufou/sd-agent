@@ -2537,6 +2537,15 @@ class checks:
         self.mainLogger.debug('doTraceroute: %s', mtr)
 
     def doPostBack(self, postBackData, retry=False):
+
+        if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)',
+                     self.agentConfig['sdUrl']) is not None):
+            self.mainLogger.warning(
+                'You are currently posting back to our old product, SDv1. '
+                'This will be discontinued in the near future so please visit '
+                'https://www.serverdensity.com/v2migration/ to learn about '
+                'migrating to the new platform.')
+
         self.mainLogger.debug('doPostBack: start')
 
         try:
