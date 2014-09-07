@@ -2470,8 +2470,8 @@ class checks:
 
                 try:
                     output[plugin.__class__.__name__] = plugin.run()
-                        self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
-                        self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
+                    self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
+                    self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
 
                 except Exception:
                     import traceback
