@@ -2469,9 +2469,13 @@ class checks:
                 self.mainLogger.info('getPlugins: executing  %s', plugin.__class__.__name__)
 
                 try:
-                    output[plugin.__class__.__name__] = plugin.run()
-                    self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
-                    self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
+                    value = plugin.run()
+                    if value:
+                        output[plugin.__class__.__name__] = value
+                        self.mainLogger.debug('getPlugins: %s output: %s', plugin.__class__.__name__, output[plugin.__class__.__name__])
+                        self.mainLogger.info('getPlugins: executed %s', plugin.__class__.__name__)
+                    else:
+                        self.mainLogger.info('getPlugins: executed %s but returned no data', plugin.__class__.__name__)
 
                 except Exception:
                     import traceback
