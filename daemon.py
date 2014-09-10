@@ -27,6 +27,7 @@ import time
 
 from signal import SIGTERM
 
+
 class Daemon:
     """
     A generic daemon class.
@@ -69,7 +70,7 @@ class Daemon:
             sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
 
-        if sys.platform != 'darwin': # This block breaks on OS X
+        if sys.platform != 'darwin':  # This block breaks on OS X
             # Redirect standard file descriptors
             sys.stdout.flush()
             sys.stderr.flush()
@@ -83,9 +84,9 @@ class Daemon:
         print "Started"
 
         # Write pidfile
-        atexit.register(self.delpid) # Make sure pid file is removed if we quit
+        atexit.register(self.delpid)  # Make sure pid file is removed if we quit
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
+        file(self.pidfile, 'w+').write("%s\n" % pid)
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -98,14 +99,13 @@ class Daemon:
         print "Starting..."
 
         # Check for a pidfile to see if the daemon already runs
+        pid = None
         try:
-            pf = file(self.pidfile,'r')
+            pf = file(self.pidfile, 'r')
             pid = int(pf.read().strip())
             pf.close()
-        except IOError:
-            pid = None
-        except SystemExit:
-            pid = None
+        except (IOError, SystemExit):
+            pass
 
         if pid:
             message = "pidfile %s already exists. Is it already running?\n"
@@ -124,14 +124,13 @@ class Daemon:
         print "Stopping..."
 
         # Get the pid from the pidfile
+        pid = None
         try:
-            pf = file(self.pidfile,'r')
+            pf = file(self.pidfile, 'r')
             pid = int(pf.read().strip())
             pf.close()
-        except IOError:
-            pid = None
-        except ValueError:
-            pid = None
+        except (IOError, ValueError):
+            pass
 
         if not pid:
             message = "pidfile %s does not exist. Not running?\n"
@@ -141,7 +140,7 @@ class Daemon:
             if os.path.exists(self.pidfile):
                 os.remove(self.pidfile)
 
-            return # Not an error in a restart
+            return  # Not an error in a restart
 
         # Try killing the daemon process
         try:
@@ -171,4 +170,4 @@ class Daemon:
         You should override this method when you subclass Daemon. It will be called after the process has been
         daemonized by start() or restart().
         """
-
+        pass

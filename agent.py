@@ -11,11 +11,11 @@
 import logging
 
 # General config
-agentConfig = {}
-agentConfig['logging'] = logging.INFO
-agentConfig['checkFreq'] = 60
-
-agentConfig['version'] = '1.13.3.1'
+agentConfig = {
+    'logging': logging.INFO,
+    'checkFreq': 60,
+    'version': '1.13.3.1'
+}
 
 rawConfig = {}
 
@@ -34,10 +34,10 @@ if int(sys.version_info[1]) <= 3:
 # Core modules
 import ConfigParser
 import glob
-import os
 import re
 import sched
 import time
+import os
 
 # After the version check as this isn't available on older Python versions
 # and will error before the message is shown
@@ -61,16 +61,16 @@ try:
     else:
         configPath = path + '/config.cfg'
 
-    if os.access(configPath, os.R_OK) == False:
+    if not os.access(configPath, os.R_OK):
         print 'Unable to read the config file at ' + configPath
         print 'Agent will now quit'
         sys.exit(1)
 
     if os.path.isdir(configPath):
-       for configFile in glob.glob(os.path.join(configPath, "*.cfg")):
-           config.read(configFile)
+        for configFile in glob.glob(os.path.join(configPath, "*.cfg")):
+            config.read(configFile)
     else:
-       config.read(configPath)
+        config.read(configPath)
 
     # Core config
     agentConfig['sdUrl'] = config.get('Main', 'sd_url')
@@ -84,7 +84,7 @@ try:
     if os.path.exists('/var/log/sd-agent/'):
         agentConfig['tmpDirectory'] = '/var/log/sd-agent/'
     else:
-        agentConfig['tmpDirectory'] = '/tmp/' # default which may be overriden in the config later
+        agentConfig['tmpDirectory'] = '/tmp/'  # default which may be overriden in the config later
 
     agentConfig['pidfileDirectory'] = agentConfig['tmpDirectory']
 
@@ -106,13 +106,13 @@ try:
     if config.has_option('Main', 'logging_level'):
         # Maps log levels from the configuration file to Python log levels
         loggingLevelMapping = {
-            'debug'    : logging.DEBUG,
-            'info'     : logging.INFO,
-            'error'    : logging.ERROR,
-            'warn'     : logging.WARN,
-            'warning'  : logging.WARNING,
-            'critical' : logging.CRITICAL,
-            'fatal'    : logging.FATAL,
+            'debug': logging.DEBUG,
+            'info': logging.INFO,
+            'error': logging.ERROR,
+            'warn': logging.WARN,
+            'warning': logging.WARNING,
+            'critical': logging.CRITICAL,
+            'fatal': logging.FATAL,
         }
 
         customLogging = config.get('Main', 'logging_level')
@@ -203,12 +203,13 @@ if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.(com|io)',
     sys.exit(1)
 
 # Check apache_status_url is not empty (case 27073)
-if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] == None:
-    print 'You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it as its default value - http://www.example.com/server-status/?auto'
+if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] is None:
+    print ('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, '
+           'leave it as its default value - http://www.example.com/server-status/?auto')
     print 'Agent will now quit'
     sys.exit(1)
 
-if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] == None:
+if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] is None:
     print 'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status'
     print 'Agent will now quit'
     sys.exit(1)
@@ -235,6 +236,7 @@ for section in config.sections():
     for option in config.options(section):
         rawConfig[section][option] = config.get(section, option)
 
+
 # Override the generic daemon class to run our checks
 class agent(Daemon):
 
@@ -253,7 +255,7 @@ class agent(Daemon):
 
         elif sys.platform.find('freebsd') != -1:
             version = platform.uname()[2]
-            systemStats['fbsdV'] = ('freebsd', version, '') # no codename for FreeBSD
+            systemStats['fbsdV'] = ('freebsd', version, '')  # no codename for FreeBSD
 
         mainLogger.info('System: ' + str(systemStats))
 
@@ -265,7 +267,7 @@ class agent(Daemon):
         # Schedule the checks
         mainLogger.info('checkFreq: %s', agentConfig['checkFreq'])
         s = sched.scheduler(time.time, time.sleep)
-        c.doChecks(s, True, systemStats) # start immediately (case 28315)
+        c.doChecks(s, True, systemStats)  # start immediately (case 28315)
         s.run()
 
     def cpuCores(self):
@@ -285,12 +287,12 @@ if __name__ == '__main__':
     # Logging
     logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')
 
-    if os.access(agentConfig['tmpDirectory'], os.W_OK) == False:
+    if not os.access(agentConfig['tmpDirectory'], os.W_OK):
         print 'Unable to write the log file at ' + logFile
         print 'Agent will now quit'
         sys.exit(1)
 
-    handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5) # 10MB files
+    handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5)  # 10MB files
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     handler.setFormatter(formatter)
@@ -309,7 +311,7 @@ if __name__ == '__main__':
 
     argLen = len(sys.argv)
 
-    if argLen == 3 or argLen == 4: # needs to accept case when --clean is passed
+    if argLen == 3 or argLen == 4:  # needs to accept case when --clean is passed
         if sys.argv[2] == 'init':
             # This path added for newer Linux packages which run under
             # a separate sd-agent user account.
@@ -321,7 +323,7 @@ if __name__ == '__main__':
     else:
         pidFile = os.path.join(agentConfig['pidfileDirectory'], 'sd-agent.pid')
 
-    if os.access(agentConfig['pidfileDirectory'], os.W_OK) == False:
+    if not os.access(agentConfig['pidfileDirectory'], os.W_OK):
         print 'Unable to write the PID file at ' + pidFile
         print 'Agent will now quit'
         sys.exit(1)
@@ -361,7 +363,7 @@ if __name__ == '__main__':
             mainLogger.info('Action: status')
 
             try:
-                pf = file(pidFile,'r')
+                pf = file(pidFile, 'r')
                 pid = int(pf.read().strip())
                 pf.close()
             except IOError:
@@ -386,7 +388,7 @@ if __name__ == '__main__':
             import platform
             import urllib2
 
-            print 'Checking if there is a new version';
+            print 'Checking if there is a new version'
 
             # Get the latest version info
             try:
@@ -420,7 +422,7 @@ if __name__ == '__main__':
             pythonVersion = platform.python_version_tuple()
 
             # Decode the JSON
-            if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we only support v2 anyway
+            if int(pythonVersion[1]) >= 6:  # Don't bother checking major version since we only support v2 anyway
                 import json
 
                 mainLogger.debug('Update: decoding JSON (json)')
@@ -444,12 +446,12 @@ if __name__ == '__main__':
 
             # Do the version check
             if updateInfo['version'] != agentConfig['version']:
-                import md5 # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
+                import md5  # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
                 import urllib
 
                 print 'A new version is available.'
 
-                def downloadFile(agentFile, recursed = False):
+                def downloadFile(agentFile, recursed=False):
                     mainLogger.debug('Update: downloading ' + agentFile['name'])
                     print 'Downloading ' + agentFile['name']
 
@@ -465,7 +467,7 @@ if __name__ == '__main__':
                         part = f.read(1024)
 
                         if not part:
-                            break # end of file
+                            break  # end of file
 
                         checksum.update(part)
 
@@ -477,7 +479,7 @@ if __name__ == '__main__':
 
                     else:
                         # Try once more
-                        if recursed == False:
+                        if not recursed:
                             downloadFile(agentFile, True)
 
                         else:
@@ -491,7 +493,7 @@ if __name__ == '__main__':
                 # If we got to here then everything worked out fine. However, all the files are still in temporary locations so we need to move them
                 # This is to stop an update breaking a working agent if the update fails halfway through
                 import os
-                import shutil # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
+                import shutil  # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
 
                 for agentFile in updateInfo['files']:
                     mainLogger.debug('Update: updating ' + agentFile['name'])
