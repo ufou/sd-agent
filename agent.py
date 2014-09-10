@@ -37,6 +37,7 @@ import glob
 import re
 import sched
 import time
+import os
 
 # After the version check as this isn't available on older Python versions
 # and will error before the message is shown

@@ -935,7 +935,7 @@ class checks:
                             for part in parts:
                                 match = re.search(regexp, part)
 
-                                if match not is None:
+                                if match is not None:
                                     physUsed = match.group(0)
                                     self.mainLogger.debug('getMemoryUsage: sysinfo: found used %s', physUsed)
 
