@@ -11,11 +11,11 @@
 import logging
 
 # General config
-agentConfig = {}
-agentConfig['logging'] = logging.INFO
-agentConfig['checkFreq'] = 60
-
-agentConfig['version'] = '1.13.2'
+agentConfig = {
+    'logging': logging.INFO,
+    'checkFreq': 60,
+    'version': '1.13.3.1'
+}
 
 rawConfig = {}
 
@@ -24,23 +24,21 @@ rawConfig = {}
 # in 2.4.
 import sys
 if int(sys.version_info[1]) <= 3:
-    print (
-        'You are using an outdated version of Python. Please update to v2.4 or '
-        'above (v3 is not supported). For newer OSs, you can update Python '
-        'without affecting your system install. See '
-        'http://blog.boxedice.com/2010/01/19/updating-python-on-rhelcentos/ '
-        'If you are running RHEl 4 / CentOS 4 then you will need to compile Python '
-        'manually.'
-    )
+    print ('You are using an outdated version of Python. Please update to '
+           'v2.4 or above (v3 is not supported). For newer OSs, you can '
+           'update Python without affecting your system install. See '
+           'https://blog.serverdensity.com/updating-python-on-rhelcentos/ If '
+           'you are running RHEl 4 / CentOS 4 then you will need to compile '
+           'Python manually.')
     sys.exit(1)
 
 # Core modules
 import ConfigParser
 import glob
-import os
 import re
 import sched
 import time
+import os
 
 # After the version check as this isn't available on older Python versions
 # and will error before the message is shown
@@ -64,7 +62,7 @@ try:
     else:
         configPath = path + '/config.cfg'
 
-    if os.access(configPath, os.R_OK) is False:
+    if not os.access(configPath, os.R_OK):
         print 'Unable to read the config file at ' + configPath
         print 'Agent will now quit'
         sys.exit(1)
@@ -134,6 +132,12 @@ try:
     if config.has_option('Main', 'mongodb_server'):
         agentConfig['MongoDBServer'] = config.get('Main', 'mongodb_server')
 
+    if config.has_option('Main', 'mongodb_keyfile'):
+        agentConfig['MongoDBKeyfile'] = config.get('Main', 'mongodb_keyfile')
+
+    if config.has_option('Main', 'mongodb_certfile'):
+        agentConfig['MongoDBCertfile'] = config.get('Main', 'mongodb_certfile')
+
     if config.has_option('Main', 'mongodb_dbstats'):
         agentConfig['MongoDBDBStats'] = config.get('Main', 'mongodb_dbstats')
 
@@ -190,33 +194,30 @@ except ConfigParser.NoOptionError, e:
     print 'There are some items missing from your config file, but nothing fatal'
 
 # Check to make sure the default config values have been changed (only core config values)
-if agentConfig['sdUrl'] == 'http://example.serverdensity.com' or agentConfig['agentKey'] == 'keyHere':
+if (re.match('http(s)?(\:\/\/)example\.serverdensity\.(com|io)',
+             agentConfig['sdUrl']) is not None
+        or agentConfig['agentKey'] == 'keyHere'):
     print 'You have not modified config.cfg for your server'
     print 'Agent will now quit'
     sys.exit(1)
 
 # Check to make sure sd_url is in correct
-if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.com)', agentConfig['sdUrl']) is None) \
-   and (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(serverdensity.io)', agentConfig['sdUrl']) is None):
-    print (
-        'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or '
-        'https://example.serverdensity.io\nAgent will now quit'
-    )
+if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.(com|io)',
+             agentConfig['sdUrl']) is None):
+    print 'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or https://example.serverdensity.io'
+    print 'Agent will now quit'
     sys.exit(1)
 
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] is None:
-    print (
-        'You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, leave it '
-        'as its default value - http://www.example.com/server-status/?auto\nAgent will now quit'
-    )
+    print ('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, '
+           'leave it as its default value - http://www.example.com/server-status/?auto')
+    print 'Agent will now quit'
     sys.exit(1)
 
 if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] is None:
-    print (
-        'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as '
-        'its default value - http://www.example.com/nginx_status\nAgent will now quit'
-    )
+    print 'You must provide a config value for nginx_status_url. If you do not wish to use Nginx monitoring, leave it as its default value - http://www.example.com/nginx_status'
+    print 'Agent will now quit'
     sys.exit(1)
 
 if (
@@ -276,7 +277,7 @@ class agent(Daemon):
 
         elif sys.platform.find('freebsd') != -1:
             version = platform.uname()[2]
-            systemStats['fbsdV'] = ('freebsd', version, '')     # no codename for FreeBSD
+            systemStats['fbsdV'] = ('freebsd', version, '')  # no codename for FreeBSD
 
         mainLogger.info('System: ' + str(systemStats))
 
@@ -288,7 +289,7 @@ class agent(Daemon):
         # Schedule the checks
         mainLogger.info('checkFreq: %s', agentConfig['checkFreq'])
         s = sched.scheduler(time.time, time.sleep)
-        c.doChecks(s, True, systemStats)        # start immediately (case 28315)
+        c.doChecks(s, True, systemStats)  # start immediately (case 28315)
         s.run()
 
     def cpuCores(self):
@@ -312,12 +313,12 @@ if __name__ == '__main__':
     # Logging
     logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')
 
-    if os.access(agentConfig['tmpDirectory'], os.W_OK) is False:
+    if not os.access(agentConfig['tmpDirectory'], os.W_OK):
         print 'Unable to write the log file at ' + logFile
         print 'Agent will now quit'
         sys.exit(1)
 
-    handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5)   # 10MB files
+    handler = logging.handlers.RotatingFileHandler(logFile, maxBytes=10485760, backupCount=5)  # 10MB files
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     handler.setFormatter(formatter)
@@ -348,7 +349,7 @@ if __name__ == '__main__':
     else:
         pidFile = os.path.join(agentConfig['pidfileDirectory'], 'sd-agent.pid')
 
-    if os.access(agentConfig['pidfileDirectory'], os.W_OK) is False:
+    if not os.access(agentConfig['pidfileDirectory'], os.W_OK):
         print 'Unable to write the PID file at ' + pidFile
         print 'Agent will now quit'
         sys.exit(1)
@@ -508,7 +509,7 @@ if __name__ == '__main__':
 
                     else:
                         # Try once more
-                        if recursed is False:
+                        if not recursed:
                             downloadFile(agentFile, True)
 
                         else:

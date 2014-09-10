@@ -4,8 +4,6 @@
 Classes for plugin download, installation, and registration.
 
 """
-
-
 import ConfigParser
 import os
 import platform
@@ -68,7 +66,7 @@ class PluginMetadata(object):
         self.downloader = downloader
 
     def get(self):
-        raise Exception, 'sub-classes to provide implementation.'
+        raise Exception('sub-classes to provide implementation.')
 
     def json(self):
         metadata = self.get()
@@ -123,7 +121,8 @@ class Action(object):
         self.verbose = verbose
 
     def start(self):
-        raise Exception, 'sub-classes to provide implementation.'
+        raise Exception('sub-classes to provide implementation.')
+
 
 
 class PluginUpdater(Action):
@@ -188,7 +187,7 @@ class PluginRemover(Action):
             print 'retrieved remove response.'
         assert 'status' in response, 'response is not valid.'
         if 'status' in response and response['status'] == 'error':
-            raise Exception, response['msg']
+            raise Exception(response['msg'])
         self.__remove_file(response['name'])
         print 'plugin removed successfully.'
 
@@ -250,7 +249,7 @@ class PluginDownloader(Action):
             print 'retrieved metadata.'
         assert 'configKeys' in metadata or 'status' in metadata, 'metadata is not valid.'
         if 'status' in metadata and metadata['status'] == 'error':
-            raise Exception, metadata['msg']
+            raise Exception(metadata['msg'])
         self.__prepare_plugin_directory()
         self.__download()
         self.config.prompt(metadata['configKeys'])
@@ -284,10 +283,10 @@ class AgentConfig(object):
                 return path
 
     def __parse(self):
-        if os.access(self.path, os.R_OK) is False:
+        if not os.access(self.path, os.R_OK):
             if self.action.verbose:
                 print 'cannot access config'
-            raise Exception, 'cannot access config'
+            raise Exception('cannot access config')
         if self.action.verbose:
             print 'found config, parsing'
         config = ConfigParser.ConfigParser()
