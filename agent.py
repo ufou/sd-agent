@@ -20,7 +20,8 @@ agentConfig = {
 rawConfig = {}
 
 # Check we're not using an old version of Python. Do this before anything else
-# We need 2.4 above because some modules (like subprocess) were only introduced in 2.4.
+# We need 2.4 above because some modules (like subprocess) were only introduced
+# in 2.4.
 import sys
 if int(sys.version_info[1]) <= 3:
     print ('You are using an outdated version of Python. Please update to '
@@ -84,24 +85,29 @@ try:
     if os.path.exists('/var/log/sd-agent/'):
         agentConfig['tmpDirectory'] = '/var/log/sd-agent/'
     else:
-        agentConfig['tmpDirectory'] = '/tmp/'  # default which may be overriden in the config later
+        # default which may be overriden in the config later
+        agentConfig['tmpDirectory'] = '/tmp/'
 
     agentConfig['pidfileDirectory'] = agentConfig['tmpDirectory']
 
     # Plugin config
     if config.has_option('Main', 'plugin_directory'):
-        agentConfig['pluginDirectory'] = config.get('Main', 'plugin_directory')
+        agentConfig['pluginDirectory'] = config.get('Main',
+                                                    'plugin_directory')
 
     # Optional config
     # Also do not need to be present in the config file (case 28326).
     if config.has_option('Main', 'apache_status_url'):
-        agentConfig['apacheStatusUrl'] = config.get('Main', 'apache_status_url')
+        agentConfig['apacheStatusUrl'] = config.get('Main',
+                                                    'apache_status_url')
 
     if config.has_option('Main', 'apache_status_user'):
-        agentConfig['apacheStatusUser'] = config.get('Main', 'apache_status_user')
+        agentConfig['apacheStatusUser'] = config.get('Main',
+                                                     'apache_status_user')
 
     if config.has_option('Main', 'apache_status_pass'):
-        agentConfig['apacheStatusPass'] = config.get('Main', 'apache_status_pass')
+        agentConfig['apacheStatusPass'] = config.get('Main',
+                                                     'apache_status_pass')
 
     if config.has_option('Main', 'logging_level'):
         # Maps log levels from the configuration file to Python log levels
@@ -214,20 +220,30 @@ if 'nginxStatusUrl' in agentConfig and agentConfig['nginxStatusUrl'] is None:
     print 'Agent will now quit'
     sys.exit(1)
 
-if 'MySQLServer' in agentConfig and agentConfig['MySQLServer'] != '' and 'MySQLUser' in agentConfig and agentConfig['MySQLUser'] != '' and 'MySQLPass' in agentConfig:
+if (
+        'MySQLServer' in agentConfig and
+        agentConfig['MySQLServer'] != '' and
+        'MySQLUser' in agentConfig and
+        agentConfig['MySQLUser'] != '' and
+        'MySQLPass' in agentConfig
+):
     try:
         import MySQLdb
     except ImportError:
-        print 'You have configured MySQL for monitoring, but the MySQLdb module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mysqlstatus/'
-        print 'Agent will now quit'
+        print (
+            'You have configured MySQL for monitoring, but the MySQLdb module is not installed. For more info, see: '
+            'http://www.serverdensity.com/docs/agent/mysqlstatus/\nAgent will now quit'
+        )
         sys.exit(1)
 
 if 'MongoDBServer' in agentConfig and agentConfig['MongoDBServer'] != '':
     try:
         import pymongo
     except ImportError:
-        print 'You have configured MongoDB for monitoring, but the pymongo module is not installed. For more info, see: http://www.serverdensity.com/docs/agent/mongodbstatus/'
-        print 'Agent will now quit'
+        print (
+            'You have configured MongoDB for monitoring, but the pymongo module is not installed. For more info, see: '
+            'http://www.serverdensity.com/docs/agent/mongodbstatus/\nAgent will now quit'
+        )
         sys.exit(1)
 
 for section in config.sections():
@@ -245,7 +261,13 @@ class agent(Daemon):
 
         # Get some basic system stats to post back for development/testing
         import platform
-        systemStats = {'machine': platform.machine(), 'platform': sys.platform, 'processor': platform.processor(), 'pythonV': platform.python_version(), 'cpuCores': self.cpuCores()}
+        systemStats = {
+            'machine': platform.machine(),
+            'platform': sys.platform,
+            'processor': platform.processor(),
+            'pythonV': platform.python_version(),
+            'cpuCores': self.cpuCores()
+        }
 
         if sys.platform == 'linux2':
             systemStats['nixV'] = platform.dist()
@@ -278,7 +300,11 @@ class agent(Daemon):
             return int(output)
 
         if sys.platform == 'darwin':
-            output = subprocess.Popen(['sysctl', 'hw.ncpu'], stdout=subprocess.PIPE, close_fds=True).communicate()[0].split(': ')[1]
+            output = subprocess.Popen(
+                ['sysctl', 'hw.ncpu'],
+                stdout=subprocess.PIPE,
+                close_fds=True
+            ).communicate()[0].split(': ')[1]
             return int(output)
 
 # Control of daemon
@@ -446,7 +472,8 @@ if __name__ == '__main__':
 
             # Do the version check
             if updateInfo['version'] != agentConfig['version']:
-                import md5  # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
+                # We know md5 is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
+                import md5
                 import urllib
 
                 print 'A new version is available.'
@@ -455,7 +482,9 @@ if __name__ == '__main__':
                     mainLogger.debug('Update: downloading ' + agentFile['name'])
                     print 'Downloading ' + agentFile['name']
 
-                    downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
+                    downloadedFile = urllib.urlretrieve(
+                        'http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name']
+                    )
 
                     # Do md5 check to make sure the file downloaded properly
                     checksum = md5.new()
@@ -467,7 +496,8 @@ if __name__ == '__main__':
                         part = f.read(1024)
 
                         if not part:
-                            break  # end of file
+                            # end of file
+                            break
 
                         checksum.update(part)
 
@@ -483,17 +513,23 @@ if __name__ == '__main__':
                             downloadFile(agentFile, True)
 
                         else:
-                            print agentFile['name'] + ' did not match its checksum - it is corrupted. This may be caused by network issues so please try again in a moment.'
+                            print agentFile['name'] + (
+                                ' did not match its checksum - it is corrupted. This may be caused '
+                                'by network issues so please try again in a moment.'
+                            )
                             sys.exit(1)
 
                 # Loop through the new files and call the download function
                 for agentFile in updateInfo['files']:
                     agentFile['tempFile'] = downloadFile(agentFile)
 
-                # If we got to here then everything worked out fine. However, all the files are still in temporary locations so we need to move them
-                # This is to stop an update breaking a working agent if the update fails halfway through
+                # If we got to here then everything worked out fine. However, all the files are still in temporary
+                # locations so we need to move them. This is to stop an update breaking a working agent if the update
+                # fails halfway through
                 import os
-                import shutil  # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
+                # Prevents [Errno 18] Invalid cross-device link (case 26878)
+                # http://mail.python.org/pipermail/python-list/2005-February/308026.html
+                import shutil
 
                 for agentFile in updateInfo['files']:
                     mainLogger.debug('Update: updating ' + agentFile['name'])
@@ -508,7 +544,11 @@ if __name__ == '__main__':
                         shutil.move(agentFile['tempFile'], os.path.join(installation_path, agentFile['name']))
 
                     except OSError:
-                        print 'An OS level error occurred. You will need to manually re-install the agent by downloading the latest version from http://www.serverdensity.com/downloads/sd-agent.tar.gz. You can copy your config.cfg to the new install'
+                        print (
+                            'An OS level error occurred. You will need to manually re-install the agent by downloading '
+                            'the latest version from http://www.serverdensity.com/downloads/sd-agent.tar.gz. You can '
+                            'copy your config.cfg to the new install'
+                        )
                         sys.exit(1)
 
                 mainLogger.debug('Update: done')

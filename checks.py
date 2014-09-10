@@ -2737,7 +2737,12 @@ class checks:
         self.mainLogger.debug('doChecks: json converted, hash')
 
         payloadHash = md5(payload).hexdigest()
-        postBackData = urllib.urlencode({'payload': payload, 'hash': payloadHash})
+        postBackData = urllib.urlencode(
+            {
+                'payload': payload,
+                'hash': payloadHash
+            }
+        )
 
         self.mainLogger.debug('doChecks: hashed, doPostBack')
 
