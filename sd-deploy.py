@@ -50,7 +50,7 @@ except socket.error, e:
 # Get latest agent version
 #
 
-print '1/4: Downloading latest agent version';
+print '1/4: Downloading latest agent version'
 
 import httplib
 import urllib2
@@ -81,12 +81,12 @@ except Exception, e:
 # Define downloader function
 #
 
-import md5 # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
+import md5  # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
 import urllib
 
-def downloadFile(agentFile, recursed = False):
-    print 'Downloading ' + agentFile['name']
 
+def downloadFile(agentFile, recursed=False):
+    print 'Downloading ' + agentFile['name']
     downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
 
     # Do md5 check to make sure the file downloaded properly
@@ -97,10 +97,8 @@ def downloadFile(agentFile, recursed = False):
     # won't be large files in the future, so read the file in small parts (1kb at time)
     while True:
         part = f.read(1024)
-
         if not part:
-            break # end of file
-
+            break  # end of file
         checksum.update(part)
 
     f.close()
@@ -111,7 +109,7 @@ def downloadFile(agentFile, recursed = False):
 
     else:
         # Try once more
-        if recursed == False:
+        if not recursed:
             downloadFile(agentFile, True)
 
         else:
@@ -130,7 +128,7 @@ import platform
 pythonVersion = platform.python_version_tuple()
 
 # Decode the JSON
-if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we only support v2 anyway
+if int(pythonVersion[1]) >= 6:  # Don't bother checking major version since we only support v2 anyway
     import json
 
     try:
@@ -154,7 +152,7 @@ for agentFile in updateInfo['files']:
 
 # If we got to here then everything worked out fine. However, all the files are still in temporary locations so we need to move them
 import os
-import shutil # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
+import shutil  # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
 
 # Make sure doesn't exist already
 if os.path.exists('sd-agent/'):
@@ -180,7 +178,7 @@ print '2/4: Adding new server'
 import time
 timestamp = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
 
-postData = urllib.urlencode({'name' : serverHostname, 'ip' : serverIp, 'notes' : 'Added by sd-deploy: ' + timestamp })
+postData = urllib.urlencode({'name': serverHostname, 'ip': serverIp, 'notes': 'Added by sd-deploy: ' + timestamp})
 
 # Send request
 try:
@@ -192,7 +190,7 @@ try:
     urllib2.install_opener(opener)
 
     # Build the request handler
-    requestAdd = urllib2.Request(sys.argv[1] + '/1.0/?account=' + sys.argv[2] + '&c=servers/add', postData, { 'User-Agent' : 'Server Density Deploy' })
+    requestAdd = urllib2.Request(sys.argv[1] + '/1.0/?account=' + sys.argv[2] + '&c=servers/add', postData, {'User-Agent': 'Server Density Deploy'})
 
     # Do the request, log any errors
     responseAdd = urllib2.urlopen(requestAdd)
@@ -211,7 +209,7 @@ except urllib2.URLError, e:
     if os.path.exists('sd-agent/'):
         shutil.rmtree('sd-agent/')
 
-except httplib.HTTPException, e: # Added for case #26701
+except httplib.HTTPException, e:  # Added for case #26701
     print 'HTTPException' + str(e)
 
     if os.path.exists('sd-agent/'):
@@ -225,7 +223,7 @@ except Exception, e:
         shutil.rmtree('sd-agent/')
 
 # Decode the JSON
-if int(pythonVersion[1]) >= 6: # Don't bother checking major version since we only support v2 anyway
+if int(pythonVersion[1]) >= 6:  # Don't bother checking major version since we only support v2 anyway
     import json
 
     try:
