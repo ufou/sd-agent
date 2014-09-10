@@ -124,7 +124,6 @@ class Action(object):
         raise Exception('sub-classes to provide implementation.')
 
 
-
 class PluginUpdater(Action):
     def __init__(self, verbose=True):
         super(PluginUpdater, self).__init__(verbose=verbose)
