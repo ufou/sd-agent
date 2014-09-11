@@ -7,8 +7,10 @@ Classes for plugin download, installation, and registration.
 import ConfigParser
 import os
 import platform
+import sys
 import urllib
 import urllib2
+
 from optparse import OptionParser
 from zipfile import ZipFile
 
@@ -119,6 +121,7 @@ class Action(object):
     def __init__(self, key=None, verbose=True):
         self.key = key
         self.verbose = verbose
+        self.config = None
 
     def start(self):
         raise Exception('sub-classes to provide implementation.')
