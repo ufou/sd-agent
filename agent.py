@@ -1,28 +1,33 @@
 #!/usr/bin/env python
-'''
+"""
     Server Density
     www.serverdensity.com
     ----
     Server monitoring agent for Linux, FreeBSD and Mac OS X
 
     Licensed under Simplified BSD License (see LICENSE)
-'''
+"""
 
+import ConfigParser
+import glob
+import httplib
 import logging
-
-# General config
-agentConfig = {
-    'logging': logging.INFO,
-    'checkFreq': 60,
-    'version': '1.13.3.1'
-}
-
-rawConfig = {}
+# We know md5 is depreciated, but we still support Python 2.4 and hashlib is
+# only in 2.5. Case 26918
+import md5
+import os
+import platform
+import re
+import sched
+import shutil
+import sys
+import time
+import urllib
+import urllib2
 
 # Check we're not using an old version of Python. Do this before anything else
 # We need 2.4 above because some modules (like subprocess) were only introduced
 # in 2.4.
-import sys
 if int(sys.version_info[1]) <= 3:
     print ('You are using an outdated version of Python. Please update to '
            'v2.4 or above (v3 is not supported). For newer OSs, you can '
@@ -32,14 +37,6 @@ if int(sys.version_info[1]) <= 3:
            'Python manually.')
     sys.exit(1)
 
-# Core modules
-import ConfigParser
-import glob
-import re
-import sched
-import time
-import os
-
 # After the version check as this isn't available on older Python versions
 # and will error before the message is shown
 import subprocess
@@ -48,6 +45,16 @@ import subprocess
 from checks import checks
 from daemon import Daemon
 
+# General config
+agentConfig = {
+    'logging': logging.INFO,
+    'checkFreq': 60,
+    'version': '1.13.3.1'
+}
+
+rawConfig = {}
+config = None
+configPath = None
 # Config handling
 try:
     path = os.path.realpath(__file__)
@@ -253,6 +260,22 @@ for section in config.sections():
         rawConfig[section][option] = config.get(section, option)
 
 
+def cpu_cores():
+    if sys.platform == 'linux2':
+        grep = subprocess.Popen(['grep', 'model name', '/proc/cpuinfo'], stdout=subprocess.PIPE, close_fds=True)
+        wc = subprocess.Popen(['wc', '-l'], stdin=grep.stdout, stdout=subprocess.PIPE, close_fds=True)
+        output = wc.communicate()[0]
+        return int(output)
+
+    if sys.platform == 'darwin':
+        output = subprocess.Popen(
+            ['sysctl', 'hw.ncpu'],
+            stdout=subprocess.PIPE,
+            close_fds=True
+        ).communicate()[0].split(': ')[1]
+        return int(output)
+
+
 # Override the generic daemon class to run our checks
 class agent(Daemon):
 
@@ -260,13 +283,12 @@ class agent(Daemon):
         mainLogger.debug('Collecting basic system stats')
 
         # Get some basic system stats to post back for development/testing
-        import platform
         systemStats = {
             'machine': platform.machine(),
             'platform': sys.platform,
             'processor': platform.processor(),
             'pythonV': platform.python_version(),
-            'cpuCores': self.cpuCores()
+            'cpuCores': cpu_cores()
         }
 
         if sys.platform == 'linux2':
@@ -291,21 +313,6 @@ class agent(Daemon):
         s = sched.scheduler(time.time, time.sleep)
         c.doChecks(s, True, systemStats)  # start immediately (case 28315)
         s.run()
-
-    def cpuCores(self):
-        if sys.platform == 'linux2':
-            grep = subprocess.Popen(['grep', 'model name', '/proc/cpuinfo'], stdout=subprocess.PIPE, close_fds=True)
-            wc = subprocess.Popen(['wc', '-l'], stdin=grep.stdout, stdout=subprocess.PIPE, close_fds=True)
-            output = wc.communicate()[0]
-            return int(output)
-
-        if sys.platform == 'darwin':
-            output = subprocess.Popen(
-                ['sysctl', 'hw.ncpu'],
-                stdout=subprocess.PIPE,
-                close_fds=True
-            ).communicate()[0].split(': ')[1]
-            return int(output)
 
 # Control of daemon
 if __name__ == '__main__':
@@ -337,6 +344,7 @@ if __name__ == '__main__':
 
     argLen = len(sys.argv)
 
+    pidFile = None
     if argLen == 3 or argLen == 4:  # needs to accept case when --clean is passed
         if sys.argv[2] == 'init':
             # This path added for newer Linux packages which run under
@@ -389,7 +397,7 @@ if __name__ == '__main__':
             mainLogger.info('Action: status')
 
             try:
-                pf = file(pidFile, 'r')
+                pf = open(pidFile, 'r')
                 pid = int(pf.read().strip())
                 pf.close()
             except IOError:
@@ -409,10 +417,6 @@ if __name__ == '__main__':
                 print 'Please use the Linux package manager that was used to install the agent to update it.'
                 print 'e.g. yum install sd-agent or apt-get install sd-agent'
                 sys.exit(1)
-
-            import httplib
-            import platform
-            import urllib2
 
             print 'Checking if there is a new version'
 
@@ -435,7 +439,7 @@ if __name__ == '__main__':
                 print 'Unable to get latest version info - HTTPException'
                 sys.exit(1)
 
-            except Exception, e:
+            except Exception:
                 import traceback
                 print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
                 sys.exit(1)
@@ -472,10 +476,6 @@ if __name__ == '__main__':
 
             # Do the version check
             if updateInfo['version'] != agentConfig['version']:
-                # We know md5 is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
-                import md5
-                import urllib
-
                 print 'A new version is available.'
 
                 def downloadFile(agentFile, recursed=False):
@@ -488,7 +488,7 @@ if __name__ == '__main__':
 
                     # Do md5 check to make sure the file downloaded properly
                     checksum = md5.new()
-                    f = file(downloadedFile[0], 'rb')
+                    f = open(downloadedFile[0], 'rb')
 
                     # Although the files are small, we can't guarantee the available memory nor that there
                     # won't be large files in the future, so read the file in small parts (1kb at time)
@@ -526,11 +526,6 @@ if __name__ == '__main__':
                 # If we got to here then everything worked out fine. However, all the files are still in temporary
                 # locations so we need to move them. This is to stop an update breaking a working agent if the update
                 # fails halfway through
-                import os
-                # Prevents [Errno 18] Invalid cross-device link (case 26878)
-                # http://mail.python.org/pipermail/python-list/2005-February/308026.html
-                import shutil
-
                 for agentFile in updateInfo['files']:
                     mainLogger.debug('Update: updating ' + agentFile['name'])
                     print 'Updating ' + agentFile['name']
@@ -541,6 +536,8 @@ if __name__ == '__main__':
                         if os.path.exists(agentFile['name']):
                             os.remove(os.path.join(installation_path, agentFile['name']))
 
+                        # Use of shutil prevents [Errno 18] Invalid
+                        # cross-device link (case 26878)
                         shutil.move(agentFile['tempFile'], os.path.join(installation_path, agentFile['name']))
 
                     except OSError:

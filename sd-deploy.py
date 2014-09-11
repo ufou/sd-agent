@@ -1,16 +1,29 @@
-'''
+"""
     Server Density
     www.serverdensity.com
     ----
     Server monitoring agent for Linux, FreeBSD and Mac OS X
 
     Licensed under Simplified BSD License (see LICENSE)
-'''
+"""
+import httplib
+# We know this is deprecated, but we still support Python 2.4 and hashlib is
+# only in 2.5. Case 26918
+import md5
+import os
+import platform
+import shutil
+import socket
+import subprocess
+import sys
+import time
+import urllib
+import urllib2
+
 
 #
 # Why are you using this?
 #
-import time
 print 'Note: This script is for automating deployments and is not the normal way to install the SD agent. See http://www.serverdensity.com/docs/agent/installation/'
 print 'Continuing in 4 seconds...'
 time.sleep(4)
@@ -18,7 +31,6 @@ time.sleep(4)
 #
 # Argument checks
 #
-import sys
 
 if len(sys.argv) < 5:
     print 'Usage: python sd-deploy.py [API URL] [SD URL] [username] [password] [[init]]'
@@ -27,8 +39,6 @@ if len(sys.argv) < 5:
 #
 # Get server details
 #
-
-import socket
 
 # IP
 try:
@@ -52,9 +62,6 @@ except socket.error, e:
 
 print '1/4: Downloading latest agent version'
 
-import httplib
-import urllib2
-
 # Request details
 try:
     requestAgent = urllib2.urlopen('http://www.serverdensity.com/agentupdate/')
@@ -72,7 +79,7 @@ except httplib.HTTPException, e:
     print 'Unable to get latest version info - HTTPException'
     sys.exit(2)
 
-except Exception, e:
+except Exception:
     import traceback
     print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
     sys.exit(2)
@@ -81,17 +88,13 @@ except Exception, e:
 # Define downloader function
 #
 
-import md5  # I know this is depreciated, but we still support Python 2.4 and hashlib is only in 2.5. Case 26918
-import urllib
-
-
 def downloadFile(agentFile, recursed=False):
     print 'Downloading ' + agentFile['name']
     downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
 
     # Do md5 check to make sure the file downloaded properly
     checksum = md5.new()
-    f = file(downloadedFile[0], 'rb')
+    f = open(downloadedFile[0], 'rb')
 
     # Although the files are small, we can't guarantee the available memory nor that there
     # won't be large files in the future, so read the file in small parts (1kb at time)
@@ -123,8 +126,6 @@ def downloadFile(agentFile, recursed=False):
 # We need to return the data using JSON. As of Python 2.6+, there is a core JSON
 # module. We have a 2.4/2.5 compatible lib included with the agent but if we're
 # on 2.6 or above, we should use the core module which will be faster
-import platform
-
 pythonVersion = platform.python_version_tuple()
 
 # Decode the JSON
@@ -150,13 +151,14 @@ else:
 for agentFile in updateInfo['files']:
     agentFile['tempFile'] = downloadFile(agentFile)
 
-# If we got to here then everything worked out fine. However, all the files are still in temporary locations so we need to move them
-import os
-import shutil  # Prevents [Errno 18] Invalid cross-device link (case 26878) - http://mail.python.org/pipermail/python-list/2005-February/308026.html
-
-# Make sure doesn't exist already
+# If we got to here then everything worked out fine. However, all the files are
+# still in temporary locations so we need to move them.
+#
+# Make sure doesn't exist already.
+# Usage of shutil prevents [Errno 18] Invalid cross-device link (case 26878) -
+# http://mail.python.org/pipermail/python-list/2005-February/308026.html
 if os.path.exists('sd-agent/'):
-        shutil.rmtree('sd-agent/')
+    shutil.rmtree('sd-agent/')
 
 os.mkdir('sd-agent')
 
@@ -175,7 +177,6 @@ print 'Agent files downloaded'
 print '2/4: Adding new server'
 
 # Build API payload
-import time
 timestamp = time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())
 
 postData = urllib.urlencode({'name': serverHostname, 'ip': serverIp, 'notes': 'Added by sd-deploy: ' + timestamp})
@@ -264,7 +265,7 @@ try:
     f.write(configCfg)
     f.close()
 
-except Exception, e:
+except Exception:
     import traceback
     print 'Exception = ' + traceback.format_exc()
 
@@ -282,8 +283,6 @@ if len(sys.argv) == 6:
     print '4/4: Installing init.d script'
 
     shutil.copy('sd-agent/sd-agent.init', '/etc/init.d/sd-agent')
-
-    import subprocess
 
     print 'Setting permissions'
 
