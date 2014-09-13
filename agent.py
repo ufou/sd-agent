@@ -208,13 +208,6 @@ if (re.match('http(s)?(\:\/\/)example\.serverdensity\.(com|io)',
     print 'Agent will now quit'
     sys.exit(1)
 
-# Check to make sure sd_url is in correct
-if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.(com|io)',
-             agentConfig['sdUrl']) is None):
-    print 'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or https://example.serverdensity.io'
-    print 'Agent will now quit'
-    sys.exit(1)
-
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] is None:
     print ('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, '
