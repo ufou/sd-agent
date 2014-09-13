@@ -5,12 +5,12 @@ python:
 
 install:
   - pip install pep8 --use-mirrors
-  - pip install pyflakes --use-mirrors
+#  - pip install pyflakes --use-mirrors
 # - pip install coveralls
 
 before_script:
-  - "pep8 --exclude=minjson.py ."
-  - pyflakes -x W .
+  - "pep8 --exclude=minjson.py --ignore=E501 ."
+#  - pyflakes -x W .
 
 script:
     - PYTHONPATH=.:${PYTHONPATH} nosetests
