@@ -3,7 +3,7 @@ import unittest
 try:
     import agent
 except SystemExit:
-    pass # expected, agent.py line 209. Must be fixed to add new tests.
+    pass  # expected, agent.py line 209. Must be fixed to add new tests.
 
 
 class AgentTest(unittest.TestCase):
