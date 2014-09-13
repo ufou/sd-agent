@@ -84,10 +84,10 @@ except Exception:
     print 'Unable to get latest version info - Exception = ' + traceback.format_exc()
     sys.exit(2)
 
+
 #
 # Define downloader function
 #
-
 def downloadFile(agentFile, recursed=False):
     print 'Downloading ' + agentFile['name']
     downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])

@@ -2,6 +2,7 @@ import unittest
 
 import plugins
 
+
 class PluginsTest(unittest.TestCase):
 
     def setUp(self):
@@ -13,6 +14,7 @@ class PluginsTest(unittest.TestCase):
     def test_empy(self):
         """Don't test anything yet."""
         pass
+
 
 def main():
     unittest.main()
