@@ -187,6 +187,9 @@ try:
     if config.has_option('Main', 'rabbitmq_pass'):
         agentConfig['rabbitMQPass'] = config.get('Main', 'rabbitmq_pass')
 
+    if config.has_option('Main', 'logtail_paths'):
+        agentConfig['logTailPaths'] = config.get('Main', 'logtail_paths')
+
 except ConfigParser.NoSectionError, e:
     print 'Config file not found or incorrectly formatted'
     print 'Agent will now quit'
@@ -303,9 +306,28 @@ class agent(Daemon):
 
         mainLogger.info('System: ' + str(systemStats))
 
-        mainLogger.debug('Creating checks instance')
+        # Log tailer
+        if 'logTailPaths' in agentConfig and agentConfig['logTailPaths'] != '':
+
+            from logtail import LogTailer
+
+            logFiles = []
+
+            for path in agentConfig['logTailPaths'].split(','):
+                files = glob.glob(path)
+
+                for file in files:
+                    logFiles.append(file)
+
+            for file in logFiles:
+                mainLogger.info('Starting log tailer: %s', file)
+
+                logThread = LogTailer(agentConfig, mainLogger, file)
+                logThread.setName(file)
+                logThread.start()
 
         # Checks instance
+        mainLogger.debug('Creating checks instance')
         c = checks(agentConfig, rawConfig, mainLogger)
 
         # Schedule the checks
