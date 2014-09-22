@@ -45,21 +45,33 @@ class LogTailer(threading.Thread):
 
     # http://www.dabeaz.com/generators/follow.py
     def follow(self, thefile):
-        thefile.seek(0, 2)
+        try:
+          thefile.seek(0, 2)
 
-        while True:
+          while True:
 
-            line = thefile.readline()
-            if not line:
-                time.sleep(0.1)
-                continue
+              line = thefile.readline()
+              if not line:
+                  time.sleep(0.1)
+                  continue
 
-            yield line
+              yield line
+
+        except Exception:
+            import traceback
+            self.mainLogger.error('LogTailer (%s) - follow() failed = %s', self.filename, traceback.format_exc())
+            return
 
     def run(self):
 
-        filename = open(self.filename, "r")
-        loglines = self.follow(filename)
+        try:
+          filename = open(self.filename, "r")
+          loglines = self.follow(filename)
+
+        except Exception:
+            import traceback
+            self.mainLogger.error('LogTailer (%s) - Unable to open log file = %s', self.filename, traceback.format_exc())
+            return
 
         for line in loglines:
             payload = {
@@ -72,17 +84,16 @@ class LogTailer(threading.Thread):
                 }]
             }
 
-            if int(pythonVersion[1]) >= 6:
-                try:
-                    payloadJSON = json.dumps(payload)
+            try:
+              if int(pythonVersion[1]) >= 6:
+                  payloadJSON = json.dumps(payload)
+              else:
+                  payloadJSON = minjson.write(checksData)
 
-                except Exception:
-                    import traceback
-                    self.mainLogger.error('LogTailer (%s) - Failed encoding payload to json. Exception = %s', self.filename, traceback.format_exc())
-                    return False
-
-            else:
-                payload = minjson.write(checksData)
+            except Exception:
+                import traceback
+                self.mainLogger.error('LogTailer (%s) - Failed encoding payload to json. Exception = %s', self.filename, traceback.format_exc())
+                return
 
             sdUrl = string.replace(self.agentConfig['sdUrl'], 'https://', '')
             sdUrl = string.replace(sdUrl, '.serverdensity.io', '')
@@ -110,7 +121,7 @@ class LogTailer(threading.Thread):
             except urllib2.HTTPError, e:
                 self.mainLogger.error('LogTailer (%s) - doPostBack: HTTPError = %s', self.filename, e)
 
-                return False
+                return
 
             except urllib2.URLError, e:
                 self.mainLogger.error('LogTailer (%s) - doPostBack: URLError = %s', self.filename, e)
@@ -136,16 +147,16 @@ class LogTailer(threading.Thread):
                     # if we get here, the retry has failed, so we need to reschedule
                     self.mainLogger.info("LogTailer (%s) - doPostBack: Retry failed, rescheduling", self.filename)
 
-                    return False
+                    return
 
             except httplib.HTTPException, e:  # Added for case #26701
                 self.mainLogger.error('LogTailer (%s) - doPostBack: HTTPException = %s', self.filename, e)
-                return False
+                return
 
             except Exception:
                 import traceback
                 self.mainLogger.error('LogTailer (%s) - doPostBack: Exception = %s', self.filename, traceback.format_exc())
-                return False
+                return
 
         finally:
             if int(pythonVersion[1]) >= 6:
@@ -155,6 +166,6 @@ class LogTailer(threading.Thread):
                 except Exception:
                     import traceback
                     self.mainLogger.error('LogTailer (%s) - doPostBack: Exception = %s', self.filename, traceback.format_exc())
-                    return False
+                    return
 
             self.mainLogger.debug('LogTailer (%s) - doPostBack: completed', self.filename)
