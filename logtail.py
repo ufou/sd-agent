@@ -10,6 +10,7 @@
 import httplib  # Used only for handling httplib.HTTPException
 import datetime
 import json
+import os
 import platform
 import socket
 import string
@@ -53,6 +54,19 @@ class LogTailer(threading.Thread):
               line = thefile.readline()
               if not line:
                   time.sleep(0.1)
+
+                  # Check to see if the file is still the one we opened
+                  # This can change if the log gets rotated, for example
+                  fstat = os.fstat(thefile.fileno())
+                  stat = os.stat(self.filename)
+
+                  if fstat.st_ino != stat.st_ino:
+                    self.mainLogger.warn('LogTailer (%s) - log file changed, reopening', self.filename)
+
+                    thefile.close()
+
+                    thefile = open(self.filename, "r")
+
                   continue
 
               yield line
