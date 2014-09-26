@@ -307,7 +307,7 @@ class agent(Daemon):
         mainLogger.info('System: ' + str(systemStats))
 
         # Log tailer
-        if 'logTailPaths' in agentConfig and agentConfig['logTailPaths'] != '':
+        if agentConfig.get('logTailPaths', '') != '':
 
             from logtail import LogTailer
 
