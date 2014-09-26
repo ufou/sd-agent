@@ -47,29 +47,29 @@ class LogTailer(threading.Thread):
     # http://www.dabeaz.com/generators/follow.py
     def follow(self, thefile):
         try:
-          thefile.seek(0, 2)
+            thefile.seek(0, 2)
 
-          while True:
+            while True:
 
-              line = thefile.readline()
-              if not line:
-                  time.sleep(0.1)
+                line = thefile.readline()
+                if not line:
+                    time.sleep(0.1)
 
-                  # Check to see if the file is still the one we opened
-                  # This can change if the log gets rotated, for example
-                  fstat = os.fstat(thefile.fileno())
-                  stat = os.stat(self.filename)
+                    # Check to see if the file is still the one we opened
+                    # This can change if the log gets rotated, for example
+                    fstat = os.fstat(thefile.fileno())
+                    stat = os.stat(self.filename)
 
-                  if fstat.st_ino != stat.st_ino:
-                    self.mainLogger.warn('LogTailer (%s) - log file changed, reopening', self.filename)
+                    if fstat.st_ino != stat.st_ino:
+                        self.mainLogger.warn('LogTailer (%s) - log file changed, reopening', self.filename)
 
-                    thefile.close()
+                        thefile.close()
 
-                    thefile = open(self.filename, "r")
+                        thefile = open(self.filename, "r")
 
-                  continue
+                    continue
 
-              yield line
+                yield line
 
         except Exception:
             import traceback
@@ -79,8 +79,8 @@ class LogTailer(threading.Thread):
     def run(self):
 
         try:
-          filename = open(self.filename, "r")
-          loglines = self.follow(filename)
+            filename = open(self.filename, "r")
+            loglines = self.follow(filename)
 
         except Exception:
             import traceback
@@ -99,10 +99,10 @@ class LogTailer(threading.Thread):
             }
 
             try:
-              if int(pythonVersion[1]) >= 6:
-                  payloadJSON = json.dumps(payload)
-              else:
-                  payloadJSON = minjson.write(checksData)
+                if int(pythonVersion[1]) >= 6:
+                    payloadJSON = json.dumps(payload)
+                else:
+                    payloadJSON = minjson.write(checksData)
 
             except Exception:
                 import traceback
