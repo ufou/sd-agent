@@ -7,9 +7,6 @@
     Licensed under Simplified BSD License (see LICENSE)
 """
 import httplib
-# We know this is deprecated, but we still support Python 2.4 and hashlib is
-# only in 2.5. Case 26918
-import md5
 import os
 import platform
 import shutil
@@ -20,6 +17,10 @@ import time
 import urllib
 import urllib2
 
+try:
+    from hashlib import md5
+except ImportError:  # Python < 2.5
+    from md5 import new as md5
 
 #
 # Why are you using this?
@@ -93,7 +94,7 @@ def downloadFile(agentFile, recursed=False):
     downloadedFile = urllib.urlretrieve('http://www.serverdensity.com/downloads/sd-agent/' + agentFile['name'])
 
     # Do md5 check to make sure the file downloaded properly
-    checksum = md5.new()
+    checksum = md5()
     f = open(downloadedFile[0], 'rb')
 
     # Although the files are small, we can't guarantee the available memory nor that there
