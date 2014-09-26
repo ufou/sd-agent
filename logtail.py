@@ -73,7 +73,11 @@ class LogTailer(threading.Thread):
 
         except Exception:
             import traceback
-            self.mainLogger.error('LogTailer (%s) - follow() failed = %s', self.filename, traceback.format_exc())
+            self.mainLogger.error(
+                'LogTailer (%s) - follow() failed = %s',
+                self.filename,
+                traceback.format_exc()
+            )
             return
 
     def run(self):
@@ -84,7 +88,11 @@ class LogTailer(threading.Thread):
 
         except Exception:
             import traceback
-            self.mainLogger.error('LogTailer (%s) - Unable to open log file = %s', self.filename, traceback.format_exc())
+            self.mainLogger.error(
+                'LogTailer (%s) - Unable to open log file = %s',
+                self.filename,
+                traceback.format_exc()
+            )
             return
 
         for line in loglines:
@@ -106,7 +114,11 @@ class LogTailer(threading.Thread):
 
             except Exception:
                 import traceback
-                self.mainLogger.error('LogTailer (%s) - Failed encoding payload to json. Exception = %s', self.filename, traceback.format_exc())
+                self.mainLogger.error(
+                    'LogTailer (%s) - Failed encoding payload to json. Exception = %s',
+                    self.filename,
+                    traceback.format_exc()
+                )
                 return
 
             sdUrl = string.replace(self.agentConfig['sdUrl'], 'https://', '')
@@ -122,15 +134,27 @@ class LogTailer(threading.Thread):
         try:
 
             try:
-                self.mainLogger.debug('LogTailer (%s) - doPostBack: attempting postback for %s', self.filename, postBackData['sdUrl'])
+                self.mainLogger.debug(
+                    'LogTailer (%s) - doPostBack: attempting postback for %s',
+                    self.filename,
+                    postBackData['sdUrl']
+                )
 
                 # Build the request handler
-                request = urllib2.Request('https://logs.serverdensity.io/collector', urllib.urlencode(postBackData), headers)
+                request = urllib2.Request(
+                    'https://logs.serverdensity.io/collector',
+                    urllib.urlencode(postBackData),
+                    headers
+                )
 
                 # Do the request, log any errors
                 response = urllib2.urlopen(request)
 
-                self.mainLogger.info('LogTailer (%s) - Postback response: %s', self.filename, response.read())
+                self.mainLogger.info(
+                    'LogTailer (%s) - Postback response: %s',
+                    self.filename,
+                    response.read()
+                )
 
             except urllib2.HTTPError, e:
                 self.mainLogger.error('LogTailer (%s) - doPostBack: HTTPError = %s', self.filename, e)
@@ -147,7 +171,10 @@ class LogTailer(threading.Thread):
                     timeout = socket.getdefaulttimeout()
                     socket.setdefaulttimeout(5)
 
-                    self.mainLogger.info('LogTailer (%s) - doPostBack: Retrying postback with DNS lookup iteration', self.filename)
+                    self.mainLogger.info(
+                        'LogTailer (%s) - doPostBack: Retrying postback with DNS lookup iteration',
+                        self.filename
+                    )
                     try:
                         [socket.gethostbyname(self.agentConfig['sdUrl']) for x in xrange(0, 2)]
                     except Exception:
@@ -155,21 +182,35 @@ class LogTailer(threading.Thread):
                         pass
                     socket.setdefaulttimeout(timeout)
 
-                    self.mainLogger.info("LogTailer (%s) - doPostBack: Executing retry", self.filename)
+                    self.mainLogger.info(
+                        "LogTailer (%s) - doPostBack: Executing retry",
+                        self.filename
+                    )
                     return self.doPostBack(postBackData, retry=True)
                 else:
                     # if we get here, the retry has failed, so we need to reschedule
-                    self.mainLogger.info("LogTailer (%s) - doPostBack: Retry failed, rescheduling", self.filename)
+                    self.mainLogger.info(
+                        "LogTailer (%s) - doPostBack: Retry failed, rescheduling",
+                        self.filename
+                    )
 
                     return
 
             except httplib.HTTPException, e:  # Added for case #26701
-                self.mainLogger.error('LogTailer (%s) - doPostBack: HTTPException = %s', self.filename, e)
+                self.mainLogger.error(
+                    'LogTailer (%s) - doPostBack: HTTPException = %s',
+                    self.filename,
+                    e
+                )
                 return
 
             except Exception:
                 import traceback
-                self.mainLogger.error('LogTailer (%s) - doPostBack: Exception = %s', self.filename, traceback.format_exc())
+                self.mainLogger.error(
+                    'LogTailer (%s) - doPostBack: Exception = %s',
+                    self.filename,
+                    traceback.format_exc()
+                )
                 return
 
         finally:
@@ -179,7 +220,11 @@ class LogTailer(threading.Thread):
                         response.close()
                 except Exception:
                     import traceback
-                    self.mainLogger.error('LogTailer (%s) - doPostBack: Exception = %s', self.filename, traceback.format_exc())
+                    self.mainLogger.error(
+                        'LogTailer (%s) - doPostBack: Exception = %s',
+                        self.filename,
+                        traceback.format_exc()
+                    )
                     return
 
             self.mainLogger.debug('LogTailer (%s) - doPostBack: completed', self.filename)
