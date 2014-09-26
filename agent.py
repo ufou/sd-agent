@@ -12,9 +12,6 @@ import ConfigParser
 import glob
 import httplib
 import logging
-# We know md5 is depreciated, but we still support Python 2.4 and hashlib is
-# only in 2.5. Case 26918
-import md5
 import os
 import platform
 import re
@@ -24,6 +21,11 @@ import sys
 import time
 import urllib
 import urllib2
+
+try:
+    from hashlib import md5
+except ImportError:  # Python < 2.5
+    from md5 import new as md5
 
 # Check we're not using an old version of Python. Do this before anything else
 # We need 2.4 above because some modules (like subprocess) were only introduced
@@ -509,7 +511,7 @@ if __name__ == '__main__':
                     )
 
                     # Do md5 check to make sure the file downloaded properly
-                    checksum = md5.new()
+                    checksum = md5()
                     f = open(downloadedFile[0], 'rb')
 
                     # Although the files are small, we can't guarantee the available memory nor that there
