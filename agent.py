@@ -192,6 +192,9 @@ try:
     if config.has_option('Main', 'logtail_paths'):
         agentConfig['logTailPaths'] = config.get('Main', 'logtail_paths')
 
+    if config.has_option('Main', 'proxy_url'):
+        agentConfig['proxyUrl'] = config.get('Main', 'proxy_url')
+
 except ConfigParser.NoSectionError, e:
     print 'Config file not found or incorrectly formatted'
     print 'Agent will now quit'
