@@ -2526,6 +2526,13 @@ class checks:
                 # Build the request handler
                 request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
 
+                if self.agentConfig.get('proxyUrl', '') != '':
+                    self.mainLogger.info('doPostBack: using proxy: %s', self.agentConfig['proxyUrl'])
+                    
+                    proxy = urllib2.ProxyHandler({'https': self.agentConfig['proxyUrl']})
+                    opener = urllib2.build_opener(proxy)
+                    urllib2.install_opener(opener)
+
                 # Do the request, log any errors
                 response = urllib2.urlopen(request)
 
