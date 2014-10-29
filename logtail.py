@@ -9,7 +9,6 @@
 
 import httplib  # Used only for handling httplib.HTTPException
 import datetime
-import json
 import os
 import platform
 import socket
