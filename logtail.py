@@ -9,7 +9,6 @@
 
 import httplib  # Used only for handling httplib.HTTPException
 import datetime
-import json
 import os
 import platform
 import socket
@@ -110,7 +109,7 @@ class LogTailer(threading.Thread):
                 if int(pythonVersion[1]) >= 6:
                     payloadJSON = json.dumps(payload)
                 else:
-                    payloadJSON = minjson.write(checksData)
+                    payloadJSON = minjson.write(payload)
 
             except Exception:
                 import traceback

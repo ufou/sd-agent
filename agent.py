@@ -11,6 +11,7 @@
 import ConfigParser
 import glob
 import httplib
+import locale
 import logging
 import os
 import platform
@@ -192,6 +193,9 @@ try:
     if config.has_option('Main', 'logtail_paths'):
         agentConfig['logTailPaths'] = config.get('Main', 'logtail_paths')
 
+    if config.has_option('Main', 'proxy_url'):
+        agentConfig['proxyUrl'] = config.get('Main', 'proxy_url')
+
 except ConfigParser.NoSectionError, e:
     print 'Config file not found or incorrectly formatted'
     print 'Agent will now quit'
@@ -333,6 +337,12 @@ class agent(Daemon):
 
 # Control of daemon
 if __name__ == '__main__':
+
+    # Setup locale to use always 'C' locale. This would prevent that the
+    # commands executed by the agent produce localized output and thus, break
+    # the parsers.
+    locale.setlocale(locale.LC_ALL, 'C')
+    os.putenv('LC_ALL', 'C')
 
     # Logging
     logFile = os.path.join(agentConfig['tmpDirectory'], 'sd-agent.log')

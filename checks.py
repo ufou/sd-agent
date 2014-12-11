@@ -2403,7 +2403,10 @@ class checks:
                     self.mainLogger.debug('getPlugins: imported %s', pluginName)
 
                     # Find out the class name and then instantiate it
-                    pluginClass = getattr(importedPlugin, pluginName)
+                    pluginClass = getattr(importedPlugin, pluginName, None)
+                    if pluginClass is None:
+                        self.mainLogger.info('getPlugins: Unable to locate class %s in %s, skipping', pluginName, pluginPath)
+                        continue
 
                     try:
                         pluginObj = pluginClass(self.agentConfig, self.mainLogger, self.rawConfig)
@@ -2525,6 +2528,13 @@ class checks:
 
                 # Build the request handler
                 request = urllib2.Request(self.agentConfig['sdUrl'] + '/postback/', postBackData, headers)
+
+                if self.agentConfig.get('proxyUrl', '') != '':
+                    self.mainLogger.info('doPostBack: using proxy: %s', self.agentConfig['proxyUrl'])
+
+                    proxy = urllib2.ProxyHandler({'https': self.agentConfig['proxyUrl']})
+                    opener = urllib2.build_opener(proxy)
+                    urllib2.install_opener(opener)
 
                 # Do the request, log any errors
                 response = urllib2.urlopen(request)
