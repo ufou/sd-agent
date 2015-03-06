@@ -20,7 +20,7 @@
 ### limitations under the License.
 ###
  
-PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL")
+PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux")
  
 # Put additional version numbers here.
 # These variables take the form ${platform}_VERSIONS, where $platform matches
@@ -30,6 +30,7 @@ Debian_VERSIONS=("5" "6")
 CentOS_VERSIONS=("5" "6")
 Amazon_VERSIONS=("2012.09" "2013.03")
 RHEL_VERSIONS=("5" "6")
+CloudLinux_VERSIONS=("5" "6")
  
 # For version number updates you hopefully don't need to modify below this line
 # -----------------------------------------------------------------------------
@@ -77,7 +78,7 @@ function check_distro_version() {
             fi
         done
  
-    elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "RHEL" ]; then
+    elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
         MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
         MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
  
@@ -148,7 +149,7 @@ function do_install() {
         sudo $APT_CMD install sd-agent
         return $?
     
-    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ]; then        
+    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then        
         echo "Adding repository"
  
         sudo sh -c "cat - > /etc/yum.repos.d/serverdensity.repo <<EOF
@@ -274,7 +275,7 @@ function pre_install_sanity() {
             sudo $APT_CMD update > /dev/null
             sudo $APT_CMD install curl
  
-        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ]; then
+        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
             sudo $YUM_CMD install curl
         fi
     fi
@@ -286,17 +287,17 @@ function pre_install_sanity() {
 if [ -f /etc/redhat-release ] ; then
     PLATFORM=`cat /etc/redhat-release`
     DISTRO=`echo $PLATFORM | awk '{print $1}'`
-    if [ "$DISTRO" != "CentOS" ]; then
-        if [ "$DISTRO" = "Red" ]; then
-                DISTRO="RHEL"
-                VERSION=`echo $PLATFORM | awk '{print $7}'`
-        else
-                DISTRO="unknown"
-                PLATFORM="unknown"
-                VERSION="unknown"
-        fi
+    if [ "$DISTRO" = "Red" ]; then
+        DISTRO="RHEL"
+        VERSION=`echo $PLATFORM | awk '{print $7}'`
     elif [ "$DISTRO" = "CentOS" ]; then
         VERSION=`echo $PLATFORM | awk '{print $3}'`
+    elif [ "$DISTRO" = "CloudLinux" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $4}'`
+    else
+        DISTRO="unknown"
+        PLATFORM="unknown"
+        VERSION="unknown"
     fi
     MACHINE=`uname -m`
 elif [ -f /etc/system-release ]; then
