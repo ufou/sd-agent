@@ -391,7 +391,13 @@ if [ -z $AGENTKEY ]; then
             echo "Found $TAGNAME, using tag ID $TAGID"
 
         else
-            HEX="#`echo -n $TAGNAME | md5 | cut -c1-6`"
+
+            MD5=`which md5`
+            if [ -z $MD5 ]; then
+                MD5=`which md5sum`
+            fi
+
+            HEX="#`echo -n $TAGNAME | $MD5 | cut -c1-6`"
             echo "Creating tag $TAGNAME with random hex code $HEX"
             TAGS=`curl --silent -X POST https://api.serverdensity.io/inventory/tags?token=${API_KEY} --data "name=$TAGNAME&color=$HEX"`
             TAGID=`echo $TAGS | grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'`
