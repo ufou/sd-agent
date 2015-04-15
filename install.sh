@@ -126,7 +126,7 @@ function print_help() {
     echo "      -k: Agent key. Not required if API token provided. "
     echo "      -t: API token. Not required if agent key provided. "   
     echo "      -g: Group. Optional. Group to add the new device into."   
-    echo "      -T: Tag name."   
+    echo "      -T: Tag. Optional. Tag this device."   
     exit 0
 }
  
@@ -396,10 +396,11 @@ if [ -z $AGENTKEY ]; then
             if [ -z $MD5 ]; then
                 MD5=`which md5sum`
             fi
-
             HEX="#`echo -n $TAGNAME | $MD5 | cut -c1-6`"
+
             echo "Creating tag $TAGNAME with random hex code $HEX"
             TAGS=`curl --silent -X POST https://api.serverdensity.io/inventory/tags?token=${API_KEY} --data "name=$TAGNAME&color=$HEX"`
+
             TAGID=`echo $TAGS | grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'`
             echo "Tag cretated, using tag ID $TAGID"
 
@@ -413,7 +414,7 @@ if [ -z $AGENTKEY ]; then
             RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}&tags=[\"$TAGID\"]"`
         fi 
 
-    elif [ "${TAGNAME}" = "" ]; then
+    else
 
         if [ "${GROUPNAME}" = "" ]; then
             RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
