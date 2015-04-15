@@ -126,6 +126,7 @@ function print_help() {
     echo "      -k: Agent key. Not required if API token provided. "
     echo "      -t: API token. Not required if agent key provided. "   
     echo "      -g: Group. Optional. Group to add the new device into."   
+    echo "      -T: Tag name."   
     exit 0
 }
  
@@ -337,7 +338,7 @@ fi
  
 IGNORE_RELEASE=0
 
-while getopts ":a:k:g:t:" opt; do
+while getopts ":a:k:g:t:T:" opt; do
   case $opt in
     a)
       ACCOUNT="$OPTARG" >&2
@@ -350,6 +351,9 @@ while getopts ":a:k:g:t:" opt; do
       ;;
     t)
       API_KEY="$OPTARG" >&2
+      ;;
+    T)
+      TAGNAME="$OPTARG" >&2
       ;;
     \?)
       exit
@@ -376,13 +380,44 @@ if [ -z $AGENTKEY ]; then
     echo "Using API key $API_KEY to automatically create device with hostname ${HOSTNAME}"
     echo ""
 
-    if [ "${GROUPNAME}" = "" ]; then
-        RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
-    fi
+    if [ "${TAGNAME}" != "" ]; then
 
-    if [ "${GROUPNAME}" != "" ]; then
-        RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}"`
-    fi    
+        TAGS=`curl --silent -X GET https://api.serverdensity.io/inventory/tags?token=${API_KEY}`
+
+        # very messy way to get the tag ID without using any json tools
+        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'` 
+
+        if [ ! -z $TAGID ]; then
+            echo "Found $TAGNAME, using tag ID $TAGID"
+
+        else
+            HEX="#`echo -n $TAGNAME | md5 | cut -c1-6`"
+            echo "Creating tag $TAGNAME with random hex code $HEX"
+            TAGS=`curl --silent -X POST https://api.serverdensity.io/inventory/tags?token=${API_KEY} --data "name=$TAGNAME&color=$HEX"`
+            TAGID=`echo $TAGS | grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'`
+            echo "Tag cretated, using tag ID $TAGID"
+
+        fi
+
+        if [ "${GROUPNAME}" = "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}&tags=[\"$TAGID\"]"`
+        fi
+
+        if [ "${GROUPNAME}" != "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}&tags=[\"$TAGID\"]"`
+        fi 
+
+    elif [ "${TAGNAME}" = "" ]; then
+
+        if [ "${GROUPNAME}" = "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
+        fi
+
+        if [ "${GROUPNAME}" != "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}"`
+        fi 
+
+    fi
 
     exit_status=$?
 
