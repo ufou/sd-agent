@@ -126,7 +126,7 @@ function print_help() {
     echo "      -k: Agent key. Not required if API token provided. "
     echo "      -t: API token. Not required if agent key provided. "   
     echo "      -g: Group. Optional. Group to add the new device into."   
-    echo "      -T: Tag. Optional. Tag this device."   
+    echo "      -T: Tag. Optional. Tag this device - multiple tags not supported."   
     exit 0
 }
  
