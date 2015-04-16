@@ -385,7 +385,7 @@ if [ -z $AGENTKEY ]; then
         TAGS=`curl --silent -X GET https://api.serverdensity.io/inventory/tags?token=${API_KEY}`
 
         # very messy way to get the tag ID without using any json tools
-        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'` 
+        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i "\"$TAGNAME"\" | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'` 
 
         if [ ! -z $TAGID ]; then
             echo "Found $TAGNAME, using tag ID $TAGID"
