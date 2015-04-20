@@ -211,8 +211,8 @@ except ConfigParser.NoOptionError, e:
 
 # Check to make sure the default config values have been changed (only core config values)
 if (re.match('http(s)?(\:\/\/)example\.serverdensity\.(com|io)',
-             agentConfig['sdUrl']) is not None
-        or agentConfig['agentKey'] == 'keyHere'):
+             agentConfig['sdUrl']) is not None or
+        agentConfig['agentKey'] == 'keyHere'):
     print 'You have not modified config.cfg for your server'
     print 'Agent will now quit'
     sys.exit(1)
