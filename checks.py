@@ -2319,6 +2319,30 @@ class checks:
                 status['queues'] = queues
                 self.mainLogger.debug(status['queues'])
 
+                # Network partitions
+                status['partition'] = 0
+                url = split_url[0] + '://' + split_url[1] + '/api/nodes'
+                self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+                req = urllib2.Request(url, None, rabbitMQHeaders)
+                # Do the request, log any errors
+                request = urllib2.urlopen(req)
+                response = request.read()
+
+                if int(pythonVersion[1]) >= 6:
+                    self.mainLogger.debug('getRabbitMQStatus: nodes json read')
+                    nodes = json.loads(response)
+                else:
+                    self.mainLogger.debug('getRabbitMQStatus: nodes minjson read')
+                    nodes = minjson.safeRead(response)
+
+                for node in nodes:
+                    if 'partitions' in node and len(node['partitions']) > 0:
+                        self.mainLogger.debug('getRabbitMQStatus: partitions found on node %s: %s', (node['name'], node['partitions']))
+                        status['partition'] = 1
+                        break
+
+                self.mainLogger.debug(status['partition'])
+
         except Exception:
             import traceback
             self.mainLogger.error('Unable to load RabbitMQ status JSON - Exception = %s', traceback.format_exc())
