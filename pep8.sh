@@ -3,4 +3,4 @@
 set -e
 set -u
 
-pep8 --ignore=E501 --exclude=minjson.py .
+pep8 --ignore=E402,E501 --exclude=minjson.py .
