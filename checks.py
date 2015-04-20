@@ -194,8 +194,8 @@ class checks:
     def getCouchDBStatus(self):
         self.mainLogger.debug('getCouchDBStatus: start')
 
-        if ('CouchDBServer' not in self.agentConfig
-                or self.agentConfig['CouchDBServer'] == ''):
+        if ('CouchDBServer' not in self.agentConfig or
+                self.agentConfig['CouchDBServer'] == ''):
             self.mainLogger.debug('getCouchDBStatus: config not set')
             return False
 
