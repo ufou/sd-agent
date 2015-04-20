@@ -400,7 +400,7 @@ class checks:
             self.mainLogger.debug('getCPUStats: darwin')
 
             try:
-                proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, close_fds=True)
+                proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
                 stats = proc.communicate()[0]
 
                 itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
