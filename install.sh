@@ -138,7 +138,7 @@ function do_install() {
         echo "Adding repository"
         sudo sh -c "echo \"deb http://www.serverdensity.com/downloads/linux/deb all main\" > /etc/apt/sources.list.d/sd-agent.list"
  
-        $CURL -s https://www.serverdensity.com/downloads/boxedice-public.key | sudo apt-key add -
+        $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo apt-key add -
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
