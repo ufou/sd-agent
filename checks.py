@@ -629,12 +629,27 @@ class checks:
             proc4 = None
             try:
                 try:
-                    proc1 = subprocess.Popen(["iostat", "-d", "disk0"], stdout=subprocess.PIPE, close_fds=True)
-                    proc2 = subprocess.Popen(["tail", "-1"], stdin=proc1.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc1 = subprocess.Popen(
+                        ["iostat", "-d", "disk0"],
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
+                    proc2 = subprocess.Popen(
+                        ["tail", "-1"],
+                        stdin=proc1.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc1.stdout.close()
-                    proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc3 = subprocess.Popen(
+                        ["awk", '\"{ print $1,$2,int($3) }\"'],
+                        stdin=proc2.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc2.stdout.close()
-                    proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc4 = subprocess.Popen(
+                        ["sed", r's/  */:/g'],
+                        stdin=proc3.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc3.stdout.close()
 
                     stats = proc4.communicate()[0]
@@ -643,9 +658,9 @@ class checks:
 
                     ioStats = {
                         'disk0': {
-                            'KBt': stats[3],  # kilobytes per transfer
-                            'tps': stats[5],  # transfers per second
-                            'MBs': stats[7]  # megabytes per second
+                            'KBt': stats[1],  # kilobytes per transfer
+                            'tps': stats[2],  # transfers per second
+                            'MBs': stats[3]   # megabytes per second
                         }
                     }
 
