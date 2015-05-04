@@ -162,7 +162,7 @@ gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity
 EOF"
  
-        $CURL -s https://www.serverdensity.com/downloads/boxedice-public.key | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity > /dev/null
+        $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity > /dev/null
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
