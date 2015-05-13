@@ -538,7 +538,7 @@ class checks:
 
                 diskNameFull = device.split('/')[-1]
                 disks.append({
-                    'volumeName': diskNameFull.split('-')[1],
+                    'volumeName': diskNameFull.split('-', 1)[1],
                     'device': deviceName
                 })
 
