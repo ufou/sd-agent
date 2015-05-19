@@ -194,8 +194,8 @@ class checks:
     def getCouchDBStatus(self):
         self.mainLogger.debug('getCouchDBStatus: start')
 
-        if ('CouchDBServer' not in self.agentConfig
-                or self.agentConfig['CouchDBServer'] == ''):
+        if ('CouchDBServer' not in self.agentConfig or
+                self.agentConfig['CouchDBServer'] == ''):
             self.mainLogger.debug('getCouchDBStatus: config not set')
             return False
 
@@ -400,7 +400,7 @@ class checks:
             self.mainLogger.debug('getCPUStats: darwin')
 
             try:
-                proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, close_fds=True)
+                proc = subprocess.Popen(['sar', '-u', '1', '2'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
                 stats = proc.communicate()[0]
 
                 itemRegexp = re.compile(r'\s+(\d+)[\s+]?')
@@ -538,7 +538,7 @@ class checks:
 
                 diskNameFull = device.split('/')[-1]
                 disks.append({
-                    'volumeName': diskNameFull.split('-')[1],
+                    'volumeName': diskNameFull.split('-', 1)[1],
                     'device': deviceName
                 })
 
@@ -629,12 +629,27 @@ class checks:
             proc4 = None
             try:
                 try:
-                    proc1 = subprocess.Popen(["iostat", "-d", "disk0"], stdout=subprocess.PIPE, close_fds=True)
-                    proc2 = subprocess.Popen(["tail", "-1"], stdin=proc1.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc1 = subprocess.Popen(
+                        ["iostat", "-d", "disk0"],
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
+                    proc2 = subprocess.Popen(
+                        ["tail", "-1"],
+                        stdin=proc1.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc1.stdout.close()
-                    proc3 = subprocess.Popen(["awk", '\"{ print $1,$2,int($3) }\"'], stdin=proc2.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc3 = subprocess.Popen(
+                        ["awk", '\"{ print $1,$2,int($3) }\"'],
+                        stdin=proc2.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc2.stdout.close()
-                    proc4 = subprocess.Popen(["sed", r's/ /:/g'], stdin=proc3.stdout, stdout=subprocess.PIPE, close_fds=True)
+                    proc4 = subprocess.Popen(
+                        ["sed", r's/  */:/g'],
+                        stdin=proc3.stdout,
+                        stdout=subprocess.PIPE,
+                        close_fds=True)
                     proc3.stdout.close()
 
                     stats = proc4.communicate()[0]
@@ -643,9 +658,9 @@ class checks:
 
                     ioStats = {
                         'disk0': {
-                            'KBt': stats[3],  # kilobytes per transfer
-                            'tps': stats[5],  # transfers per second
-                            'MBs': stats[7]  # megabytes per second
+                            'KBt': stats[1],  # kilobytes per transfer
+                            'tps': stats[2],  # transfers per second
+                            'MBs': stats[3]   # megabytes per second
                         }
                     }
 
@@ -2318,6 +2333,30 @@ class checks:
 
                 status['queues'] = queues
                 self.mainLogger.debug(status['queues'])
+
+                # Network partitions
+                status['partition'] = 0
+                url = split_url[0] + '://' + split_url[1] + '/api/nodes'
+                self.mainLogger.debug('getRabbitMQStatus: attempting urlopen on %s', url)
+                req = urllib2.Request(url, None, rabbitMQHeaders)
+                # Do the request, log any errors
+                request = urllib2.urlopen(req)
+                response = request.read()
+
+                if int(pythonVersion[1]) >= 6:
+                    self.mainLogger.debug('getRabbitMQStatus: nodes json read')
+                    nodes = json.loads(response)
+                else:
+                    self.mainLogger.debug('getRabbitMQStatus: nodes minjson read')
+                    nodes = minjson.safeRead(response)
+
+                for node in nodes:
+                    if 'partitions' in node and len(node['partitions']) > 0:
+                        self.mainLogger.debug('getRabbitMQStatus: partitions found on node %s: %s', (node['name'], node['partitions']))
+                        status['partition'] = 1
+                        break
+
+                self.mainLogger.debug(status['partition'])
 
         except Exception:
             import traceback

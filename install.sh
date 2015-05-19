@@ -20,7 +20,7 @@
 ### limitations under the License.
 ###
  
-PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL")
+PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux")
  
 # Put additional version numbers here.
 # These variables take the form ${platform}_VERSIONS, where $platform matches
@@ -30,6 +30,7 @@ Debian_VERSIONS=("5" "6")
 CentOS_VERSIONS=("5" "6")
 Amazon_VERSIONS=("2012.09" "2013.03")
 RHEL_VERSIONS=("5" "6")
+CloudLinux_VERSIONS=("5" "6")
  
 # For version number updates you hopefully don't need to modify below this line
 # -----------------------------------------------------------------------------
@@ -77,7 +78,7 @@ function check_distro_version() {
             fi
         done
  
-    elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "RHEL" ]; then
+    elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
         MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
         MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
  
@@ -125,6 +126,7 @@ function print_help() {
     echo "      -k: Agent key. Not required if API token provided. "
     echo "      -t: API token. Not required if agent key provided. "   
     echo "      -g: Group. Optional. Group to add the new device into."   
+    echo "      -T: Tag. Optional. Tag this device - multiple tags not supported."   
     exit 0
 }
  
@@ -136,7 +138,7 @@ function do_install() {
         echo "Adding repository"
         sudo sh -c "echo \"deb http://www.serverdensity.com/downloads/linux/deb all main\" > /etc/apt/sources.list.d/sd-agent.list"
  
-        $CURL -s https://www.serverdensity.com/downloads/boxedice-public.key | sudo apt-key add -
+        $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo apt-key add -
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
@@ -148,7 +150,7 @@ function do_install() {
         sudo $APT_CMD install sd-agent
         return $?
     
-    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ]; then        
+    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then        
         echo "Adding repository"
  
         sudo sh -c "cat - > /etc/yum.repos.d/serverdensity.repo <<EOF
@@ -160,7 +162,7 @@ gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity
 EOF"
  
-        $CURL -s https://www.serverdensity.com/downloads/boxedice-public.key | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity > /dev/null
+        $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity > /dev/null
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
@@ -274,7 +276,7 @@ function pre_install_sanity() {
             sudo $APT_CMD update > /dev/null
             sudo $APT_CMD install curl
  
-        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ]; then
+        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
             sudo $YUM_CMD install curl
         fi
     fi
@@ -286,17 +288,17 @@ function pre_install_sanity() {
 if [ -f /etc/redhat-release ] ; then
     PLATFORM=`cat /etc/redhat-release`
     DISTRO=`echo $PLATFORM | awk '{print $1}'`
-    if [ "$DISTRO" != "CentOS" ]; then
-        if [ "$DISTRO" = "Red" ]; then
-                DISTRO="RHEL"
-                VERSION=`echo $PLATFORM | awk '{print $7}'`
-        else
-                DISTRO="unknown"
-                PLATFORM="unknown"
-                VERSION="unknown"
-        fi
+    if [ "$DISTRO" = "Red" ]; then
+        DISTRO="RHEL"
+        VERSION=`echo $PLATFORM | awk '{print $7}'`
     elif [ "$DISTRO" = "CentOS" ]; then
         VERSION=`echo $PLATFORM | awk '{print $3}'`
+    elif [ "$DISTRO" = "CloudLinux" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $4}'`
+    else
+        DISTRO="unknown"
+        PLATFORM="unknown"
+        VERSION="unknown"
     fi
     MACHINE=`uname -m`
 elif [ -f /etc/system-release ]; then
@@ -336,7 +338,7 @@ fi
  
 IGNORE_RELEASE=0
 
-while getopts ":a:k:g:t:" opt; do
+while getopts ":a:k:g:t:T:" opt; do
   case $opt in
     a)
       ACCOUNT="$OPTARG" >&2
@@ -349,6 +351,9 @@ while getopts ":a:k:g:t:" opt; do
       ;;
     t)
       API_KEY="$OPTARG" >&2
+      ;;
+    T)
+      TAGNAME="$OPTARG" >&2
       ;;
     \?)
       exit
@@ -375,13 +380,51 @@ if [ -z $AGENTKEY ]; then
     echo "Using API key $API_KEY to automatically create device with hostname ${HOSTNAME}"
     echo ""
 
-    if [ "${GROUPNAME}" = "" ]; then
-        RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
-    fi
+    if [ "${TAGNAME}" != "" ]; then
 
-    if [ "${GROUPNAME}" != "" ]; then
-        RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}"`
-    fi    
+        TAGS=`curl --silent -X GET https://api.serverdensity.io/inventory/tags?token=${API_KEY}`
+
+        # very messy way to get the tag ID without using any json tools
+        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i "\"$TAGNAME"\" | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'` 
+
+        if [ ! -z $TAGID ]; then
+            echo "Found $TAGNAME, using tag ID $TAGID"
+
+        else
+
+            MD5=`which md5`
+            if [ -z $MD5 ]; then
+                MD5=`which md5sum`
+            fi
+            HEX="#`echo -n $TAGNAME | $MD5 | cut -c1-6`"
+
+            echo "Creating tag $TAGNAME with random hex code $HEX"
+            TAGS=`curl --silent -X POST https://api.serverdensity.io/inventory/tags?token=${API_KEY} --data "name=$TAGNAME&color=$HEX"`
+
+            TAGID=`echo $TAGS | grep -i $TAGNAME | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'`
+            echo "Tag cretated, using tag ID $TAGID"
+
+        fi
+
+        if [ "${GROUPNAME}" = "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}&tags=[\"$TAGID\"]"`
+        fi
+
+        if [ "${GROUPNAME}" != "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}&tags=[\"$TAGID\"]"`
+        fi 
+
+    else
+
+        if [ "${GROUPNAME}" = "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
+        fi
+
+        if [ "${GROUPNAME}" != "" ]; then
+            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}"`
+        fi 
+
+    fi
 
     exit_status=$?
 
