@@ -20,7 +20,7 @@
 ### limitations under the License.
 ###
  
-PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux")
+PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux" "Fedora")
  
 # Put additional version numbers here.
 # These variables take the form ${platform}_VERSIONS, where $platform matches
@@ -31,6 +31,7 @@ CentOS_VERSIONS=("5" "6")
 Amazon_VERSIONS=("2012.09" "2013.03")
 RHEL_VERSIONS=("5" "6")
 CloudLinux_VERSIONS=("5" "6")
+Fedora_VERSIONS=("21")
  
 # For version number updates you hopefully don't need to modify below this line
 # -----------------------------------------------------------------------------
@@ -114,6 +115,18 @@ function check_distro_version() {
                 return 0
             fi
         done
+
+    elif [ $DISTRO = "Fedora" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $3}'`
+        # Some of these include minor numbers. Trim.
+
+        TEMP="\${${DISTRO}_VERSIONS[*]}"
+        VERSIONS=`eval echo $TEMP`
+        for v in $VERSIONS ; do
+            if [ "$VERSION" = "$v" ]; then
+                return 0
+            fi
+        done
     fi
  
     echo "Detected $DISTRO but with an unsupported version ($VERSION)"
@@ -150,7 +163,7 @@ function do_install() {
         sudo $APT_CMD install sd-agent
         return $?
     
-    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then        
+    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ] || [ $DISTRO = "Fedora" ]; then
         echo "Adding repository"
  
         sudo sh -c "cat - > /etc/yum.repos.d/serverdensity.repo <<EOF
@@ -276,7 +289,7 @@ function pre_install_sanity() {
             sudo $APT_CMD update > /dev/null
             sudo $APT_CMD install curl
  
-        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
+        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ] || [ $DISTRO = "Fedora" ]; then
             sudo $YUM_CMD install curl
         fi
     fi
@@ -295,6 +308,8 @@ if [ -f /etc/redhat-release ] ; then
         VERSION=`echo $PLATFORM | awk '{print $3}'`
     elif [ "$DISTRO" = "CloudLinux" ]; then
         VERSION=`echo $PLATFORM | awk '{print $4}'`
+    elif [ "$DISTRO" = "Fedora" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $3}'`
     else
         DISTRO="unknown"
         PLATFORM="unknown"
