@@ -2331,6 +2331,16 @@ class checks:
                     self.mainLogger.debug('getRabbitMQStatus: queues minjson read')
                     queues = minjson.safeRead(response)
 
+                # Filter queues to send
+                queue_filter = self.agentConfig.get('rabbitMQQueueFilter', False)
+                if queue_filter and queue_filter != '.*':
+                    filtered_queues = []
+                    regex = re.compile(queue_filter)
+                    for queue_to_filter in queues:
+                        if regex.match(queue_to_filter['name']):
+                            filtered_queues.append(queue_to_filter)
+                    queues = filtered_queues
+
                 status['queues'] = queues
                 self.mainLogger.debug(status['queues'])
 
