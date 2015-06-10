@@ -52,6 +52,15 @@ else:
 
 class checks:
 
+    RABBITMQ_ALLOWED_QUEUE_FIELDS = [
+        'consumers',
+        'messages',
+        'messages_unacknowledged',
+        'messages_uncommitted',
+        'memory',
+        'name'
+    ]
+
     def __init__(self, agentConfig, rawConfig, mainLogger):
         self.agentConfig = agentConfig
         self.rawConfig = rawConfig
@@ -2340,6 +2349,12 @@ class checks:
                         if regex.match(queue_to_filter['name']):
                             filtered_queues.append(queue_to_filter)
                     queues = filtered_queues
+
+                # Filter out the fields we don't need to reduce payload size
+                for current_queue in queues:
+                    for key in current_queue:
+                        if key not in self.RABBITMQ_ALLOWED_QUEUE_FIELDS:
+                            current_queue.pop(key, None)
 
                 status['queues'] = queues
                 self.mainLogger.debug(status['queues'])
