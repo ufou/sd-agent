@@ -2333,7 +2333,7 @@ class checks:
 
                 # Filter queues to send
                 queue_filter = self.agentConfig.get('rabbitMQQueueFilter', False)
-                if queue_filter:
+                if queue_filter and queue_filter != '.*':
                     filtered_queues = []
                     regex = re.compile(queue_filter)
                     for queue_to_filter in queues:

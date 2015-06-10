@@ -192,7 +192,7 @@ try:
 
     if config.has_option('Main', 'logtail_paths'):
         agentConfig['logTailPaths'] = config.get('Main', 'logtail_paths')
-        
+
     if config.has_option('Main', 'rabbitmq_queue_filter'):
         agentConfig['rabbitMQQueueFilter'] = config.get('Main', 'rabbitmq_queue_filter')
 
