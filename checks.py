@@ -2352,7 +2352,7 @@ class checks:
 
                 # Filter out the fields we don't need to reduce payload size
                 for current_queue in queues:
-                    for key in current_queue:
+                    for key in current_queue.keys():
                         if key not in self.RABBITMQ_ALLOWED_QUEUE_FIELDS:
                             current_queue.pop(key, None)
 
