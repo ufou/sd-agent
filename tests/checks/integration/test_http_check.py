@@ -1,6 +1,9 @@
 import time
 import mock
 
+# 3p
+from nose.plugins.skip import SkipTest
+
 from checks import AgentCheck
 from tests.checks.common import AgentCheckTest
 
@@ -82,6 +85,8 @@ class HTTPCheckTest(AgentCheckTest):
     CHECK_NAME = 'http_check'
 
     def tearDown(self):
+        raise SkipTest("Service checks are not supported.")
+
         self.check.stop()
 
     def wait_for_async_service_checks(self, count):
@@ -96,6 +101,8 @@ class HTTPCheckTest(AgentCheckTest):
                         .format(self.check.service_checks))
 
     def test_check(self):
+        raise SkipTest("Service checks are not supported.")
+
         self.run_check(CONFIG)
         # Overrides self.service_checks attribute when values are available\
         self.service_checks = self.wait_for_async_service_checks(5)
@@ -134,6 +141,8 @@ class HTTPCheckTest(AgentCheckTest):
         self.coverage_report()
 
     def test_check_ssl(self):
+        raise SkipTest("Service checks are not supported.")
+
         self.run_check(CONFIG_SSL_ONLY)
         # Overrides self.service_checks attribute when values are available
         self.service_checks = self.wait_for_async_service_checks(6)
@@ -153,6 +162,8 @@ class HTTPCheckTest(AgentCheckTest):
 
     @mock.patch('ssl.SSLSocket.getpeercert', return_value=FAKE_CERT)
     def test_mock_case(self, getpeercert_func):
+        raise SkipTest("Service checks are not supported.")
+
         self.run_check(CONFIG_EXPIRED_SSL)
         # Overrides self.service_checks attribute when values are av
         # Needed for the HTTP headers

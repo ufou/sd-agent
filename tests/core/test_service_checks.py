@@ -4,6 +4,7 @@ import time
 
 # 3p
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 
 # project
 from config import AGENT_VERSION
@@ -17,6 +18,8 @@ class ServiceCheckTestCase(AgentCheckTest):
     CHECK_NAME = "http_check"
 
     def testHTTPHeaders(self):
+        raise SkipTest("Service checks are not supported.")
+
         agentConfig = {
             'version': AGENT_VERSION,
             'api_key': 'toto'
@@ -43,6 +46,8 @@ class ServiceCheckTestCase(AgentCheckTest):
 
 
     def testHTTPWarning(self):
+        raise SkipTest("Service checks are not supported.")
+
         self.CHECK_NAME = "http_check"
 
         config = {
@@ -77,6 +82,8 @@ class ServiceCheckTestCase(AgentCheckTest):
         self.check.stop()
 
     def testHTTP(self):
+        raise SkipTest("Service checks are not supported.")
+
         self.CHECK_NAME = "http_check"
 
         # No passwords this time
@@ -128,6 +135,8 @@ class ServiceCheckTestCase(AgentCheckTest):
         self.check.stop()
 
     def testTCP(self):
+        raise SkipTest("Service checks are not supported.")
+
         # No passwords this time
         config = {
             'init_config': {
