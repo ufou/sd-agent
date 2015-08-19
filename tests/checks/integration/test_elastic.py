@@ -155,7 +155,7 @@ class TestElastic(AgentCheckTest):
         bad_port = 9205
         agent_config = {
             "hostname": conf_hostname, "version": get_version(),
-            "api_key": "bar"
+            "agent_key": "bar"
         }
 
         tags = ['foo:bar', 'baz']

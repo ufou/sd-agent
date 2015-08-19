@@ -52,7 +52,7 @@ class AgentPayload(collections.MutableMapping):
     METADATA_KEYS = frozenset(['meta', 'tags', 'host-tags', 'systemStats',
                                'agent_checks', 'gohai', 'external_host_tags'])
 
-    DUPLICATE_KEYS = frozenset(['apiKey', 'agentVersion'])
+    DUPLICATE_KEYS = frozenset(['agentKey', 'agentVersion'])
 
     COMMON_ENDPOINT = ''
     DATA_ENDPOINT = 'metrics'
@@ -371,7 +371,7 @@ class Collector(object):
 
             if has_resource:
                 payload['resources']['meta'] = {
-                    'api_key': self.agentConfig['api_key'],
+                    'agent_key': self.agentConfig['agent_key'],
                     'host': payload['internalHostname'],
                 }
 
@@ -605,7 +605,7 @@ class Collector(object):
         payload['os'] = self.os
         payload['python'] = sys.version
         payload['agentVersion'] = self.agentConfig['version']
-        payload['apiKey'] = self.agentConfig['api_key']
+        payload['agentKey'] = self.agentConfig['agent_key']
         payload['events'] = {}
         payload['metrics'] = []
         payload['service_checks'] = []
@@ -626,7 +626,7 @@ class Collector(object):
             payload['systemStats'] = self.agentConfig.get('system_stats', {})
             # Also post an event in the newsfeed
             payload['events']['System'] = [{
-                'api_key': self.agentConfig['api_key'],
+                'agent_key': self.agentConfig['agent_key'],
                 'host': payload['internalHostname'],
                 'timestamp': now,
                 'event_type':'Agent Startup',

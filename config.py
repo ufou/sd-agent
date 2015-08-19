@@ -387,8 +387,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in datadog.conf.")
             exit(2)
 
-        # Which API key to use
-        agentConfig['api_key'] = config.get('Main', 'api_key')
+        # Which agent key to use
+        agentConfig['agent_key'] = config.get('Main', 'agent_key')
 
         # local traffic only? Default to no
         agentConfig['non_local_traffic'] = False

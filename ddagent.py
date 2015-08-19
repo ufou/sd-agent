@@ -167,10 +167,10 @@ class AgentTransaction(Transaction):
         # Only send data to Datadog if an API KEY exists
         # i.e. user is also Datadog user
         try:
-            is_dd_user = 'api_key' in cls._application._agentConfig\
+            is_dd_user = 'agent_key' in cls._application._agentConfig\
                 and 'use_dd' in cls._application._agentConfig\
                 and cls._application._agentConfig['use_dd']\
-                and cls._application._agentConfig.get('api_key')
+                and cls._application._agentConfig.get('agent_key')
             if is_dd_user:
                 log.warn("You are a Datadog user so we will send data to https://app.datadoghq.com")
                 cls._endpoints.append(DD_ENDPOINT)
@@ -200,9 +200,10 @@ class AgentTransaction(Transaction):
 
     def get_url(self, endpoint):
         endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
-        api_key = self._application._agentConfig.get('api_key')
-        if api_key:
-            return "{0}/intake/{1}?api_key={2}".format(endpoint_base_url, self._msg_type, api_key)
+        agent_key = self._application._agentConfig.get('agent_key')
+        if agent_key:
+            return "{0}/intake/{1}?agent_key={2}".format(
+                endpoint_base_url, self._msg_type, agent_key)
         return "{0}/intake/{1}".format(endpoint_base_url, self._msg_type)
 
     def flush(self):
@@ -437,7 +438,7 @@ class Application(tornado.web.Application):
         if len(self._metrics) > 0:
             self._metrics['uuid'] = get_uuid()
             self._metrics['internalHostname'] = get_hostname(self._agentConfig)
-            self._metrics['apiKey'] = self._agentConfig['api_key']
+            self._metrics['agentKey'] = self._agentConfig['agent_key']
             MetricTransaction(json.dumps(self._metrics),
                               headers={'Content-Type': 'application/json'})
             self._metrics = {}
@@ -447,8 +448,8 @@ class Application(tornado.web.Application):
             (r"/intake/?", AgentInputHandler),
             (r"/intake/metrics?", MetricsAgentInputHandler),
             (r"/intake/metadata?", MetadataAgentInputHandler),
-            (r"/api/v1/series/?", ApiInputHandler),
-            (r"/api/v1/check_run/?", ApiCheckRunHandler),
+            #(r"/api/v1/series/?", ApiInputHandler),
+            #(r"/api/v1/check_run/?", ApiCheckRunHandler),
             (r"/status/?", StatusHandler),
         ]
 

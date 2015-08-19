@@ -404,7 +404,7 @@ def testddForwarder():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
-    config = {'api_key':'my_apikey', 'ddforwarder_log': sys.argv[1]}
+    config = {'agent_key':'my_agentkey', 'ddforwarder_log': sys.argv[1]}
     dd = DdForwarder(logger, config)
     m = dd.check(config, move_end=False)
     while True:

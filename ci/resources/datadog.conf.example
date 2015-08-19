@@ -15,10 +15,9 @@ dd_url: https://app.datadoghq.com
 # If you run the agent behind haproxy, you might want to set this to yes
 # skip_ssl_validation: no
 
-# The Datadog api key to associate your Agent's data with your organization.
-# Can be found here:
-# https://app.datadoghq.com/account/settings
-api_key:
+# The Server Density agent key to associate your Agent's data with your
+# device.
+agent_key:
 
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain

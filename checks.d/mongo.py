@@ -139,7 +139,7 @@ class MongoDb(AgentCheck):
         self.event({
             'timestamp': int(time.time()),
             'event_type': 'Mongo',
-            'api_key': agentConfig['api_key'],
+            'agent_key': agentConfig['agent_key'],
             'msg_title': msg_title,
             'msg_text': msg,
             'host': hostname

@@ -46,11 +46,11 @@ def http_emitter(message, log, agentConfig, endpoint):
     log.debug("payload_size=%d, compressed_size=%d, compression_ratio=%.3f"
               % (len(payload), len(zipped), float(len(payload))/float(len(zipped))))
 
-    apiKey = message.get('apiKey', None)
-    if not apiKey:
-        raise Exception("The http emitter requires an api key")
+    agentKey = message.get('agentKey', None)
+    if not agentKey:
+        raise Exception("The http emitter requires an agent key")
 
-    url = "{0}/intake/{1}?api_key={2}".format(url, endpoint, apiKey)
+    url = "{0}/intake/{1}?agent_key={2}".format(url, endpoint, agentKey)
 
     try:
         headers = post_headers(agentConfig, zipped)

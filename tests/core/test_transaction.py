@@ -4,6 +4,7 @@ from datetime import timedelta, datetime
 
 # 3rd party
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 from tornado.web import Application
 import requests
 import simplejson as json
@@ -110,7 +111,7 @@ class TestTransaction(unittest.TestCase):
 
         config = {
             "dd_url": "https://foo.bar.com",
-            "api_key": "foo",
+            "agent_key": "foo",
             "use_dd": True
         }
 
@@ -127,7 +128,7 @@ class TestTransaction(unittest.TestCase):
 
         transaction = MetricTransaction(None, {}, "msgtype")
         endpoints = [transaction.get_url(e) for e in transaction._endpoints]
-        expected = ['https://foo.bar.com/intake/msgtype?api_key=foo']
+        expected = ['https://foo.bar.com/intake/msgtype?agent_key=foo']
         self.assertEqual(endpoints, expected, (endpoints, expected))
 
     def testEndpoints(self):
@@ -135,6 +136,7 @@ class TestTransaction(unittest.TestCase):
         Tests that the logic behind the agent version specific endpoints is ok.
         Also tests that these endpoints actually exist.
         """
+        raise SkipTest("This test doesn't apply to Server Density.")
         MetricTransaction._endpoints = []
         api_key = "a" * 32
         config = {

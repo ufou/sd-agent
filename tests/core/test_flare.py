@@ -12,7 +12,7 @@ from utils.flare import Flare
 
 def get_mocked_config():
     return {
-        'api_key': 'APIKEY',
+        'agent_key': 'APIKEY',
         'dd_url': 'https://app.datadoghq.com',
     }
 
@@ -55,7 +55,7 @@ class FlareTest(unittest.TestCase):
         f = Flare(case_id=1337)
         conf = mock_config()
         self.assertEqual(f._case_id, 1337)
-        self.assertEqual(f._api_key, conf['api_key'])
+        self.assertEqual(f._agent_key, conf['agent_key'])
         self.assertEqual(f._url, 'https://6-6-6-flare.agent.datadoghq.com/support/flare')
         self.assertEqual(f._tar_path, os.path.join(get_mocked_temp(), "datadog-agent-1.tar.bz2"))
 

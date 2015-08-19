@@ -56,7 +56,7 @@ def get_check(name, config_str):
 
     agentConfig = {
         'version': '0.1',
-        'api_key': 'tota'
+        'agent_key': 'tota'
     }
 
     return check_class.from_yaml(yaml_text=config_str, check_name=name,
