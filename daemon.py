@@ -12,15 +12,15 @@
 
 # Core modules
 import atexit
+import errno
+import logging
 import os
+import signal
 import sys
 import time
-import logging
-import errno
-import signal
 
-# 3p
-from psutil import pid_exists
+# project
+from utils.process import pid_exists
 
 log = logging.getLogger(__name__)
 

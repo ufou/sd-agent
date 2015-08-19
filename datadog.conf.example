@@ -25,6 +25,10 @@ agent_key:
 # Set the host's tags
 #tags: mytag0, mytag1
 
+# Add one "dd_check:checkname" tag per running check. It makes it possible to slice
+# and dice per monitored app (= running Agent Check) on Datadog's backend.
+# create_dd_check_tags: no
+
 # Collect AWS EC2 custom tags as agent tags
 # collect_ec2_tags: no
 
@@ -42,12 +46,16 @@ agent_key:
 # for more information
 # collect_instance_metadata: yes
 
+# use unique hostname for GCE hosts, see http://dtdg.co/1eAynZk
+gce_updated_hostname: yes
+
 # Set the threshold for accepting points to allow anything
 # with recent_point_threshold seconds
 # Defaults to 30 seconds if no value is provided
-#recent_point_threshold: 30
+# recent_point_threshold: 30
 
 # Use mount points instead of volumes to track disk and fs metrics
+# DEPRECATED: use conf.d/disk.yaml instead to configure it
 use_mount: no
 
 # Change port the Agent is listening to
@@ -133,6 +141,7 @@ use_mount: no
 # running constantly churning linux containers) whose metrics aren't
 # interesting for datadog. To filter out a particular pattern of devices
 # from collection, configure a regex here:
+# DEPRECATED: use conf.d/disk.yaml instead to configure it
 # device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
 
 # -------------------------------------------------------------------------- #

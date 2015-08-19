@@ -1,12 +1,12 @@
 # stdlib
 import re
 
-# project
-from util import headers
-from checks import AgentCheck
-
 # 3rd party
 import requests
+
+# project
+from checks import AgentCheck
+from util import headers
 
 # Constants
 COUCHBASE_STATS_PATH = '/pools/default'
@@ -101,7 +101,8 @@ class Couchbase(AgentCheck):
                 tags=service_check_tags, message=str(e))
             raise
         else:
-            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK)
+            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK,
+                tags=service_check_tags)
 
         couchbase['stats'] = overall_stats
 

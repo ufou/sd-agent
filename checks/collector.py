@@ -7,15 +7,15 @@ import sys
 import time
 
 # project
-from checks import AgentCheck, AGENT_METRICS_CHECK_NAME, create_service_check
+from checks import AGENT_METRICS_CHECK_NAME, AgentCheck, create_service_check
 from checks.check_status import (
     CheckStatus,
     CollectorStatus,
     EmitterStatus,
-    STATUS_OK,
     STATUS_ERROR,
+    STATUS_OK,
 )
-from checks.datadog import Dogstreams, DdForwarder
+from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
@@ -30,7 +30,7 @@ from util import (
     get_uuid,
     Timer,
 )
-from utils.jmxfiles import JMXFiles
+from utils.jmx import JMXFiles
 from utils.subprocess_output import subprocess
 
 log = logging.getLogger(__name__)
@@ -215,7 +215,8 @@ class Collector(object):
 
         # Custom metric checks
         for module_spec in [s.strip() for s in self.agentConfig.get('custom_checks', '').split(',')]:
-            if len(module_spec) == 0: continue
+            if len(module_spec) == 0:
+                continue
             try:
                 self._metrics_checks.append(modules.load(module_spec, 'Check')(log))
                 log.info("Registered custom check %s" % module_spec)
@@ -759,6 +760,11 @@ class Collector(object):
             pass
 
         metadata["hostname"] = get_hostname()
+
+        # Add cloud provider aliases
+        host_aliases = GCE.get_host_aliases(self.agentConfig)
+        if host_aliases:
+            metadata['host_aliases'] = host_aliases
 
         return metadata
 

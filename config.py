@@ -1,22 +1,24 @@
 import ConfigParser
-import os
+from cStringIO import StringIO
+import glob
+import imp
+import inspect
 import itertools
 import logging
 import logging.config
 import logging.handlers
+from optparse import OptionParser, Values
+import os
 import platform
+import re
+from socket import gaierror, gethostbyname
 import string
 import sys
-import glob
-import inspect
 import traceback
-import re
-import imp
-import socket
-from socket import gaierror
-from optparse import OptionParser, Values
-from cStringIO import StringIO
 from urlparse import urlparse
+
+# 3rd party
+import yaml
 
 # project
 from util import get_os, yLoader
@@ -24,12 +26,11 @@ from utils.platform import Platform
 from utils.proxy import get_proxy
 from utils.subprocess_output import subprocess
 
-# 3rd party
-import yaml
-
 # CONSTANTS
-AGENT_VERSION = "5.4.0"
+AGENT_VERSION = "5.5.0"
 DATADOG_CONF = "datadog.conf"
+UNIX_CONFIG_PATH = '/etc/dd-agent'
+MAC_CONFIG_PATH = '/opt/datadog-agent/etc'
 DEFAULT_CHECK_FREQUENCY = 15   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
@@ -70,18 +71,18 @@ class PathNotFound(Exception):
 def get_parsed_args():
     parser = OptionParser()
     parser.add_option('-A', '--autorestart', action='store_true', default=False,
-                        dest='autorestart')
+                      dest='autorestart')
     parser.add_option('-d', '--dd_url', action='store', default=None,
-                        dest='dd_url')
+                      dest='dd_url')
     parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                        default=False, dest='use_forwarder')
+                      default=False, dest='use_forwarder')
     parser.add_option('-n', '--disable-dd', action='store_true', default=False,
-                        dest="disable_dd")
+                      dest="disable_dd")
     parser.add_option('-v', '--verbose', action='store_true', default=False,
-                        dest='verbose',
+                      dest='verbose',
                       help='Print out stacktraces for errors in checks')
     parser.add_option('-p', '--profile', action='store_true', default=False,
-                        dest='profile', help='Enable Developer Mode')
+                      dest='profile', help='Enable Developer Mode')
 
     try:
         options, args = parser.parse_args()
@@ -141,58 +142,70 @@ def _windows_commondata_path():
 
 def _windows_config_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', DATADOG_CONF)
-    if os.path.exists(path):
-        return path
-    raise PathNotFound(path)
+    return _config_path(os.path.join(common_data, 'Datadog'))
 
 
 def _windows_confd_path():
     common_data = _windows_commondata_path()
-    path = os.path.join(common_data, 'Datadog', 'conf.d')
-    if os.path.exists(path):
-        return path
-    raise PathNotFound(path)
+    return _confd_path(os.path.join(common_data, 'Datadog'))
 
 
 def _windows_checksd_path():
     if hasattr(sys, 'frozen'):
         # we're frozen - from py2exe
         prog_path = os.path.dirname(sys.executable)
-        checksd_path = os.path.join(prog_path, '..', 'checks.d')
+        return _checksd_path(os.path.join(prog_path, '..'))
     else:
-
         cur_path = os.path.dirname(__file__)
-        checksd_path = os.path.join(cur_path, 'checks.d')
+        return _checksd_path(cur_path)
 
-    if os.path.exists(checksd_path):
-        return checksd_path
-    raise PathNotFound(checksd_path)
+
+def _mac_config_path():
+    return _config_path(MAC_CONFIG_PATH)
+
+
+def _mac_confd_path():
+    return _confd_path(MAC_CONFIG_PATH)
+
+
+def _mac_checksd_path():
+    return _unix_checksd_path()
 
 
 def _unix_config_path():
-    path = os.path.join('/etc/dd-agent', DATADOG_CONF)
-    if os.path.exists(path):
-        return path
-    raise PathNotFound(path)
+    return _config_path(UNIX_CONFIG_PATH)
 
 
 def _unix_confd_path():
-    path = os.path.join('/etc/dd-agent', 'conf.d')
-    if os.path.exists(path):
-        return path
-    raise PathNotFound(path)
+    return _confd_path(UNIX_CONFIG_PATH)
 
 
 def _unix_checksd_path():
     # Unix only will look up based on the current directory
     # because checks.d will hang with the other python modules
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    checksd_path = os.path.join(cur_path, 'checks.d')
+    return _checksd_path(cur_path)
 
-    if os.path.exists(checksd_path):
-        return checksd_path
-    raise PathNotFound(checksd_path)
+
+def _config_path(directory):
+    path = os.path.join(directory, DATADOG_CONF)
+    if os.path.exists(path):
+        return path
+    raise PathNotFound(path)
+
+
+def _confd_path(directory):
+    path = os.path.join(directory, 'conf.d')
+    if os.path.exists(path):
+        return path
+    raise PathNotFound(path)
+
+
+def _checksd_path(directory):
+    path = os.path.join(directory, 'checks.d')
+    if os.path.exists(path):
+        return path
+    raise PathNotFound(path)
 
 
 def _is_affirmative(s):
@@ -213,32 +226,33 @@ def get_config_path(cfg_path=None, os_name=None):
 
     # Check for an OS-specific path, continue on not-found exceptions
     bad_path = ''
-    if os_name == 'windows':
-        try:
+    try:
+        if os_name == 'windows':
             return _windows_config_path()
-        except PathNotFound, e:
-            if len(e.args) > 0:
-                bad_path = e.args[0]
-    else:
-        try:
+        elif os_name == 'mac':
+            return _mac_config_path()
+        else:
             return _unix_config_path()
-        except PathNotFound, e:
-            if len(e.args) > 0:
-                bad_path = e.args[0]
+    except PathNotFound, e:
+        if len(e.args) > 0:
+            bad_path = e.args[0]
 
     # Check if there's a config stored in the current agent directory
-    path = os.path.realpath(__file__)
-    path = os.path.dirname(path)
-    if os.path.exists(os.path.join(path, DATADOG_CONF)):
-        return os.path.join(path, DATADOG_CONF)
+    try:
+        path = os.path.realpath(__file__)
+        path = os.path.dirname(path)
+        return _config_path(path)
+    except PathNotFound, e:
+        pass
 
     # If all searches fail, exit the agent with an error
     sys.stderr.write("Please supply a configuration file at %s or in the directory where the Agent is currently deployed.\n" % bad_path)
     sys.exit(3)
 
+
 def get_default_bind_host():
     try:
-        socket.gethostbyname('localhost')
+        gethostbyname('localhost')
     except gaierror:
         log.warning("localhost seems undefined in your hosts file, using 127.0.0.1 instead")
         return '127.0.0.1'
@@ -314,6 +328,9 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'statsd_metric_namespace': None,
         'utf8_decoding': False
     }
+
+    if Platform.is_mac():
+        agentConfig['additional_checksd'] = '/opt/datadog-agent/etc/checks.d'
 
     # Config handling
     try:
@@ -438,8 +455,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
                 agentConfig[key] = value
 
         # Create app:xxx tags based on monitored apps
-        agentConfig['create_dd_check_tags'] = config.has_option('Main', 'create_dd_check_tags')\
-                and _is_affirmative(config.get('Main', 'create_dd_check_tags'))
+        agentConfig['create_dd_check_tags'] = config.has_option('Main', 'create_dd_check_tags') and \
+            _is_affirmative(config.get('Main', 'create_dd_check_tags'))
 
         # Forwarding to external statsd server
         if config.has_option('Main', 'statsd_forward_host'):
@@ -528,6 +545,10 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option("Main", "utf8_decoding"):
             agentConfig["utf8_decoding"] = _is_affirmative(config.get("Main", "utf8_decoding"))
 
+        agentConfig["gce_updated_hostname"] = False
+        if config.has_option("Main", "gce_updated_hostname"):
+            agentConfig["gce_updated_hostname"] = _is_affirmative(config.get("Main", "gce_updated_hostname"))
+
     except ConfigParser.NoSectionError, e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
@@ -611,24 +632,22 @@ def get_confd_path(osname=None):
     if not osname:
         osname = get_os()
     bad_path = ''
-    if osname == 'windows':
-        try:
+    try:
+        if osname == 'windows':
             return _windows_confd_path()
-        except PathNotFound, e:
-            if len(e.args) > 0:
-                bad_path = e.args[0]
-    else:
-        try:
+        elif osname == 'mac':
+            return _mac_confd_path()
+        else:
             return _unix_confd_path()
-        except PathNotFound, e:
-            if len(e.args) > 0:
-                bad_path = e.args[0]
+    except PathNotFound, e:
+        if len(e.args) > 0:
+            bad_path = e.args[0]
 
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    cur_path = os.path.join(cur_path, 'conf.d')
-
-    if os.path.exists(cur_path):
-        return cur_path
+    try:
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        return _confd_path(cur_path)
+    except PathNotFound, e:
+        pass
 
     raise PathNotFound(bad_path)
 
@@ -638,6 +657,8 @@ def get_checksd_path(osname=None):
         osname = get_os()
     if osname == 'windows':
         return _windows_checksd_path()
+    elif osname == 'mac':
+        return _mac_checksd_path()
     else:
         return _unix_checksd_path()
 
@@ -678,7 +699,6 @@ def get_ssl_certificate(osname, filename):
         if os.path.exists(path):
             log.debug("Certificate file found at %s" % str(path))
             return path
-
     else:
         cur_path = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(cur_path, filename)
@@ -892,34 +912,24 @@ def get_syslog_format(logger_name):
 
 def get_logging_config(cfg_path=None):
     system_os = get_os()
-    if system_os != 'windows':
-        logging_config = {
-            'log_level': None,
-            'collector_log_file': '/var/log/datadog/collector.log',
-            'forwarder_log_file': '/var/log/datadog/forwarder.log',
-            'dogstatsd_log_file': '/var/log/datadog/dogstatsd.log',
-            'jmxfetch_log_file': '/var/log/datadog/jmxfetch.log',
-            'log_to_event_viewer': False,
-            'log_to_syslog': True,
-            'syslog_host': None,
-            'syslog_port': None,
-        }
+    logging_config = {
+        'log_level': None,
+        'log_to_event_viewer': False,
+        'log_to_syslog': False,
+        'syslog_host': None,
+        'syslog_port': None,
+    }
+    if system_os == 'windows':
+        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'collector.log')
+        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'forwarder.log')
+        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'dogstatsd.log')
+        logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
     else:
-        collector_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'collector.log')
-        forwarder_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'forwarder.log')
-        dogstatsd_log_location = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'dogstatsd.log')
-        jmxfetch_log_file = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
-        logging_config = {
-            'log_level': None,
-            'windows_collector_log_file': collector_log_location,
-            'windows_forwarder_log_file': forwarder_log_location,
-            'windows_dogstatsd_log_file': dogstatsd_log_location,
-            'jmxfetch_log_file': jmxfetch_log_file,
-            'log_to_event_viewer': False,
-            'log_to_syslog': False,
-            'syslog_host': None,
-            'syslog_port': None,
-        }
+        logging_config['collector_log_file'] = '/var/log/datadog/collector.log'
+        logging_config['forwarder_log_file'] = '/var/log/datadog/forwarder.log'
+        logging_config['dogstatsd_log_file'] = '/var/log/datadog/dogstatsd.log'
+        logging_config['jmxfetch_log_file'] = '/var/log/datadog/jmxfetch.log'
+        logging_config['log_to_syslog'] = True
 
     config_path = get_config_path(cfg_path, os_name=system_os)
     config = ConfigParser.ConfigParser()

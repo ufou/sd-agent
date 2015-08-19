@@ -1,6 +1,6 @@
 #!/usr/bin/env rake
 # encoding: utf-8
-
+# 3p
 require 'rake/clean'
 require 'rubocop/rake_task'
 
@@ -22,6 +22,7 @@ require './ci/lighttpd'
 require './ci/memcache'
 require './ci/mongo'
 require './ci/mysql'
+require './ci/network'
 require './ci/nginx'
 require './ci/pgbouncer'
 require './ci/phpfpm'
@@ -36,13 +37,13 @@ require './ci/sysstat'
 require './ci/tokumx'
 require './ci/tomcat'
 require './ci/varnish'
+require './ci/windows'
 require './ci/zookeeper'
 
 CLOBBER.include '**/*.pyc'
 
-# Travis-like environment for local use
-
-unless ENV['TRAVIS']
+# CI-like environment for local use
+unless ENV['CI']
   rakefile_dir = File.dirname(__FILE__)
   ENV['TRAVIS_BUILD_DIR'] = rakefile_dir
   ENV['INTEGRATIONS_DIR'] = File.join(rakefile_dir, 'embedded')

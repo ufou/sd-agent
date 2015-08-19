@@ -9,7 +9,7 @@ from nose.plugins.attrib import attr
 import nose.tools as nt
 
 # project
-from aggregator import MetricsAggregator, get_formatter, DEFAULT_HISTOGRAM_AGGREGATES
+from aggregator import DEFAULT_HISTOGRAM_AGGREGATES, get_formatter, MetricsAggregator
 
 
 class TestUnitDogStatsd(unittest.TestCase):
@@ -741,7 +741,7 @@ class TestUnitDogStatsd(unittest.TestCase):
 
         nt.assert_equal(first['check'], 'check.1')
         assert first.get('tags') is None, "service_check['tags'] shouldn't be" + \
-                                        "defined when no tags aren't explicited in the packet"
+            "defined when no tags aren't explicited in the packet"
 
         nt.assert_equal(second['check'], 'check.2')
         nt.assert_equal(second['tags'], sorted(['t1']))

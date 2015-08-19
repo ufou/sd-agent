@@ -24,7 +24,7 @@ import yaml
 
 # project
 from checks import check_status
-from util import LaconicFilter, get_hostname, get_next_id, yLoader
+from util import get_hostname, get_next_id, LaconicFilter, yLoader
 from utils.platform import Platform
 from utils.profile import pretty_statistics
 if Platform.is_windows():
@@ -37,11 +37,22 @@ DEFAULT_PSUTIL_METHODS = ['get_memory_info', 'get_io_counters']
 
 AGENT_METRICS_CHECK_NAME = 'agent_metrics'
 
+
 # Konstants
-class CheckException(Exception): pass
-class Infinity(CheckException): pass
-class NaN(CheckException): pass
-class UnknownValue(CheckException): pass
+class CheckException(Exception):
+    pass
+
+
+class Infinity(CheckException):
+    pass
+
+
+class NaN(CheckException):
+    pass
+
+
+class UnknownValue(CheckException):
+    pass
 
 
 
@@ -736,7 +747,7 @@ class AgentCheck(object):
             check = cls(check_name, config.get('init_config') or {}, agentConfig or {})
         return check, config.get('instances', [])
 
-    def normalize(self, metric, prefix=None, fix_case = False):
+    def normalize(self, metric, prefix=None, fix_case=False):
         """
         Turn a metric into a well-formed metric name
         prefix.b.c
@@ -795,7 +806,7 @@ class AgentCheck(object):
 
 
 def agent_formatter(metric, value, timestamp, tags, hostname, device_name=None,
-                                                metric_type=None, interval=None):
+                    metric_type=None, interval=None):
     """ Formats metrics coming from the MetricsAggregator. Will look like:
      (metric, timestamp, value, {"tags": ["tag1", "tag2"], ...})
     """

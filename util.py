@@ -1,5 +1,4 @@
 # stdlib
-
 from hashlib import md5
 import logging
 import math
@@ -7,7 +6,6 @@ import os
 import platform
 import re
 import signal
-import simplejson as json
 import socket
 import sys
 import time
@@ -16,6 +14,7 @@ import urllib2
 import uuid
 
 # 3p
+import simplejson as json
 import yaml  # noqa, let's guess, probably imported somewhere
 from tornado import ioloop
 try:
@@ -234,7 +233,7 @@ class GCE(object):
     TIMEOUT = 0.1 # second
     SOURCE_TYPE_NAME = 'google cloud platform'
     metadata = None
-    EXCLUDED_ATTRIBUTES = ["sshKeys"]
+    EXCLUDED_ATTRIBUTES = ["sshKeys", "user-data", "cli-cert", "ipsec-cert", "ssl-cert"]
 
 
     @staticmethod
@@ -304,7 +303,21 @@ class GCE(object):
     def get_hostname(agentConfig):
         try:
             host_metadata = GCE._get_metadata(agentConfig)
-            return host_metadata['instance']['hostname'].split('.')[0]
+            hostname = host_metadata['instance']['hostname']
+            if agentConfig.get('gce_updated_hostname'):
+                return hostname
+            else:
+                return hostname.split('.')[0]
+        except Exception:
+            return None
+
+    @staticmethod
+    def get_host_aliases(agentConfig):
+        try:
+            host_metadata = GCE._get_metadata(agentConfig)
+            project_id = host_metadata['project']['projectId']
+            instance_name = host_metadata['instance']['hostname'].split('.')[0]
+            return ['%s.%s' % (instance_name, project_id)]
         except Exception:
             return None
 
@@ -333,8 +346,8 @@ class EC2(object):
             pass
 
         try:
-            iam_role = urllib2.urlopen(EC2.METADATA_URL_BASE + "/iam/security-credentials").read().strip()
-            iam_params = json.loads(urllib2.urlopen(EC2.METADATA_URL_BASE + "/iam/security-credentials" + "/" + unicode(iam_role)).read().strip())
+            iam_role = urllib2.urlopen(EC2.METADATA_URL_BASE + "/iam/security-credentials/").read().strip()
+            iam_params = json.loads(urllib2.urlopen(EC2.METADATA_URL_BASE + "/iam/security-credentials/" + unicode(iam_role)).read().strip())
             instance_identity = json.loads(urllib2.urlopen(EC2.INSTANCE_IDENTITY_URL).read().strip())
             region = instance_identity['region']
 
@@ -385,11 +398,11 @@ class EC2(object):
         except Exception:
             pass
 
-        for k in ('instance-id', 'hostname', 'local-hostname', 'public-hostname', 'ami-id', 'local-ipv4', 'public-keys', 'public-ipv4', 'reservation-id', 'security-groups'):
+        for k in ('instance-id', 'hostname', 'local-hostname', 'public-hostname', 'ami-id', 'local-ipv4', 'public-keys/', 'public-ipv4', 'reservation-id', 'security-groups'):
             try:
                 v = urllib2.urlopen(EC2.METADATA_URL_BASE + "/" + unicode(k)).read().strip()
                 assert type(v) in (types.StringType, types.UnicodeType) and len(v) > 0, "%s is not a string" % v
-                EC2.metadata[k] = v
+                EC2.metadata[k.rstrip('/')] = v
             except Exception:
                 pass
 

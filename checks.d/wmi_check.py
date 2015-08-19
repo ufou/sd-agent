@@ -5,11 +5,11 @@ Generic WMI check. This check allows you to specify particular metrics that you
 want from WMI in your configuration. Check wmi_check.yaml.example in your conf.d
 directory for more details on configuration.
 '''
-# project
-from checks import AgentCheck
-
 # 3rd party
 import wmi
+
+# project
+from checks import AgentCheck
 
 UP_METRIC = 'Up'
 SEARCH_WILDCARD = '*'
@@ -109,13 +109,18 @@ class WMICheck(AgentCheck):
                     # Special-case metric will just submit 1 for every value
                     # returned in the result.
                     val = 1
-                else:
+                elif getattr(res, wmi_property):
                     val = float(getattr(res, wmi_property))
+                else:
+                    self.log.warning("When extracting metrics with wmi, found a null value"
+                                     " for property '{0}'. Metric type of property is {1}."
+                                     .format(wmi_property, mtype))
+                    continue
 
+                # Submit the metric to Datadog
                 try:
                     func = getattr(self, mtype)
                 except AttributeError:
                     raise Exception('Invalid metric type: {0}'.format(mtype))
 
-                # submit the metric to datadog
                 func(name, val, tags=tags)

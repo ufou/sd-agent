@@ -13,6 +13,7 @@ python:
 cache:
   directories:
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
+    - vendor/cache
 
 matrix:
   fast_finish: true
@@ -20,6 +21,7 @@ matrix:
 env:
   global:
     - CONCURRENCY=2
+    - COVERAGE=true
     - NOSE_FILTER="not windows"
     - INTEGRATIONS_DIR=$HOME/embedded
     - PIP_CACHE=$HOME/.cache/pip
@@ -57,6 +59,7 @@ env:
     - TRAVIS_FLAVOR=mongo FLAVOR_VERSION=2.6.9
     - TRAVIS_FLAVOR=mongo FLAVOR_VERSION=3.0.1
     - TRAVIS_FLAVOR=mysql
+    - TRAVIS_FLAVOR=network
     - TRAVIS_FLAVOR=nginx FLAVOR_VERSION=1.6.2
     - TRAVIS_FLAVOR=nginx FLAVOR_VERSION=1.7.11
     - TRAVIS_FLAVOR=pgbouncer
@@ -91,6 +94,7 @@ before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
   - bundle install
+  - bundle package
   # Needed if no cache exists
   - mkdir -p $INTEGRATIONS_DIR
   - ls -al $INTEGRATIONS_DIR

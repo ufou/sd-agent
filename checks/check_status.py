@@ -19,9 +19,9 @@ import yaml
 
 # project
 import config
-from config import get_config, _is_affirmative, _windows_commondata_path
+from config import _is_affirmative, _windows_commondata_path, get_config
 from util import plural
-from utils.jmxfiles import JMXFiles
+from utils.jmx import JMXFiles
 from utils.ntp import get_ntp_args
 from utils.pidfile import PidFile
 from utils.platform import Platform
@@ -74,7 +74,7 @@ class Stylizer(object):
         for style in styles or []:
             text = fmt % (cls.STYLES[style], text)
 
-        return text + fmt % (0, '') # reset
+        return text + fmt % (0, '')  # reset
 
 
 # a small convienence method
@@ -88,7 +88,10 @@ def logger_info():
     if len(root_logger.handlers) > 0:
         for handler in root_logger.handlers:
             if isinstance(handler, logging.StreamHandler):
-                loggers.append(handler.stream.name)
+                try:
+                    loggers.append(handler.stream.name)
+                except AttributeError:
+                    loggers.append("unnamed stream")
             if isinstance(handler, logging.handlers.SysLogHandler):
                 if isinstance(handler.address, basestring):
                     loggers.append('syslog:%s' % handler.address)
@@ -168,9 +171,10 @@ class AgentStatus(object):
         fields = [
             (
                 style("Status date", *styles),
-                style("%s (%ss ago)" %
-                    (self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                                        self.created_seconds_ago()), *styles)
+                style("%s (%ss ago)" % (
+                    self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    self.created_seconds_ago()), *styles
+                )
             )
         ]
 
@@ -389,7 +393,8 @@ class CollectorStatus(AgentStatus):
                 if s.has_warnings():
                     for warning in s.warnings:
                         warn = warning.split('\n')
-                        if not len(warn): continue
+                        if not len(warn):
+                            continue
                         check_lines.append(u"        %s: %s" %
                             (style("Warning", 'yellow'), warn[0]))
                         check_lines.extend(u"        %s" % l for l in
@@ -533,7 +538,8 @@ class CollectorStatus(AgentStatus):
                         if s.has_warnings():
                             for warning in s.warnings:
                                 warn = warning.split('\n')
-                                if not len(warn): continue
+                                if not len(warn):
+                                    continue
                                 check_lines.append(u"        %s: %s" %
                                     (style("Warning", 'yellow'), warn[0]))
                                 check_lines.extend(u"        %s" % l for l in
