@@ -27,11 +27,11 @@ from utils.proxy import get_proxy
 from utils.subprocess_output import subprocess
 
 # CONSTANTS
-AGENT_VERSION = "5.5.0"
+AGENT_VERSION = "1.9.90"
 DATADOG_CONF = "datadog.conf"
 UNIX_CONFIG_PATH = '/etc/dd-agent'
 MAC_CONFIG_PATH = '/opt/datadog-agent/etc'
-DEFAULT_CHECK_FREQUENCY = 15   # seconds
+DEFAULT_CHECK_FREQUENCY = 60   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
