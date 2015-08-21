@@ -39,7 +39,7 @@ from util import (
     get_hostname,
     Watchdog,
 )
-from utils.flare import configcheck, Flare
+from utils.flare import configcheck
 from utils.jmx import jmx_command
 from utils.pidfile import PidFile
 from utils.profile import AgentProfiler
@@ -328,16 +328,6 @@ def main():
 
     elif 'jmx' == command:
         jmx_command(args[1:], agentConfig)
-
-    elif 'flare' == command:
-        Flare.check_user_rights()
-        case_id = int(args[1]) if len(args) > 1 else None
-        f = Flare(True, case_id)
-        f.collect()
-        try:
-            f.upload()
-        except Exception, e:
-            print 'The upload failed:\n{0}'.format(str(e))
 
     return 0
 
