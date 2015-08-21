@@ -1,7 +1,7 @@
 [Main]
 
-# The host of the Datadog intake server to send Agent data to
-dd_url: https://app.datadoghq.com
+# The Server Density account where this device is registered.
+sd_account:
 
 # If you need a proxy to connect to the Internet, provide the settings here
 # proxy_host: my-proxy.com

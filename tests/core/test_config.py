@@ -20,7 +20,7 @@ class TestConfig(unittest.TestCase):
         """
         agentConfig = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                                        'fixtures', 'badconfig.conf'))
-        self.assertEquals(agentConfig["dd_url"], "https://app.datadoghq.com")
+        self.assertEquals(agentConfig["sd_url"], "https://agent.serverdensity.io")
         self.assertEquals(agentConfig["agent_key"], "1234")
         self.assertEquals(agentConfig["nagios_log"], "/var/log/nagios3/nagios.log")
         self.assertEquals(agentConfig["graphite_listen_port"], 17126)

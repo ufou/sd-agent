@@ -44,7 +44,6 @@ from checks.check_status import ForwarderStatus
 from config import (
     get_config,
     get_logging_config,
-    get_url_endpoint,
     get_version
 )
 import modules
@@ -60,7 +59,7 @@ from util import (
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
-DD_ENDPOINT = "dd_url"
+SD_ENDPOINT = "sd_url"
 
 TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
@@ -172,8 +171,8 @@ class AgentTransaction(Transaction):
                 and cls._application._agentConfig['use_dd']\
                 and cls._application._agentConfig.get('agent_key')
             if is_dd_user:
-                log.warn("You are a Datadog user so we will send data to https://app.datadoghq.com")
-                cls._endpoints.append(DD_ENDPOINT)
+                log.warn("You are a Server Density user so we will send data to https://agent.serverdensity.io")
+                cls._endpoints.append(SD_ENDPOINT)
         except Exception:
             log.info("Not a Datadog user")
 
@@ -199,7 +198,7 @@ class AgentTransaction(Transaction):
         return sys.getsizeof(self._data)
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
+        endpoint_base_url = self._application._agentConfig[endpoint]
         agent_key = self._application._agentConfig.get('agent_key')
         if agent_key:
             return "{0}/intake/{1}?agent_key={2}".format(
@@ -280,7 +279,7 @@ class MetricTransaction(AgentTransaction):
 class APIMetricTransaction(MetricTransaction):
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
+        endpoint_base_url = self._application._agentConfig[endpoint]
         config = self._application._agentConfig
         api_key = config['api_key']
         url = endpoint_base_url + '/api/v1/series/?api_key=' + api_key
@@ -294,7 +293,7 @@ class APIServiceCheckTransaction(AgentTransaction):
     _type = "service checks"
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
+        endpoint_base_url = self._application._agentConfig[endpoint]
         config = self._application._agentConfig
         api_key = config['api_key']
         url = endpoint_base_url + '/api/v1/check_run/?api_key=' + api_key

@@ -51,7 +51,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         # Setup the correct options so the agent will use the forwarder
         opts, args = Values({
             'autorestart': False,
-            'dd_url': None,
+            'sd_url': None,
             'use_forwarder': True,
             'disabled_dd': False,
             'profile': False

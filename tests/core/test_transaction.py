@@ -113,7 +113,7 @@ class TestTransaction(unittest.TestCase):
         MetricTransaction._endpoints = []
 
         config = {
-            "dd_url": "https://foo.bar.com",
+            "sd_url": "https://foo.bar.com",
             "agent_key": "foo",
             "use_dd": True
         }
@@ -143,7 +143,7 @@ class TestTransaction(unittest.TestCase):
         MetricTransaction._endpoints = []
         api_key = "a" * 32
         config = {
-            "dd_url": "https://app.datadoghq.com",
+            "sd_url": "https://agent.serverdensity.io",
             "api_key": api_key,
             "use_dd": True
         }

@@ -30,7 +30,7 @@ def remove_control_chars(s):
 
 def http_emitter(message, log, agentConfig, endpoint):
     "Send payload"
-    url = agentConfig['dd_url']
+    url = agentConfig['sd_url']
 
     log.debug('http_emitter: attempting postback to ' + url)
 

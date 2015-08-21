@@ -58,11 +58,6 @@ NAGIOS_OLD_CONF_KEYS = [
     'nagios_perf_cfg'
 ]
 
-LEGACY_DATADOG_URLS = [
-    "app.datadoghq.com",
-    "app.datad0g.com",
-]
-
 
 class PathNotFound(Exception):
     pass
@@ -72,8 +67,8 @@ def get_parsed_args():
     parser = OptionParser()
     parser.add_option('-A', '--autorestart', action='store_true', default=False,
                       dest='autorestart')
-    parser.add_option('-d', '--dd_url', action='store', default=None,
-                      dest='dd_url')
+    parser.add_option('-s', '--sd_url', action='store', default=None,
+                      dest='sd_url')
     parser.add_option('-u', '--use-local-forwarder', action='store_true',
                       default=False, dest='use_forwarder')
     parser.add_option('-n', '--disable-dd', action='store_true', default=False,
@@ -89,7 +84,7 @@ def get_parsed_args():
     except SystemExit:
         # Ignore parse errors
         options, args = Values({'autorestart': False,
-                                'dd_url': None,
+                                'sd_url': None,
                                 'disable_dd':False,
                                 'use_forwarder': False,
                                 'profile': False}), []
@@ -99,20 +94,6 @@ def get_parsed_args():
 def get_version():
     return AGENT_VERSION
 
-
-# Return url endpoint, here because needs access to version number
-def get_url_endpoint(default_url, endpoint_type='app'):
-    parsed_url = urlparse(default_url)
-    if parsed_url.netloc not in LEGACY_DATADOG_URLS:
-        return default_url
-
-    subdomain = parsed_url.netloc.split(".")[0]
-
-    # Replace https://app.datadoghq.com in https://5-2-0-app.agent.datadoghq.com
-    return default_url.replace(subdomain,
-        "{0}-{1}.agent".format(
-            get_version().replace(".", "-"),
-            endpoint_type))
 
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
@@ -371,14 +352,19 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             listen_port = 17123
             if config.has_option('Main', 'listen_port'):
                 listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['dd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
+            agentConfig['sd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
             agentConfig['use_forwarder'] = True
-        elif options is not None and not options.disable_dd and options.dd_url:
-            agentConfig['dd_url'] = options.dd_url
+        elif options is not None and not options.disable_dd and options.sd_url:
+            agentConfig['sd_url'] = options.sd_url
+        elif config.has_option('Main', 'sd_url'):
+            agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
-            agentConfig['dd_url'] = config.get('Main', 'dd_url')
-        if agentConfig['dd_url'].endswith('/'):
-            agentConfig['dd_url'] = agentConfig['dd_url'][:-1]
+            # Default agent URL
+            agentConfig['sd_url'] = "https://agent.serverdensity.io"
+        if agentConfig['sd_url'].endswith('/'):
+            agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
+
+        agentConfig['sd_account'] = config.get('Main', 'sd_account')
 
         # Extra checks.d path
         # the linux directory is set by default
@@ -467,7 +453,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # optionally send dogstatsd data directly to the agent.
         if config.has_option('Main', 'dogstatsd_use_ddurl'):
             if _is_affirmative(config.get('Main', 'dogstatsd_use_ddurl')):
-                agentConfig['dogstatsd_target'] = agentConfig['dd_url']
+                agentConfig['dogstatsd_target'] = agentConfig['sd_url']
 
         # Optional config
         # FIXME not the prettiest code ever...
