@@ -19,6 +19,7 @@ from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
+import checks.system.server_density as sd
 from config import get_system_stats, get_version
 import modules
 from resources.processes import Processes as ResProcesses
@@ -194,6 +195,11 @@ class Collector(object):
             'system': u.System(log)
         }
 
+        # Server Density Checks
+        self._server_density_checks = {
+            'networkTraffic': sd.NetworkTraffic(log)
+        }
+
         # Win32 System `Checks
         self._win32_system_checks = {
             'io': w32.IO(log),
@@ -291,6 +297,11 @@ class Collector(object):
             except Exception:
                 log.exception('Unable to fetch Windows system metrics.')
         else:
+
+            sd_checks = self._server_density_checks
+            network = sd_checks['networkTraffic'].check(self.agentConfig)
+            payload.update(network)
+
             # Unix system checks
             sys_checks = self._unix_system_checks
 
