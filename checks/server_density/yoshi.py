@@ -5,6 +5,7 @@ Unix system checks.
 import operator
 import platform
 import re
+import string
 import sys
 import time
 
@@ -35,7 +36,6 @@ class NetworkTraffic(Check):
         @rtype dict
         @return {"device": {"metric": value, "metric": value}, ...}
         """
-        #return {'networkTraffic': {'eth0': {'trans_bytes': '54196', 'recv_bytes': '54196'}}}
 
         network_traffic = {}
 
@@ -179,7 +179,10 @@ class CPUStats(Check):
                 # we dont have it installed return nothing
                 return False
 
-            except Exception:
+            except Exception as exception:
+                import traceback
+                self.logger.error("getCPUStats: exception = %s", traceback.format_exc())
+
                 if int(pythonVersion[1]) >= 6:
                     try:
                         if proc is not None:
@@ -189,8 +192,6 @@ class CPUStats(Check):
                     except Exception:
                         self.logger.debug('Process already terminated')
 
-                import traceback
-                self.logger.error('getCPUStats: exception = %s', traceback.format_exc())
                 return False
 
         elif sys.platform == 'darwin':
