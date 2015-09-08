@@ -19,7 +19,7 @@ from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
-import checks.system.server_density as sd
+import checks.server_density.yoshi
 from config import get_system_stats, get_version
 import modules
 from resources.processes import Processes as ResProcesses
@@ -197,7 +197,8 @@ class Collector(object):
 
         # Server Density Checks
         self._server_density_checks = {
-            'networkTraffic': sd.NetworkTraffic(log)
+            'networkTraffic': yoshi.NetworkTraffic(log),
+            'cpuStats': yoshi.CPUStats(log)
         }
 
         # Win32 System `Checks
