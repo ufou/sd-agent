@@ -131,7 +131,7 @@ class CPUStats(Check):
     def check(self, agentConfig):
         self.logger.debug('getCPUStats: start')
 
-        cpuStats = {}
+        cpu_stats = {}
 
         if sys.platform == 'linux2':
             self.logger.debug('getCPUStats: linux2')
@@ -170,10 +170,10 @@ class CPUStats(Check):
 
                     values = re.findall(valueRegexp, row.replace(',', '.'))
 
-                    cpuStats[device] = {}
+                    cpu_stats[device] = {}
                     for headerIndex in range(0, len(headerNames)):
                         headerName = headerNames[headerIndex]
-                        cpuStats[device][headerName] = values[headerIndex]
+                        cpu_stats[device][headerName] = values[headerIndex]
 
             except OSError:
                 # we dont have it installed return nothing
@@ -213,7 +213,7 @@ class CPUStats(Check):
                         values = re.findall(itemRegexp, line)
 
                 if values and titles:
-                    cpuStats['CPUs'] = dict(zip(titles, values))
+                    cpu_stats['CPUs'] = dict(zip(titles, values))
 
             except Exception:
                 import traceback
@@ -225,7 +225,7 @@ class CPUStats(Check):
             return False
 
         self.logger.debug('getCPUStats: completed, returning')
-        return cpuStats
+        return {'cpuStats': cpu_stats}
 
 
 if __name__ == '__main__':
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(message)s')
     log = logging.getLogger()
     networkTraffic = NetworkTraffic(log)
-    cpuStats = CPUStats(log)
+    cpu_stats = CPUStats(log)
 
     config = {"agent_key": "666"}
 
@@ -243,5 +243,5 @@ if __name__ == '__main__':
         print("--- Network ---")
         print(networkTraffic.check(config))
         print("--- CPU Stats ---")
-        print(cpuStats.check(config))
+        print(cpu_stats.check(config))
         time.sleep(1)

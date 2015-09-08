@@ -19,7 +19,7 @@ from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
-import checks.server_density.yoshi
+from checks.server_density import yoshi
 from config import get_system_stats, get_version
 import modules
 from resources.processes import Processes as ResProcesses
@@ -302,6 +302,9 @@ class Collector(object):
             sd_checks = self._server_density_checks
             network = sd_checks['networkTraffic'].check(self.agentConfig)
             payload.update(network)
+
+            cpu_stats = sd_checks['cpuStats'].check(self.agentConfig)
+            payload.update(cpu_stats)
 
             # Unix system checks
             sys_checks = self._unix_system_checks
