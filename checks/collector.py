@@ -198,7 +198,8 @@ class Collector(object):
         # Server Density Checks
         self._server_density_checks = {
             'networkTraffic': yoshi.NetworkTraffic(log),
-            'cpuStats': yoshi.CPUStats(log)
+            'cpuStats': yoshi.CPUStats(log),
+            'identifier': yoshi.Identifier(log)
         }
 
         # Win32 System `Checks
@@ -305,6 +306,9 @@ class Collector(object):
 
             cpu_stats = sd_checks['cpuStats'].check(self.agentConfig)
             payload.update(cpu_stats)
+
+            identifier = sd_checks['identifier'].check(self.agentConfig)
+            payload.update(identifier)
 
             # Unix system checks
             sys_checks = self._unix_system_checks
