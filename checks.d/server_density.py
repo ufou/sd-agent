@@ -102,7 +102,10 @@ class ServerDensityChecks(AgentCheck):
                 except Exception, e:
                     self.log.error('getDiskUsage: parsing, loop %s - Used or Available not present' % (repr(e),))
                 usageData.append(volume)
-
+                self.gauge('serverdensity.disk.size', volume[1], device_name=volume[5])
+                self.gauge('serverdensity.disk.used', volume[2], device_name=volume[5])
+                self.gauge('serverdensity.disk.avail', volume[3], device_name=volume[5])
+                self.gauge('serverdensity.disk.use', volume[4], device_name=volume[5])
         self.log.debug('getDiskUsage: completed, returning')
         return usageData
 
@@ -129,6 +132,6 @@ if __name__ == '__main__':
                 print file_system
             time.sleep(30)
     except Exception as e:
-        print "Somethign broke {0}".format(traceback.format_exc())
+        print "Something broke {0}".format(traceback.format_exc())
     finally:
         check.stop()
