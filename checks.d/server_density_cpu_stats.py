@@ -14,7 +14,7 @@ from config import _is_affirmative
 from util import Platform
 import platform, time, sys
 import utils.subprocess_output
-import subprocess
+import subprocess, string
 import logging
 import wingdbstub
 
@@ -79,6 +79,8 @@ class ServerDensityCPUChecks(AgentCheck):
                     for headerIndex in range(0, len(headerNames)):
                         headerName = headerNames[headerIndex]
                         cpu_stats[device][headerName] = values[headerIndex]
+                        key = headerName.replace('%', '')
+                        self.gauge('serverdensity.cpu.{}'.format(key), float(values[headerIndex]), device_name=device)
 
             except OSError:
                 # we dont have it installed return nothing
@@ -149,10 +151,7 @@ if __name__ == '__main__':
     check.log = root
     try:
         for i in xrange(200):
-            results = check.check({})
-
-            for file_system in results:
-                print file_system
+            print check.check({})
             time.sleep(30)
     except Exception as e:
         print "Something broke {0}".format(traceback.format_exc())
