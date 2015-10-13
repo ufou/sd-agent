@@ -71,6 +71,7 @@ git log --all | gawk '/Author/ {print}' | sort | uniq
 ```
 
 # Run check manually
-```export PYTHONPATH=`pwd`
+```
+export PYTHONPATH=`pwd`
 python checks.d/server_density.py
 ```
