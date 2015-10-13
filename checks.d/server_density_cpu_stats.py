@@ -16,7 +16,6 @@ import platform, time, sys
 import utils.subprocess_output
 import subprocess, string
 import logging
-import wingdbstub
 
 pythonVersion = platform.python_version_tuple()
 python24 = platform.python_version().startswith('2.4')

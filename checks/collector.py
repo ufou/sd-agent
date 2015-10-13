@@ -197,8 +197,6 @@ class Collector(object):
 
         # Server Density Checks
         self._server_density_checks = {
-            'networkTraffic': yoshi.NetworkTraffic(log),
-            'cpuStats': yoshi.CPUStats(log),
             'identifier': yoshi.Identifier(log)
         }
 
@@ -301,11 +299,6 @@ class Collector(object):
         else:
 
             sd_checks = self._server_density_checks
-            network = sd_checks['networkTraffic'].check(self.agentConfig)
-            payload.update(network)
-
-            cpu_stats = sd_checks['cpuStats'].check(self.agentConfig)
-            payload.update(cpu_stats)
 
             identifier = sd_checks['identifier'].check(self.agentConfig)
             payload.update(identifier)
