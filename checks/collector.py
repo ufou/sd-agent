@@ -19,7 +19,7 @@ from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
-from checks.server_density import yoshi
+from checks.server_density import plugins, yoshi
 from config import get_system_stats, get_version
 import modules
 from resources.processes import Processes as ResProcesses
@@ -197,7 +197,8 @@ class Collector(object):
 
         # Server Density Checks
         self._server_density_checks = {
-            'identifier': yoshi.Identifier(log)
+            'identifier': yoshi.Identifier(log),
+            'plugins': plugins.Plugins(log)
         }
 
         # Win32 System `Checks
@@ -302,6 +303,11 @@ class Collector(object):
 
             identifier = sd_checks['identifier'].check(self.agentConfig)
             payload.update(identifier)
+
+            # SDv1 plugins
+            pluginsData = sd_checks['plugins'].check(self.agentConfig)
+            if pluginsData:
+                payload['plugins'] = pluginsData
 
             # Unix system checks
             sys_checks = self._unix_system_checks
