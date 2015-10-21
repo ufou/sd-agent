@@ -906,15 +906,15 @@ def get_logging_config(cfg_path=None):
         'syslog_port': None,
     }
     if system_os == 'windows':
-        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'collector.log')
-        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'forwarder.log')
-        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'dogstatsd.log')
-        logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
+        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'collector.log')
+        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'forwarder.log')
+        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'dogstatsd.log')
+        logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'jmxfetch.log')
     else:
-        logging_config['collector_log_file'] = '/var/log/datadog/collector.log'
-        logging_config['forwarder_log_file'] = '/var/log/datadog/forwarder.log'
-        logging_config['dogstatsd_log_file'] = '/var/log/datadog/dogstatsd.log'
-        logging_config['jmxfetch_log_file'] = '/var/log/datadog/jmxfetch.log'
+        logging_config['collector_log_file'] = '/var/log/sd-agent/collector.log'
+        logging_config['forwarder_log_file'] = '/var/log/sd-agent/forwarder.log'
+        logging_config['dogstatsd_log_file'] = '/var/log/sd-agent/dogstatsd.log'
+        logging_config['jmxfetch_log_file'] = '/var/log/sd-agent/jmxfetch.log'
         logging_config['log_to_syslog'] = True
 
     config_path = get_config_path(cfg_path, os_name=system_os)
