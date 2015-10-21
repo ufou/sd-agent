@@ -36,7 +36,6 @@ from config import (
     get_config_path,
     get_logging_config,
 )
-from jmxfetch import JMXFetch
 from util import get_hostname
 from utils.jmx import jmx_command, JMXFiles
 from utils.platform import Platform
