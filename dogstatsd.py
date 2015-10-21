@@ -1,4 +1,4 @@
-#!/opt/datadog-agent/embedded/bin/python
+#!/usr/share/python/sd-agent/bin/python
 """
 A Python Statsd implementation with some datadog special sauce.
 """
