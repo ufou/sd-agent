@@ -304,7 +304,7 @@ class Collector(object):
             identifier = sd_checks['identifier'].check(self.agentConfig)
             payload.update(identifier)
 
-            # SDv1 plugins
+            # SDv1 plugins
             pluginsData = sd_checks['plugins'].check(self.agentConfig)
             if pluginsData:
                 payload['plugins'] = pluginsData
