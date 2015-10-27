@@ -347,6 +347,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         else:
             agentConfig['use_dd'] = True
 
+        agentConfig['sd_account'] = config.get('Main', 'sd_account')
+
         agentConfig['use_forwarder'] = False
         if options is not None and options.use_forwarder:
             listen_port = 17123
@@ -360,11 +362,9 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
             # Default agent URL
-            agentConfig['sd_url'] = "https://agent.serverdensity.io"
+            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
         if agentConfig['sd_url'].endswith('/'):
             agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
-
-        agentConfig['sd_account'] = config.get('Main', 'sd_account')
 
         # Extra checks.d path
         # the linux directory is set by default
