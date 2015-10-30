@@ -75,3 +75,26 @@ git log --all | gawk '/Author/ {print}' | sort | uniq
 export PYTHONPATH=`pwd`
 python checks.d/server_density.py
 ```
+
+# Installing Server Density Old Style Plugins
+
+We have maintained compatibility with the original agent's plugins. All "old style" plugins are 
+full usable with this new agent.
+
+You can add your old plugins using the following steps:
+
+## Add plugin_directory to your config.conf
+```
+plugin_directory: plugins.d
+```
+
+## Create the directory mentioned above
+```
+mkdir plugins.d
+```
+
+## Transfer any config across to plugins.cfg inside the directory above
+```
+[Temperature]
+scale: c
+```
