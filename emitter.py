@@ -77,5 +77,5 @@ def post_headers(agentConfig, payload):
         #'Content-Encoding': 'deflate',
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest(),
-        'DD-Collector-Version': get_version()
+        'SD-Collector-Version': get_version()
     }
