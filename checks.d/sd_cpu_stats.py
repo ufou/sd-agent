@@ -136,7 +136,7 @@ class ServerDensityCPUChecks(AgentCheck):
 
 if __name__ == '__main__':
 
-    check, _instances = ServerDensityCPUChecks.from_yaml('conf.d/server_density.yaml')
+    check, _instances = ServerDensityCPUChecks.from_yaml('conf.d/sd_cpu_stats.yaml')
 
     root = logging.getLogger()
     root.setLevel(logging.INFO)

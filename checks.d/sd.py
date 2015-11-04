@@ -111,7 +111,7 @@ class ServerDensityChecks(AgentCheck):
 
 if __name__ == '__main__':
 
-    check, _instances = ServerDensityChecks.from_yaml('conf.d/server_density.yaml')
+    check, _instances = ServerDensityChecks.from_yaml('conf.d/sd.yaml')
 
     root = logging.getLogger()
     root.setLevel(logging.INFO)
