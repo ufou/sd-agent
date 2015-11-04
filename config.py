@@ -27,7 +27,7 @@ from utils.proxy import get_proxy
 from utils.subprocess_output import subprocess
 
 # CONSTANTS
-AGENT_VERSION = "1.9.90"
+AGENT_VERSION = "1.90.1"
 DATADOG_CONF = "config.conf"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
 MAC_CONFIG_PATH = '/opt/sd-agent/etc'
