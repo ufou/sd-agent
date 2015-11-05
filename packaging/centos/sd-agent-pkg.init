@@ -36,7 +36,7 @@ fi
 PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 
 AGENTPATH="/usr/share/python/sd-agent/agent.py"
-AGENTCONF="/etc/sd-agent/config.conf"
+AGENTCONF="/etc/sd-agent/config.cfg"
 AGENTUSER="sd-agent"
 FORWARDERPATH="/usr/share/python/sd-agent/ddagent.py"
 NAME="sd-agent"
