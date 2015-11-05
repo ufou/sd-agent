@@ -107,7 +107,7 @@ case "$1" in
 
 
         echo "Starting $DESC (using supervisord)" "$NAME"
-        daemon $SUPERVISORD_PATH -- -c $SUPERVISOR_FILE --pidfile $SUPERVISOR_PIDFILE
+        daemon  --pidfile $SUPERVISOR_PIDFILE $SUPERVISORD_PATH -c $SUPERVISOR_FILE
         if [ $? -ne 0 ]; then
             exit 1
         fi
