@@ -311,7 +311,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     }
 
     if Platform.is_mac():
-        agentConfig['additional_checksd'] = '/opt/datadog-agent/etc/checks.d'
+        agentConfig['additional_checksd'] = '/opt/sd-agent/etc/checks.d'
 
     # Config handling
     try:
@@ -549,7 +549,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     # Storing proxy settings in the agentConfig
     agentConfig['proxy_settings'] = get_proxy(agentConfig)
     if agentConfig.get('ca_certs', None) is None:
-        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'datadog-cert.pem')
+        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'sd-cert.pem')
     else:
         agentConfig['ssl_certificate'] = agentConfig['ca_certs']
 
@@ -608,7 +608,7 @@ def set_win32_cert_path():
         crt_path = os.path.join(prog_path, 'ca-certificates.crt')
     else:
         cur_path = os.path.dirname(__file__)
-        crt_path = os.path.join(cur_path, 'packaging', 'datadog-agent', 'win32',
+        crt_path = os.path.join(cur_path, 'packaging', 'sd-agent', 'win32',
                 'install_files', 'ca-certificates.crt')
     import tornado.simple_httpclient
     log.info("Windows certificate path: %s" % crt_path)
@@ -923,9 +923,9 @@ def get_logging_config(cfg_path=None):
 
     if config.has_section('handlers') or config.has_section('loggers') or config.has_section('formatters'):
         if system_os == 'windows':
-            config_example_file = "https://github.com/DataDog/dd-agent/blob/master/packaging/datadog-agent/win32/install_files/datadog_win32.conf"
+            config_example_file = "https://github.com/serverdensity/sd-agent/blob/master/packaging/sd-agent/win32/install_files/config_win32.conf"
         else:
-            config_example_file = "https://github.com/DataDog/dd-agent/blob/master/datadog.conf.example"
+            config_example_file = "https://github.com/serverdensity/sd-agent/blob/master/config.cfg.example"
 
         sys.stderr.write("""Python logging config is no longer supported and will be ignored.
             To configure logging, update the logging portion of 'config.cfg' to match:
