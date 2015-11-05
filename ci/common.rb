@@ -145,8 +145,8 @@ namespace :ci do
 
     task :before_script do |t|
       section('BEFORE_SCRIPT')
-      sh %(cp #{ENV['TRAVIS_BUILD_DIR']}/ci/resources/config.conf.example\
-           #{ENV['TRAVIS_BUILD_DIR']}/config.conf)
+      sh %(cp #{ENV['TRAVIS_BUILD_DIR']}/ci/resources/config.cfg.example\
+           #{ENV['TRAVIS_BUILD_DIR']}/config.cfg)
       t.reenable
     end
 

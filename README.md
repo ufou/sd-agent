@@ -83,7 +83,7 @@ full usable with this new agent.
 
 You can add your old plugins using the following steps:
 
-## Add plugin_directory to your config.conf
+## Add plugin_directory to your config.cfg
 ```
 plugin_directory: plugins.d
 ```

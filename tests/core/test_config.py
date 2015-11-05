@@ -19,7 +19,7 @@ class TestConfig(unittest.TestCase):
         """Leading whitespace confuse ConfigParser
         """
         agentConfig = get_config(cfg_path=os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                                       'fixtures', 'badconfig.conf'))
+                                                       'fixtures', 'badconfig.cfg'))
         self.assertEquals(agentConfig["sd_url"], "https://agent.serverdensity.io")
         self.assertEquals(agentConfig["agent_key"], "1234")
         self.assertEquals(agentConfig["nagios_log"], "/var/log/nagios3/nagios.log")

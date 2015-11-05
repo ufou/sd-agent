@@ -28,7 +28,7 @@ from utils.subprocess_output import subprocess
 
 # CONSTANTS
 AGENT_VERSION = "1.90.1"
-DATADOG_CONF = "config.conf"
+SD_CONF = "config.cfg"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
 MAC_CONFIG_PATH = '/opt/sd-agent/etc'
 DEFAULT_CHECK_FREQUENCY = 60   # seconds
@@ -169,7 +169,7 @@ def _unix_checksd_path():
 
 
 def _config_path(directory):
-    path = os.path.join(directory, DATADOG_CONF)
+    path = os.path.join(directory, SD_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -387,7 +387,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['use_web_info_page'] = True
 
         if not agentConfig['use_dd']:
-            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in config.conf.")
+            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in config.cfg.")
             exit(2)
 
         # Which agent key to use
@@ -732,7 +732,7 @@ def load_check_directory(agentConfig, hostname):
 
     deprecated_configs_enabled = [v for k,v in OLD_STYLE_PARAMETERS if len([l for l in agentConfig if l.startswith(k)]) > 0]
     for deprecated_config in deprecated_configs_enabled:
-        msg = "Configuring %s in config.conf is not supported anymore. Please use conf.d" % deprecated_config
+        msg = "Configuring %s in config.cfg is not supported anymore. Please use conf.d" % deprecated_config
         deprecated_checks[deprecated_config] = {'error': msg, 'traceback': None}
         log.error(msg)
 
@@ -790,11 +790,11 @@ def load_check_directory(agentConfig, hostname):
                 continue
         else:
             # Compatibility code for the Nagios checks if it's still configured
-            # in config.conf
+            # in config.cfg
             # FIXME: 6.x, should be removed
             if check_name == 'nagios':
                 if any([nagios_key in agentConfig for nagios_key in NAGIOS_OLD_CONF_KEYS]):
-                    log.warning("Configuring Nagios in config.conf is deprecated "
+                    log.warning("Configuring Nagios in config.cfg is deprecated "
                                 "and will be removed in a future version. "
                                 "Please use conf.d")
                     check_config = {'instances':[dict((key, agentConfig[key]) for key in agentConfig if key in NAGIOS_OLD_CONF_KEYS)]}
@@ -928,7 +928,7 @@ def get_logging_config(cfg_path=None):
             config_example_file = "https://github.com/DataDog/dd-agent/blob/master/datadog.conf.example"
 
         sys.stderr.write("""Python logging config is no longer supported and will be ignored.
-            To configure logging, update the logging portion of 'config.conf' to match:
+            To configure logging, update the logging portion of 'config.cfg' to match:
              '%s'.
              """ % config_example_file)
 
