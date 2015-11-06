@@ -171,10 +171,11 @@ class AgentTransaction(Transaction):
                 and cls._application._agentConfig['use_dd']\
                 and cls._application._agentConfig.get('agent_key')
             if is_dd_user:
-                log.warn("You are a Server Density user so we will send data to https://agent.serverdensity.io")
+                log.warn("You are a Server Density user so we will send data to https://%s.agent.serverdensity.io" %
+                         self._application._agentConfig.get('sd_account') )
                 cls._endpoints.append(SD_ENDPOINT)
         except Exception:
-            log.info("Not a Datadog user")
+            log.info("Not a Server Density user")
 
     def __init__(self, data, headers, msg_type=""):
         self._data = data

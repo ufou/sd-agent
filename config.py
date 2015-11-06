@@ -888,7 +888,7 @@ def get_log_date_format():
 
 def get_log_format(logger_name):
     if get_os() != 'windows':
-        return '%%(asctime)s | %%(levelname)s | dd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
+        return '%%(asctime)s | %%(levelname)s | sd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
     return '%(asctime)s | %(levelname)s | %(name)s(%(filename)s:%(lineno)s) | %(message)s'
 
 
