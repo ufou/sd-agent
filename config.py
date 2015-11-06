@@ -347,7 +347,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         else:
             agentConfig['use_dd'] = True
 
-        agentConfig['sd_account'] = config.get('Main', 'sd_account')
+        if config.has_option('Main', 'sd_account'):
+            agentConfig['sd_account'] = config.get('Main', 'sd_account')
 
         agentConfig['use_forwarder'] = False
         if options is not None and options.use_forwarder:
