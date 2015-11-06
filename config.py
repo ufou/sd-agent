@@ -342,10 +342,10 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # FIXME unnecessarily complex
 
-        if config.has_option('Main', 'use_dd'):
-            agentConfig['use_dd'] = config.get('Main', 'use_dd').lower() in ("yes", "true")
+        if config.has_option('Main', 'use_sd'):
+            agentConfig['use_sd'] = config.get('Main', 'use_sd').lower() in ("yes", "true")
         else:
-            agentConfig['use_dd'] = True
+            agentConfig['use_sd'] = True
 
         if config.has_option('Main', 'sd_account'):
             agentConfig['sd_account'] = config.get('Main', 'sd_account')
@@ -387,7 +387,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         else:
             agentConfig['use_web_info_page'] = True
 
-        if not agentConfig['use_dd']:
+        if not agentConfig['use_sd']:
             sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in config.cfg.")
             exit(2)
 

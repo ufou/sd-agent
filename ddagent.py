@@ -167,12 +167,13 @@ class AgentTransaction(Transaction):
         # i.e. user is also Datadog user
         try:
             is_dd_user = 'agent_key' in cls._application._agentConfig\
-                and 'use_dd' in cls._application._agentConfig\
-                and cls._application._agentConfig['use_dd']\
+                and 'use_sd' in cls._application._agentConfig\
+                and cls._application._agentConfig['use_sd']\
                 and cls._application._agentConfig.get('agent_key')
             if is_dd_user:
-                log.warn("You are a Server Density user so we will send data to https://%s.agent.serverdensity.io" %
-                         self._application._agentConfig.get('sd_account') )
+                log.warn(
+                    "You are a Server Density user so we will send data to " +
+                    "%s" % cls._application._agentConfig.get('sd_url'))
                 cls._endpoints.append(SD_ENDPOINT)
         except Exception:
             log.info("Not a Server Density user")
@@ -180,7 +181,7 @@ class AgentTransaction(Transaction):
     def __init__(self, data, headers, msg_type=""):
         self._data = data
         self._headers = headers
-        self._headers['DD-Forwarder-Version'] = get_version()
+        self._headers['SD-Forwarder-Version'] = get_version()
         self._msg_type = msg_type
 
         # Call after data has been set (size is computed in Transaction's init)
