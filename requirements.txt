@@ -40,9 +40,6 @@ kafka-python==0.9.3
 # checks.d/postgres.py
 pg8000==1.10.1
 
-# checks.d/mongo.py
-pymongo >= 2.2
-
 # checks.d/mysql.py
 pymysql==0.6.6
 
