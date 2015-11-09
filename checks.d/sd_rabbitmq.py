@@ -1,7 +1,4 @@
 # stdlib
-import re
-import time
-import urllib
 import urlparse
 
 # 3p
@@ -71,3 +68,4 @@ class RabbitMQ(AgentCheck):
 
         if data:
             self.gauge('rabbitmq.connections', len(data))
+

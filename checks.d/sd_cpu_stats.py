@@ -1,6 +1,5 @@
-from checks import AgentCheck
-import os
-import re, traceback
+import re
+import traceback
 
 # 3p
 try:
@@ -9,13 +8,13 @@ except ImportError:
     psutil = None
 
 # project
-from checks import AgentCheck
-from config import _is_affirmative
-from util import Platform
-import platform, time, sys
-import utils.subprocess_output
-import subprocess, string
 import logging
+import platform
+import string
+import subprocess
+import sys
+import time
+from checks import AgentCheck
 
 pythonVersion = platform.python_version_tuple()
 python24 = platform.python_version().startswith('2.4')
@@ -85,7 +84,7 @@ class ServerDensityCPUChecks(AgentCheck):
                 # we dont have it installed return nothing
                 return False
 
-            except Exception as exception:
+            except Exception:
                 import traceback
                 self.log.error("getCPUStats: exception = %s", traceback.format_exc())
 
