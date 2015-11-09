@@ -4,6 +4,7 @@ branches:
   only:
     - master
     - sd-agentv2-branding
+    - build-fixes
     - /^\d+\.\d+\.x$/ # release forked patches branch
 
 language: python
