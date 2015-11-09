@@ -15,7 +15,6 @@ from socket import gaierror, gethostbyname
 import string
 import sys
 import traceback
-from urlparse import urlparse
 
 # 3rd party
 import yaml

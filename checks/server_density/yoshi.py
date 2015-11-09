@@ -2,7 +2,6 @@
 Unix system checks.
 """
 # stdlib
-import operator
 import platform
 import re
 import string
@@ -11,8 +10,6 @@ import time
 
 # project
 from checks import Check
-from util import get_hostname
-from utils.platform import Platform
 from utils.subprocess_output import subprocess
 
 # locale-resilient float converter

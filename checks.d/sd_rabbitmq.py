@@ -68,4 +68,3 @@ class RabbitMQ(AgentCheck):
 
         if data:
             self.gauge('rabbitmq.connections', len(data))
-
