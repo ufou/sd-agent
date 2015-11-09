@@ -23,7 +23,7 @@ from config import (
     PathNotFound,
     set_win32_cert_path,
 )
-from ddagent import Application
+from sdagent import Application
 import dogstatsd
 from emitter import http_emitter
 from jmxfetch import JMXFetch
@@ -186,7 +186,7 @@ class ProcessWatchDog(object):
 
 class DDAgent(multiprocessing.Process):
     def __init__(self, agentConfig, hostname, heartbeat=None):
-        multiprocessing.Process.__init__(self, name='ddagent')
+        multiprocessing.Process.__init__(self, name='sdagent')
         self.config = agentConfig
         self.hostname = hostname
         self._heartbeat = heartbeat

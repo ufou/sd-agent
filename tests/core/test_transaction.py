@@ -11,7 +11,7 @@ from tornado.web import Application
 
 # project
 from config import get_version
-from ddagent import (
+from sdagent import (
     APIMetricTransaction,
     APIServiceCheckTransaction,
     MAX_QUEUE_SIZE,
