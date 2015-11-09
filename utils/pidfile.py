@@ -13,10 +13,10 @@ class PidFile(object):
     def get_dir(cls, run_dir=None):
         if run_dir is None:
             my_dir = os.path.dirname(os.path.abspath(__file__))
-            run_dir = os.path.realpath(os.path.join(my_dir, '..', '..', 'run'))
+            run_dir = os.path.join('/var/run/', 'sd-agent')
 
         if os.path.exists(run_dir) and os.access(run_dir, os.W_OK):
-            return os.path.realpath(run_dir)
+            return run_dir
         else:
             return tempfile.gettempdir()
 
