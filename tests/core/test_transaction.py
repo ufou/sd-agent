@@ -131,7 +131,9 @@ class TestTransaction(unittest.TestCase):
 
         transaction = MetricTransaction(None, {}, "msgtype")
         endpoints = [transaction.get_url(e) for e in transaction._endpoints]
-        expected = ['https://foo.bar.com/intake/msgtype?agent_key=foo']
+        # Direct metric submission is not being enabled.
+        #expected = ['https://foo.bar.com/intake/msgtype?agent_key=foo']
+        expected = []
         self.assertEqual(endpoints, expected, (endpoints, expected))
 
     def testEndpoints(self):
