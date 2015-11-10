@@ -627,7 +627,7 @@ class AgentCheck(object):
                         log.warn("Could not serialize output of {0} to dict".format(method))
 
             except psutil.AccessDenied:
-                log.warn("Cannot call psutil method {} : Access Denied".format(method))
+                log.warn("Cannot call psutil method {0} : Access Denied".format(method))
 
         return stats
 

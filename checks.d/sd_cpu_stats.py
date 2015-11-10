@@ -78,7 +78,7 @@ class ServerDensityCPUChecks(AgentCheck):
                         headerName = headerNames[headerIndex]
                         cpu_stats[device][headerName] = values[headerIndex]
                         key = headerName.replace('%', '')
-                        self.gauge('serverdensity.cpu.{}'.format(key), float(values[headerIndex]), device_name=device)
+                        self.gauge('serverdensity.cpu.{0}'.format(key), float(values[headerIndex]), device_name=device)
 
             except OSError:
                 # we dont have it installed return nothing
