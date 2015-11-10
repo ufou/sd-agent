@@ -61,7 +61,7 @@ check_status() {
         # same as the number of programs specified in the supervisor config
         # file:
 
-        supervisor_processes=$($SUPERVISORCTL_PATH -c $SUPERVISOR_FILE status)
+        supervisor_processes=$(PATH=$SYSTEM_PATH $SUPERVISORCTL_PATH -c $SUPERVISOR_FILE status)
 
         # Number of RUNNING supervisord programs
         sd_supervisor_processes=$(echo "$supervisor_processes" |
@@ -107,7 +107,7 @@ case "$1" in
 
 
         echo "Starting $DESC (using supervisord)" "$NAME"
-        daemon  --pidfile $SUPERVISOR_PIDFILE $SUPERVISORD_PATH -c $SUPERVISOR_FILE
+        PATH=$SYSTEM_PATH daemon  --pidfile $SUPERVISOR_PIDFILE $SUPERVISORD_PATH -c $SUPERVISOR_FILE
         if [ $? -ne 0 ]; then
             exit 1
         fi
