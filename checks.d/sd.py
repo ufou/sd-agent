@@ -1,6 +1,5 @@
-from checks import AgentCheck
-import os
-import re, traceback
+import re
+import traceback
 
 # 3p
 try:
@@ -9,13 +8,12 @@ except ImportError:
     psutil = None
 
 # project
-from checks import AgentCheck
-from config import _is_affirmative
-from util import Platform
-import platform, time, sys
-import utils.subprocess_output
-import subprocess
 import logging
+import platform
+import sys
+import time
+import utils.subprocess_output
+from checks import AgentCheck
 
 pythonVersion = platform.python_version_tuple()
 python24 = platform.python_version().startswith('2.4')

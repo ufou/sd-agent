@@ -1,7 +1,4 @@
 # stdlib
-import re
-import time
-import urllib
 import urlparse
 
 # 3p
