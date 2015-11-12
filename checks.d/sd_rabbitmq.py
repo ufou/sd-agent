@@ -1,3 +1,7 @@
+""" This plugin/integration exists to provide connection data, that
+would otherwise be missing from the existing rabbitmq plugin.
+"""
+
 # stdlib
 import urlparse
 
