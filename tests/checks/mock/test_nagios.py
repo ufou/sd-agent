@@ -1,6 +1,7 @@
 # stdlib
 import tempfile
 import time
+from unittest import skip
 
 # project
 from tests.checks.common import AgentCheckTest, Fixtures
@@ -34,7 +35,7 @@ class NagiosTestCase(AgentCheckTest):
 
 class EventLogTailerTestCase(NagiosTestCase):
 
-    @unit_test_disabled
+    @skip("temporarily disabled")
     def test_line_parser(self):
         """
         Parse lines
