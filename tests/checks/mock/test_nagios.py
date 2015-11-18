@@ -33,6 +33,8 @@ class NagiosTestCase(AgentCheckTest):
 
 
 class EventLogTailerTestCase(NagiosTestCase):
+
+    @unit_test_disabled
     def test_line_parser(self):
         """
         Parse lines
