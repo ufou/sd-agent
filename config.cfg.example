@@ -1,10 +1,11 @@
 [Main]
 
-# The Server Density account where this device is registered.
+# The Server Density account where this device is used.
+# Only the account name, e.g. abc not abc.serverdensity.io
 sd_account:
 
 # The Server Density agent key to associate your Agent's data with a device
-# on your organization.
+# on your account.
 agent_key:
 
 # If you need a proxy to connect to the Internet, provide the settings here
@@ -29,6 +30,7 @@ plugin_directory:
 
 # ========================================================================== #
 # Logging
+# See https://support.serverdensity.com/hc/en-us/articles/213093038-Log-levels-agent-debug-mode
 # ========================================================================== #
 
 # log_level: INFO
