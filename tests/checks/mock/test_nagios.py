@@ -1,7 +1,6 @@
 # stdlib
 import tempfile
 import time
-from unittest import skip
 
 # project
 from tests.checks.common import AgentCheckTest, Fixtures
