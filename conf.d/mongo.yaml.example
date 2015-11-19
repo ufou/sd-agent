@@ -6,10 +6,6 @@ instances:
     # Time to wait on creating a MongoDB connection
     # timeout: 30
 
-    # tags:
-    #   - optional_tag1
-    #   - optional_tag2
-
     # Optional SSL parameters, see https://github.com/mongodb/mongo-python-driver/blob/2.6.3/pymongo/mongo_client.py#L193-L212
     # for more details
     #
