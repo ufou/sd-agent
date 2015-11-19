@@ -38,7 +38,7 @@ class EventLogTailerTestCase(NagiosTestCase):
         """
         Parse lines
         """
-        # Disabled test...
+        # Disabled test...
         return
         config = self.get_config(
             '\n'.join(["log_file={0}".format(self.NAGIOS_TEST_LOG)]),
