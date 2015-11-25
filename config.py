@@ -480,18 +480,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option('datadog', 'ddforwarder_log'):
             agentConfig['has_datadog'] = True
 
-        # Dogstream config
-        if config.has_option("Main", "dogstream_log"):
-            # Older version, single log support
-            log_path = config.get("Main", "dogstream_log")
-            if config.has_option("Main", "dogstream_line_parser"):
-                agentConfig["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
-            else:
-                agentConfig["dogstreams"] = log_path
-
-        elif config.has_option("Main", "dogstreams"):
-            agentConfig["dogstreams"] = config.get("Main", "dogstreams")
-
         if config.has_option("Main", "nagios_perf_cfg"):
             agentConfig["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
 

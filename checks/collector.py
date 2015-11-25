@@ -15,7 +15,6 @@ from checks.check_status import (
     STATUS_ERROR,
     STATUS_OK,
 )
-from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
@@ -212,8 +211,6 @@ class Collector(object):
 
         # Old-style metric checks
         self._ganglia = Ganglia(log)
-        self._dogstream = Dogstreams.init(log, self.agentConfig)
-        self._ddforwarder = DdForwarder(log, self.agentConfig)
 
         # Agent performance metrics check
         self._agent_metrics = None
@@ -349,27 +346,9 @@ class Collector(object):
 
         # Run old-style checks
         gangliaData = self._ganglia.check(self.agentConfig)
-        dogstreamData = self._dogstream.check(self.agentConfig)
-        ddforwarderData = self._ddforwarder.check(self.agentConfig)
 
         if gangliaData is not False and gangliaData is not None:
             payload['ganglia'] = gangliaData
-
-        # dogstream
-        if dogstreamData:
-            dogstreamEvents = dogstreamData.get('dogstreamEvents', None)
-            if dogstreamEvents:
-                if 'dogstream' in payload['events']:
-                    events['dogstream'].extend(dogstreamEvents)
-                else:
-                    events['dogstream'] = dogstreamEvents
-                del dogstreamData['dogstreamEvents']
-
-            payload.update(dogstreamData)
-
-        # metrics about the forwarder
-        if ddforwarderData:
-            payload['datadog'] = ddforwarderData
 
         # Resources checks
         if self.os != 'windows':
@@ -454,7 +433,7 @@ class Collector(object):
                 status = AgentCheck.OK
             elif check_status.status == STATUS_ERROR:
                 status = AgentCheck.CRITICAL
-            check.service_check('datadog.agent.check_status', status, tags=service_check_tags)
+            check.service_check('sd.agent.check_status', status, tags=service_check_tags)
 
             # Collect the service checks and save them in the payload
             current_check_service_checks = check.get_service_checks()
@@ -471,7 +450,7 @@ class Collector(object):
 
             # Intrument check run timings if enabled.
             if self.check_timings:
-                metric = 'datadog.agent.check_run_time'
+                metric = 'sd.agent.check_run_time'
                 meta = {'tags': ["check:%s" % check.name]}
                 metrics.append((metric, time.time(), check_run_time, meta))
 
@@ -484,7 +463,7 @@ class Collector(object):
             check_statuses.append(check_status)
 
         # Add a service check for the agent
-        service_checks.append(create_service_check('datadog.agent.up', AgentCheck.OK,
+        service_checks.append(create_service_check('sd.agent.up', AgentCheck.OK,
                               hostname=self.hostname))
 
         # Store the metrics and events in the payload.
