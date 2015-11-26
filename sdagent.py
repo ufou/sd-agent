@@ -246,7 +246,8 @@ class AgentTransaction(Transaction):
 
             if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
                 ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-                tornado_client_params['ca_certs'] = ssl_certificate
+                # Disable this feature, it needs more testing.
+                # tornado_client_params['ca_certs'] = ssl_certificate
 
             req = tornado.httpclient.HTTPRequest(**tornado_client_params)
             use_curl = force_use_curl or self._application._agentConfig.get("use_curl_http_client") and not self._application.use_simple_http_client
