@@ -2,7 +2,7 @@
 from hashlib import md5
 import logging
 import re
-import zlib
+#import zlib
 
 # 3p
 import requests
@@ -30,7 +30,7 @@ def remove_control_chars(s):
 
 def http_emitter(message, log, agentConfig, endpoint):
     "Send payload"
-    url = agentConfig['dd_url']
+    url = agentConfig['sd_url']
 
     log.debug('http_emitter: attempting postback to ' + url)
 
@@ -41,16 +41,17 @@ def http_emitter(message, log, agentConfig, endpoint):
         message = remove_control_chars(message)
         payload = json.dumps(message)
 
-    zipped = zlib.compress(payload)
+    #zipped = zlib.compress(payload)
+    zipped = payload
 
     log.debug("payload_size=%d, compressed_size=%d, compression_ratio=%.3f"
               % (len(payload), len(zipped), float(len(payload))/float(len(zipped))))
 
-    apiKey = message.get('apiKey', None)
-    if not apiKey:
-        raise Exception("The http emitter requires an api key")
+    agentKey = message.get('agentKey', None)
+    if not agentKey:
+        raise Exception("The http emitter requires an agent key")
 
-    url = "{0}/intake/{1}?api_key={2}".format(url, endpoint, apiKey)
+    url = "{0}/intake/{1}?agent_key={2}".format(url, endpoint, agentKey)
 
     try:
         headers = post_headers(agentConfig, zipped)
@@ -71,10 +72,10 @@ def http_emitter(message, log, agentConfig, endpoint):
 
 def post_headers(agentConfig, payload):
     return {
-        'User-Agent': 'Datadog Agent/%s' % agentConfig['version'],
+        'User-Agent': 'Server Density Agent/%s' % agentConfig['version'],
         'Content-Type': 'application/json',
-        'Content-Encoding': 'deflate',
+        #'Content-Encoding': 'deflate',
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest(),
-        'DD-Collector-Version': get_version()
+        'SD-Collector-Version': get_version()
     }

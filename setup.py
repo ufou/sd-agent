@@ -20,7 +20,7 @@ setup_requires = []
 install_requires = []
 
 # Modified on mac
-app_name = 'datadog-agent'
+app_name = 'sd-agent'
 # plist (used only on mac)
 plist = None
 
@@ -87,11 +87,11 @@ if sys.platform == 'win32':
         def __init__(self, **kw):
             self.__dict__.update(kw)
             self.version = get_version()
-            self.company_name = 'Datadog, Inc.'
-            self.copyright = 'Copyright 2013 Datadog, Inc.'
+            self.company_name = 'Server Density, Ltd.'
+            self.copyright = 'Copyright 2015 Server Density, Ltd.'
             self.cmdline_style = 'pywin32'
 
-    agent_svc = Target(name='Datadog Agent', modules='win32.agent', dest_base='ddagent')
+    agent_svc = Target(name='Server Density Agent', modules='win32.agent', dest_base='sdagent')
 
     extra_args = {
         'options': {
@@ -120,12 +120,12 @@ if sys.platform == 'win32':
     }
 
 elif sys.platform == 'darwin':
-    app_name = 'Datadog Agent'
+    app_name = 'Server Density Agent'
 
     from plistlib import Plist
     plist = Plist.fromFile(os.path.dirname(os.path.realpath(__file__)) + '/packaging/Info.plist')
     plist.update(dict(
-        CFBundleGetInfoString="{0}, Copyright (c) 2009-{1}, Datadog Inc.".format(
+        CFBundleGetInfoString="{0}, Copyright (c) 2009-{1}, Server Density, Ltd.".format(
             get_version(), date.today().year),
         CFBundleVersion=get_version()
     ))
@@ -149,10 +149,10 @@ elif sys.platform == 'darwin':
 setup(
     name=app_name,
     version=get_version(),
-    description="DevOps' best friend",
-    author='DataDog',
-    author_email='dev@datadoghq.com',
-    url='http://www.datadoghq.com',
+    description="The Server Density monitoring agent",
+    author='Server Density',
+    author_email='hello@serverdensity.com',
+    url='https://www.serverdensity.com',
     install_requires=install_requires,
     setup_requires=setup_requires,
     packages=find_packages(),

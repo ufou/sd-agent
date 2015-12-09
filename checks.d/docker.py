@@ -131,7 +131,7 @@ class Docker(AgentCheck):
 
     def check(self, instance):
         # Report image metrics
-        if _is_affirmative(instance.get('collect_images_stats', True)):
+        if _is_affirmative(instance.get('collect_images_stats', False)):
             self._count_images(instance)
 
         # Get the list of containers and the index of their names
@@ -141,7 +141,7 @@ class Docker(AgentCheck):
         skipped_container_ids = self._report_containers_metrics(containers, instance)
 
         # Send events from Docker API
-        if _is_affirmative(instance.get('collect_events', True)):
+        if _is_affirmative(instance.get('collect_events', False)):
             self._process_events(instance, ids_to_names, skipped_container_ids)
 
 
@@ -268,7 +268,7 @@ class Docker(AgentCheck):
         tag_name = key.lower()
         if tag_name == "command" and not instance.get("tag_by_command", False):
             return None
-        if instance.get("new_tag_names", False):
+        if instance.get("new_tag_names", True):
             tag_name = self._new_tags_conversion(tag_name)
 
         return "%s:%s" % (tag_name, value.strip())

@@ -4,13 +4,14 @@ import unittest
 
 # 3rd party
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 import requests
 import simplejson as json
 from tornado.web import Application
 
 # project
 from config import get_version
-from ddagent import (
+from sdagent import (
     APIMetricTransaction,
     APIServiceCheckTransaction,
     MAX_QUEUE_SIZE,
@@ -112,8 +113,8 @@ class TestTransaction(unittest.TestCase):
         MetricTransaction._endpoints = []
 
         config = {
-            "dd_url": "https://foo.bar.com",
-            "api_key": "foo",
+            "sd_url": "https://foo.bar.com",
+            "agent_key": "foo",
             "use_dd": True
         }
 
@@ -130,7 +131,9 @@ class TestTransaction(unittest.TestCase):
 
         transaction = MetricTransaction(None, {}, "msgtype")
         endpoints = [transaction.get_url(e) for e in transaction._endpoints]
-        expected = ['https://foo.bar.com/intake/msgtype?api_key=foo']
+        # Direct metric submission is not being enabled.
+        #expected = ['https://foo.bar.com/intake/msgtype?agent_key=foo']
+        expected = []
         self.assertEqual(endpoints, expected, (endpoints, expected))
 
     def testEndpoints(self):
@@ -138,10 +141,11 @@ class TestTransaction(unittest.TestCase):
         Tests that the logic behind the agent version specific endpoints is ok.
         Also tests that these endpoints actually exist.
         """
+        raise SkipTest("This test doesn't apply to Server Density.")
         MetricTransaction._endpoints = []
         api_key = "a" * 32
         config = {
-            "dd_url": "https://app.datadoghq.com",
+            "sd_url": "https://agent.serverdensity.io",
             "api_key": api_key,
             "use_dd": True
         }

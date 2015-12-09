@@ -60,7 +60,7 @@ class Win32EventLog(AgentCheck):
 
         # Save any events returned to the payload as Datadog events
         for ev in events:
-            log_ev = LogEvent(ev, self.agentConfig.get('api_key', ''),
+            log_ev = LogEvent(ev, self.agentConfig.get('agent_key', ''),
                               self.hostname, tags, notify)
 
             # Since WQL only compares on the date and NOT the time, we have to
@@ -150,9 +150,9 @@ class EventLogQuery(object):
 
 
 class LogEvent(object):
-    def __init__(self, ev, api_key, hostname, tags, notify_list):
+    def __init__(self, ev, agent_key, hostname, tags, notify_list):
         self.event = ev
-        self.api_key = api_key
+        self.agent_key = agent_key
         self.hostname = hostname
         self.tags = tags
         self.notify_list = notify_list
@@ -162,7 +162,7 @@ class LogEvent(object):
         return {
             'timestamp': self.timestamp,
             'event_type': EVENT_TYPE,
-            'api_key': self.api_key,
+            'agent_key': self.agent_key,
             'msg_title': self._msg_title(self.event),
             'msg_text': self._msg_text(self.event).strip(),
             'aggregation_key': self._aggregation_key(self.event),

@@ -1,12 +1,10 @@
-#!/opt/datadog-agent/embedded/bin/python
+#!/usr/share/python/sd-agent/bin/python
 '''
-    Datadog
-    www.datadoghq.com
+    Server Density
+    www.serverdensity.com
     ----
-    Make sense of your IT Data
-
     Licensed under Simplified BSD License (see LICENSE)
-    (C) Boxed Ice 2010 all rights reserved
+    (C) Server Density 2009-2015 all rights reserved
     (C) Datadog, Inc. 2010-2014 all rights reserved
 '''
 # set up logging before importing any other components
@@ -39,13 +37,13 @@ from util import (
     get_hostname,
     Watchdog,
 )
-from utils.flare import configcheck, Flare
+from utils.flare import configcheck
 from utils.jmx import jmx_command
 from utils.pidfile import PidFile
 from utils.profile import AgentProfiler
 
 # Constants
-PID_NAME = "dd-agent"
+PID_NAME = "sd-agent"
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -250,7 +248,7 @@ def main():
         deprecate_old_command_line_tools()
 
     if command in COMMANDS_AGENT:
-        agent = Agent(PidFile('dd-agent').get_path(), autorestart, in_developer_mode=in_developer_mode)
+        agent = Agent(PidFile('sd-agent').get_path(), autorestart, in_developer_mode=in_developer_mode)
 
     if command in START_COMMANDS:
         log.info('Agent version %s' % get_version())
@@ -328,16 +326,6 @@ def main():
 
     elif 'jmx' == command:
         jmx_command(args[1:], agentConfig)
-
-    elif 'flare' == command:
-        Flare.check_user_rights()
-        case_id = int(args[1]) if len(args) > 1 else None
-        f = Flare(True, case_id)
-        f.collect()
-        try:
-            f.upload()
-        except Exception, e:
-            print 'The upload failed:\n{0}'.format(str(e))
 
     return 0
 

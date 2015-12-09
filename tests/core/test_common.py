@@ -146,7 +146,7 @@ class TestCore(unittest.TestCase):
 
     def test_collector(self):
         agentConfig = {
-            'api_key': 'test_apikey',
+            'agent_key': 'test_agentkey',
             'check_timings': True,
             'collect_ec2_tags': True,
             'collect_instance_metadata': False,
@@ -184,7 +184,7 @@ class TestCore(unittest.TestCase):
         Tests that the app tags are sent if specified so
         '''
         agentConfig = {
-            'api_key': 'test_apikey',
+            'agent_key': 'test_agentkey',
             'collect_ec2_tags': False,
             'collect_instance_metadata': False,
             'create_dd_check_tags': True,
@@ -276,7 +276,7 @@ class TestCore(unittest.TestCase):
 
         agentConfig = {
             'version': '0.1',
-            'api_key': 'toto'
+            'agent_key': 'toto'
         }
 
         # default min collection interval for that check was 20sec
@@ -346,7 +346,7 @@ class TestCore(unittest.TestCase):
 
         agentConfig = {
             'version': '0.1',
-            'api_key': 'toto'
+            'agent_key': 'toto'
         }
 
         # default min collection interval for that check was 20sec
@@ -364,7 +364,7 @@ class TestCore(unittest.TestCase):
 
         agentConfig = {
             'version': '0.1',
-            'api_key': 'toto'
+            'agent_key': 'toto'
         }
 
         # default min collection interval for that check was 20sec

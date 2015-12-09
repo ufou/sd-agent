@@ -1,12 +1,10 @@
-#!/opt/datadog-agent/embedded/bin/python
+#!/usr/share/python/sd-agent/bin/python
 '''
-    Datadog
-    www.datadoghq.com
+    Server Density
+    www.serverdensity.com
     ----
-    Make sense of your IT Data
-
     Licensed under Simplified BSD License (see LICENSE)
-    (C) Boxed Ice 2010 all rights reserved
+    (C) Server Density 2009-2015 all rights reserved
     (C) Datadog, Inc. 2010-2013 all rights reserved
 '''
 # set up logging before importing any other components
@@ -44,7 +42,6 @@ from checks.check_status import ForwarderStatus
 from config import (
     get_config,
     get_logging_config,
-    get_url_endpoint,
     get_version
 )
 import modules
@@ -60,7 +57,7 @@ from util import (
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
-DD_ENDPOINT = "dd_url"
+SD_ENDPOINT = "sd_url"
 
 TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
 WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
@@ -167,20 +164,22 @@ class AgentTransaction(Transaction):
         # Only send data to Datadog if an API KEY exists
         # i.e. user is also Datadog user
         try:
-            is_dd_user = 'api_key' in cls._application._agentConfig\
-                and 'use_dd' in cls._application._agentConfig\
-                and cls._application._agentConfig['use_dd']\
-                and cls._application._agentConfig.get('api_key')
+            is_dd_user = 'agent_key' in cls._application._agentConfig\
+                and 'use_sd' in cls._application._agentConfig\
+                and cls._application._agentConfig['use_sd']\
+                and cls._application._agentConfig.get('agent_key')
             if is_dd_user:
-                log.warn("You are a Datadog user so we will send data to https://app.datadoghq.com")
-                cls._endpoints.append(DD_ENDPOINT)
+                log.warn(
+                    "You are a Server Density user so we will send data to " +
+                    "%s" % cls._application._agentConfig.get('sd_url'))
+                cls._endpoints.append(SD_ENDPOINT)
         except Exception:
-            log.info("Not a Datadog user")
+            log.info("Not a Server Density user")
 
     def __init__(self, data, headers, msg_type=""):
         self._data = data
         self._headers = headers
-        self._headers['DD-Forwarder-Version'] = get_version()
+        self._headers['SD-Forwarder-Version'] = get_version()
         self._msg_type = msg_type
 
         # Call after data has been set (size is computed in Transaction's init)
@@ -199,10 +198,11 @@ class AgentTransaction(Transaction):
         return sys.getsizeof(self._data)
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
-        api_key = self._application._agentConfig.get('api_key')
-        if api_key:
-            return "{0}/intake/{1}?api_key={2}".format(endpoint_base_url, self._msg_type, api_key)
+        endpoint_base_url = self._application._agentConfig[endpoint]
+        agent_key = self._application._agentConfig.get('agent_key')
+        if agent_key:
+            return "{0}/intake/{1}?agent_key={2}".format(
+                endpoint_base_url, self._msg_type, agent_key)
         return "{0}/intake/{1}".format(endpoint_base_url, self._msg_type)
 
     def flush(self):
@@ -246,14 +246,15 @@ class AgentTransaction(Transaction):
 
             if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
                 ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-                tornado_client_params['ca_certs'] = ssl_certificate
+                # Disable this feature, it needs more testing.
+                # tornado_client_params['ca_certs'] = ssl_certificate
 
             req = tornado.httpclient.HTTPRequest(**tornado_client_params)
             use_curl = force_use_curl or self._application._agentConfig.get("use_curl_http_client") and not self._application.use_simple_http_client
 
             if use_curl:
                 if pycurl is None:
-                    log.error("dd-agent is configured to use the Curl HTTP Client, but pycurl is not available on this system.")
+                    log.error("sd-agent is configured to use the Curl HTTP Client, but pycurl is not available on this system.")
                 else:
                     log.debug("Using CurlAsyncHTTPClient")
                     tornado.httpclient.AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
@@ -279,7 +280,7 @@ class MetricTransaction(AgentTransaction):
 class APIMetricTransaction(MetricTransaction):
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
+        endpoint_base_url = self._application._agentConfig[endpoint]
         config = self._application._agentConfig
         api_key = config['api_key']
         url = endpoint_base_url + '/api/v1/series/?api_key=' + api_key
@@ -293,7 +294,7 @@ class APIServiceCheckTransaction(AgentTransaction):
     _type = "service checks"
 
     def get_url(self, endpoint):
-        endpoint_base_url = get_url_endpoint(self._application._agentConfig[endpoint])
+        endpoint_base_url = self._application._agentConfig[endpoint]
         config = self._application._agentConfig
         api_key = config['api_key']
         url = endpoint_base_url + '/api/v1/check_run/?api_key=' + api_key
@@ -437,7 +438,7 @@ class Application(tornado.web.Application):
         if len(self._metrics) > 0:
             self._metrics['uuid'] = get_uuid()
             self._metrics['internalHostname'] = get_hostname(self._agentConfig)
-            self._metrics['apiKey'] = self._agentConfig['api_key']
+            self._metrics['agentKey'] = self._agentConfig['agent_key']
             MetricTransaction(json.dumps(self._metrics),
                               headers={'Content-Type': 'application/json'})
             self._metrics = {}
@@ -447,8 +448,8 @@ class Application(tornado.web.Application):
             (r"/intake/?", AgentInputHandler),
             (r"/intake/metrics?", MetricsAgentInputHandler),
             (r"/intake/metadata?", MetadataAgentInputHandler),
-            (r"/api/v1/series/?", ApiInputHandler),
-            (r"/api/v1/check_run/?", ApiCheckRunHandler),
+            #(r"/api/v1/series/?", ApiInputHandler),
+            #(r"/api/v1/check_run/?", ApiCheckRunHandler),
             (r"/status/?", StatusHandler),
         ]
 

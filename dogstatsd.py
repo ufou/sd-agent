@@ -1,4 +1,4 @@
-#!/opt/datadog-agent/embedded/bin/python
+#!/usr/share/python/sd-agent/bin/python
 """
 A Python Statsd implementation with some datadog special sauce.
 """
@@ -383,7 +383,7 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
     event_chunk_size = c.get('event_chunk_size')
     recent_point_threshold = c.get('recent_point_threshold', None)
 
-    target = c['dd_url']
+    target = c['sd_url']
     if use_forwarder:
         target = c['dogstatsd_target']
 

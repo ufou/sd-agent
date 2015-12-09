@@ -15,7 +15,6 @@ from socket import gaierror, gethostbyname
 import string
 import sys
 import traceback
-from urlparse import urlparse
 
 # 3rd party
 import yaml
@@ -27,11 +26,11 @@ from utils.proxy import get_proxy
 from utils.subprocess_output import subprocess
 
 # CONSTANTS
-AGENT_VERSION = "5.5.0"
-DATADOG_CONF = "datadog.conf"
-UNIX_CONFIG_PATH = '/etc/dd-agent'
-MAC_CONFIG_PATH = '/opt/datadog-agent/etc'
-DEFAULT_CHECK_FREQUENCY = 15   # seconds
+AGENT_VERSION = "2.0.0"
+SD_CONF = "config.cfg"
+UNIX_CONFIG_PATH = '/etc/sd-agent'
+MAC_CONFIG_PATH = '/opt/sd-agent/etc'
+DEFAULT_CHECK_FREQUENCY = 60   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
 log = logging.getLogger(__name__)
@@ -58,11 +57,6 @@ NAGIOS_OLD_CONF_KEYS = [
     'nagios_perf_cfg'
 ]
 
-LEGACY_DATADOG_URLS = [
-    "app.datadoghq.com",
-    "app.datad0g.com",
-]
-
 
 class PathNotFound(Exception):
     pass
@@ -72,8 +66,8 @@ def get_parsed_args():
     parser = OptionParser()
     parser.add_option('-A', '--autorestart', action='store_true', default=False,
                       dest='autorestart')
-    parser.add_option('-d', '--dd_url', action='store', default=None,
-                      dest='dd_url')
+    parser.add_option('-s', '--sd_url', action='store', default=None,
+                      dest='sd_url')
     parser.add_option('-u', '--use-local-forwarder', action='store_true',
                       default=False, dest='use_forwarder')
     parser.add_option('-n', '--disable-dd', action='store_true', default=False,
@@ -89,7 +83,7 @@ def get_parsed_args():
     except SystemExit:
         # Ignore parse errors
         options, args = Values({'autorestart': False,
-                                'dd_url': None,
+                                'sd_url': None,
                                 'disable_dd':False,
                                 'use_forwarder': False,
                                 'profile': False}), []
@@ -99,20 +93,6 @@ def get_parsed_args():
 def get_version():
     return AGENT_VERSION
 
-
-# Return url endpoint, here because needs access to version number
-def get_url_endpoint(default_url, endpoint_type='app'):
-    parsed_url = urlparse(default_url)
-    if parsed_url.netloc not in LEGACY_DATADOG_URLS:
-        return default_url
-
-    subdomain = parsed_url.netloc.split(".")[0]
-
-    # Replace https://app.datadoghq.com in https://5-2-0-app.agent.datadoghq.com
-    return default_url.replace(subdomain,
-        "{0}-{1}.agent".format(
-            get_version().replace(".", "-"),
-            endpoint_type))
 
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
@@ -188,7 +168,7 @@ def _unix_checksd_path():
 
 
 def _config_path(directory):
-    path = os.path.join(directory, DATADOG_CONF)
+    path = os.path.join(directory, SD_CONF)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -323,14 +303,14 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         'use_ec2_instance_id': False,  # DEPRECATED
         'version': get_version(),
         'watchdog': True,
-        'additional_checksd': '/etc/dd-agent/checks.d/',
+        'additional_checksd': '/etc/sd-agent/checks.d/',
         'bind_host': get_default_bind_host(),
         'statsd_metric_namespace': None,
         'utf8_decoding': False
     }
 
     if Platform.is_mac():
-        agentConfig['additional_checksd'] = '/opt/datadog-agent/etc/checks.d'
+        agentConfig['additional_checksd'] = '/opt/sd-agent/etc/checks.d'
 
     # Config handling
     try:
@@ -361,24 +341,30 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         # FIXME unnecessarily complex
 
-        if config.has_option('Main', 'use_dd'):
-            agentConfig['use_dd'] = config.get('Main', 'use_dd').lower() in ("yes", "true")
+        if config.has_option('Main', 'use_sd'):
+            agentConfig['use_sd'] = config.get('Main', 'use_sd').lower() in ("yes", "true")
         else:
-            agentConfig['use_dd'] = True
+            agentConfig['use_sd'] = True
+
+        if config.has_option('Main', 'sd_account'):
+            agentConfig['sd_account'] = config.get('Main', 'sd_account')
 
         agentConfig['use_forwarder'] = False
         if options is not None and options.use_forwarder:
             listen_port = 17123
             if config.has_option('Main', 'listen_port'):
                 listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['dd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
+            agentConfig['sd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
             agentConfig['use_forwarder'] = True
-        elif options is not None and not options.disable_dd and options.dd_url:
-            agentConfig['dd_url'] = options.dd_url
+        elif options is not None and not options.disable_dd and options.sd_url:
+            agentConfig['sd_url'] = options.sd_url
+        elif config.has_option('Main', 'sd_url'):
+            agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
-            agentConfig['dd_url'] = config.get('Main', 'dd_url')
-        if agentConfig['dd_url'].endswith('/'):
-            agentConfig['dd_url'] = agentConfig['dd_url'][:-1]
+            # Default agent URL
+            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
+        if agentConfig['sd_url'].endswith('/'):
+            agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
 
         # Extra checks.d path
         # the linux directory is set by default
@@ -400,12 +386,12 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         else:
             agentConfig['use_web_info_page'] = True
 
-        if not agentConfig['use_dd']:
-            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in datadog.conf.")
+        if not agentConfig['use_sd']:
+            sys.stderr.write("Please specify at least one endpoint to send metrics to. This can be done in config.cfg.")
             exit(2)
 
-        # Which API key to use
-        agentConfig['api_key'] = config.get('Main', 'api_key')
+        # Which agent key to use
+        agentConfig['agent_key'] = config.get('Main', 'agent_key')
 
         # local traffic only? Default to no
         agentConfig['non_local_traffic'] = False
@@ -467,7 +453,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         # optionally send dogstatsd data directly to the agent.
         if config.has_option('Main', 'dogstatsd_use_ddurl'):
             if _is_affirmative(config.get('Main', 'dogstatsd_use_ddurl')):
-                agentConfig['dogstatsd_target'] = agentConfig['dd_url']
+                agentConfig['dogstatsd_target'] = agentConfig['sd_url']
 
         # Optional config
         # FIXME not the prettiest code ever...
@@ -493,18 +479,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
         if config.has_option('datadog', 'ddforwarder_log'):
             agentConfig['has_datadog'] = True
-
-        # Dogstream config
-        if config.has_option("Main", "dogstream_log"):
-            # Older version, single log support
-            log_path = config.get("Main", "dogstream_log")
-            if config.has_option("Main", "dogstream_line_parser"):
-                agentConfig["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
-            else:
-                agentConfig["dogstreams"] = log_path
-
-        elif config.has_option("Main", "dogstreams"):
-            agentConfig["dogstreams"] = config.get("Main", "dogstreams")
 
         if config.has_option("Main", "nagios_perf_cfg"):
             agentConfig["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
@@ -563,7 +537,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     # Storing proxy settings in the agentConfig
     agentConfig['proxy_settings'] = get_proxy(agentConfig)
     if agentConfig.get('ca_certs', None) is None:
-        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'datadog-cert.pem')
+        agentConfig['ssl_certificate'] = get_ssl_certificate(get_os(), 'sd-cert.pem')
     else:
         agentConfig['ssl_certificate'] = agentConfig['ca_certs']
 
@@ -622,7 +596,7 @@ def set_win32_cert_path():
         crt_path = os.path.join(prog_path, 'ca-certificates.crt')
     else:
         cur_path = os.path.dirname(__file__)
-        crt_path = os.path.join(cur_path, 'packaging', 'datadog-agent', 'win32',
+        crt_path = os.path.join(cur_path, 'packaging', 'sd-agent', 'win32',
                 'install_files', 'ca-certificates.crt')
     import tornado.simple_httpclient
     log.info("Windows certificate path: %s" % crt_path)
@@ -746,7 +720,7 @@ def load_check_directory(agentConfig, hostname):
 
     deprecated_configs_enabled = [v for k,v in OLD_STYLE_PARAMETERS if len([l for l in agentConfig if l.startswith(k)]) > 0]
     for deprecated_config in deprecated_configs_enabled:
-        msg = "Configuring %s in datadog.conf is not supported anymore. Please use conf.d" % deprecated_config
+        msg = "Configuring %s in config.cfg is not supported anymore. Please use conf.d" % deprecated_config
         deprecated_checks[deprecated_config] = {'error': msg, 'traceback': None}
         log.error(msg)
 
@@ -804,11 +778,11 @@ def load_check_directory(agentConfig, hostname):
                 continue
         else:
             # Compatibility code for the Nagios checks if it's still configured
-            # in datadog.conf
+            # in config.cfg
             # FIXME: 6.x, should be removed
             if check_name == 'nagios':
                 if any([nagios_key in agentConfig for nagios_key in NAGIOS_OLD_CONF_KEYS]):
-                    log.warning("Configuring Nagios in datadog.conf is deprecated "
+                    log.warning("Configuring Nagios in config.cfg is deprecated "
                                 "and will be removed in a future version. "
                                 "Please use conf.d")
                     check_config = {'instances':[dict((key, agentConfig[key]) for key in agentConfig if key in NAGIOS_OLD_CONF_KEYS)]}
@@ -902,12 +876,12 @@ def get_log_date_format():
 
 def get_log_format(logger_name):
     if get_os() != 'windows':
-        return '%%(asctime)s | %%(levelname)s | dd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
+        return '%%(asctime)s | %%(levelname)s | sd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s' % logger_name
     return '%(asctime)s | %(levelname)s | %(name)s(%(filename)s:%(lineno)s) | %(message)s'
 
 
 def get_syslog_format(logger_name):
-    return 'dd.%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
+    return 'sd.%s[%%(process)d]: %%(levelname)s (%%(filename)s:%%(lineno)s): %%(message)s' % logger_name
 
 
 def get_logging_config(cfg_path=None):
@@ -920,15 +894,15 @@ def get_logging_config(cfg_path=None):
         'syslog_port': None,
     }
     if system_os == 'windows':
-        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'collector.log')
-        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'forwarder.log')
-        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'dogstatsd.log')
-        logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'Datadog', 'logs', 'jmxfetch.log')
+        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'collector.log')
+        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'forwarder.log')
+        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'dogstatsd.log')
+        logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'jmxfetch.log')
     else:
-        logging_config['collector_log_file'] = '/var/log/datadog/collector.log'
-        logging_config['forwarder_log_file'] = '/var/log/datadog/forwarder.log'
-        logging_config['dogstatsd_log_file'] = '/var/log/datadog/dogstatsd.log'
-        logging_config['jmxfetch_log_file'] = '/var/log/datadog/jmxfetch.log'
+        logging_config['collector_log_file'] = '/var/log/sd-agent/collector.log'
+        logging_config['forwarder_log_file'] = '/var/log/sd-agent/forwarder.log'
+        logging_config['dogstatsd_log_file'] = '/var/log/sd-agent/dogstatsd.log'
+        logging_config['jmxfetch_log_file'] = '/var/log/sd-agent/jmxfetch.log'
         logging_config['log_to_syslog'] = True
 
     config_path = get_config_path(cfg_path, os_name=system_os)
@@ -937,12 +911,12 @@ def get_logging_config(cfg_path=None):
 
     if config.has_section('handlers') or config.has_section('loggers') or config.has_section('formatters'):
         if system_os == 'windows':
-            config_example_file = "https://github.com/DataDog/dd-agent/blob/master/packaging/datadog-agent/win32/install_files/datadog_win32.conf"
+            config_example_file = "https://github.com/serverdensity/sd-agent/blob/master/packaging/sd-agent/win32/install_files/config_win32.conf"
         else:
-            config_example_file = "https://github.com/DataDog/dd-agent/blob/master/datadog.conf.example"
+            config_example_file = "https://github.com/serverdensity/sd-agent/blob/master/config.cfg.example"
 
         sys.stderr.write("""Python logging config is no longer supported and will be ignored.
-            To configure logging, update the logging portion of 'datadog.conf' to match:
+            To configure logging, update the logging portion of 'config.cfg' to match:
              '%s'.
              """ % config_example_file)
 

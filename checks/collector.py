@@ -15,10 +15,10 @@ from checks.check_status import (
     STATUS_ERROR,
     STATUS_OK,
 )
-from checks.datadog import DdForwarder, Dogstreams
 from checks.ganglia import Ganglia
 import checks.system.unix as u
 import checks.system.win32 as w32
+from checks.server_density import plugins, yoshi
 from config import get_system_stats, get_version
 import modules
 from resources.processes import Processes as ResProcesses
@@ -52,7 +52,7 @@ class AgentPayload(collections.MutableMapping):
     METADATA_KEYS = frozenset(['meta', 'tags', 'host-tags', 'systemStats',
                                'agent_checks', 'gohai', 'external_host_tags'])
 
-    DUPLICATE_KEYS = frozenset(['apiKey', 'agentVersion'])
+    DUPLICATE_KEYS = frozenset(['agentKey', 'agentVersion'])
 
     COMMON_ENDPOINT = ''
     DATA_ENDPOINT = 'metrics'
@@ -194,6 +194,12 @@ class Collector(object):
             'system': u.System(log)
         }
 
+        # Server Density Checks
+        self._server_density_checks = {
+            'identifier': yoshi.Identifier(log),
+            'plugins': plugins.Plugins(log)
+        }
+
         # Win32 System `Checks
         self._win32_system_checks = {
             'io': w32.IO(log),
@@ -205,8 +211,6 @@ class Collector(object):
 
         # Old-style metric checks
         self._ganglia = Ganglia(log)
-        self._dogstream = Dogstreams.init(log, self.agentConfig)
-        self._ddforwarder = DdForwarder(log, self.agentConfig)
 
         # Agent performance metrics check
         self._agent_metrics = None
@@ -291,6 +295,17 @@ class Collector(object):
             except Exception:
                 log.exception('Unable to fetch Windows system metrics.')
         else:
+
+            sd_checks = self._server_density_checks
+
+            identifier = sd_checks['identifier'].check(self.agentConfig)
+            payload.update(identifier)
+
+            # SDv1 plugins
+            pluginsData = sd_checks['plugins'].check(self.agentConfig)
+            if pluginsData:
+                payload['plugins'] = pluginsData
+
             # Unix system checks
             sys_checks = self._unix_system_checks
 
@@ -331,27 +346,9 @@ class Collector(object):
 
         # Run old-style checks
         gangliaData = self._ganglia.check(self.agentConfig)
-        dogstreamData = self._dogstream.check(self.agentConfig)
-        ddforwarderData = self._ddforwarder.check(self.agentConfig)
 
         if gangliaData is not False and gangliaData is not None:
             payload['ganglia'] = gangliaData
-
-        # dogstream
-        if dogstreamData:
-            dogstreamEvents = dogstreamData.get('dogstreamEvents', None)
-            if dogstreamEvents:
-                if 'dogstream' in payload['events']:
-                    events['dogstream'].extend(dogstreamEvents)
-                else:
-                    events['dogstream'] = dogstreamEvents
-                del dogstreamData['dogstreamEvents']
-
-            payload.update(dogstreamData)
-
-        # metrics about the forwarder
-        if ddforwarderData:
-            payload['datadog'] = ddforwarderData
 
         # Resources checks
         if self.os != 'windows':
@@ -372,7 +369,7 @@ class Collector(object):
 
             if has_resource:
                 payload['resources']['meta'] = {
-                    'api_key': self.agentConfig['api_key'],
+                    'agent_key': self.agentConfig['agent_key'],
                     'host': payload['internalHostname'],
                 }
 
@@ -436,7 +433,7 @@ class Collector(object):
                 status = AgentCheck.OK
             elif check_status.status == STATUS_ERROR:
                 status = AgentCheck.CRITICAL
-            check.service_check('datadog.agent.check_status', status, tags=service_check_tags)
+            check.service_check('sd.agent.check_status', status, tags=service_check_tags)
 
             # Collect the service checks and save them in the payload
             current_check_service_checks = check.get_service_checks()
@@ -453,7 +450,7 @@ class Collector(object):
 
             # Intrument check run timings if enabled.
             if self.check_timings:
-                metric = 'datadog.agent.check_run_time'
+                metric = 'sd.agent.check_run_time'
                 meta = {'tags': ["check:%s" % check.name]}
                 metrics.append((metric, time.time(), check_run_time, meta))
 
@@ -466,7 +463,7 @@ class Collector(object):
             check_statuses.append(check_status)
 
         # Add a service check for the agent
-        service_checks.append(create_service_check('datadog.agent.up', AgentCheck.OK,
+        service_checks.append(create_service_check('sd.agent.up', AgentCheck.OK,
                               hostname=self.hostname))
 
         # Store the metrics and events in the payload.
@@ -606,7 +603,7 @@ class Collector(object):
         payload['os'] = self.os
         payload['python'] = sys.version
         payload['agentVersion'] = self.agentConfig['version']
-        payload['apiKey'] = self.agentConfig['api_key']
+        payload['agentKey'] = self.agentConfig['agent_key']
         payload['events'] = {}
         payload['metrics'] = []
         payload['service_checks'] = []
@@ -627,7 +624,7 @@ class Collector(object):
             payload['systemStats'] = self.agentConfig.get('system_stats', {})
             # Also post an event in the newsfeed
             payload['events']['System'] = [{
-                'api_key': self.agentConfig['api_key'],
+                'agent_key': self.agentConfig['agent_key'],
                 'host': payload['internalHostname'],
                 'timestamp': now,
                 'event_type':'Agent Startup',

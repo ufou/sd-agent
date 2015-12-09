@@ -15,7 +15,7 @@ class TestNginx(unittest.TestCase):
     def setUp(self):
         self.agent_config = {
             'version': '0.1',
-            'api_key': 'toto'
+            'agent_key': 'toto'
         }
         self.config = {
             'instances': [

@@ -44,6 +44,13 @@ class Disk(AgentCheck):
     def _psutil(cls):
         return psutil is not None
 
+    def _is_number(self, a_string):
+        try:
+            float(a_string)
+        except ValueError:
+            return False
+        return True
+
     def _load_conf(self, instance):
         self._excluded_filesystems = instance.get('excluded_filesystems', [])
         self._excluded_disks = instance.get('excluded_disks', [])
@@ -56,7 +63,7 @@ class Disk(AgentCheck):
         self._excluded_filesystems.append('iso9660')
 
         # FIXME: 6.x, drop use_mount option in datadog.conf
-        self._load_legacy_option(instance, 'use_mount', False,
+        self._load_legacy_option(instance, 'use_mount', True,
                                  operation=_is_affirmative)
         # FIXME: 6.x, drop device_blacklist_re option in datadog.conf
         self._load_legacy_option(instance, 'excluded_disk_re', '^$',
