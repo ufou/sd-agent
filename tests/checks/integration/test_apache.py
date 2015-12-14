@@ -15,7 +15,7 @@ class TestCheckApache(AgentCheckTest):
             'apache_status_url': 'http://localhost:8080/server-status',
             'tags': ['instance:first']
         },
-        # Disabled, we cannot support more than one instance
+        # Disabled, we cannot support more than one instance
         #{
         #    'apache_status_url': 'http://localhost:8080/server-status?auto',
         #    'tags': ['instance:second']
