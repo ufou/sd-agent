@@ -20,19 +20,23 @@ class DummyAgentCheck(AgentCheck):
 
 
 def test_check_status_fail():
+
     instances = [
         {'pass': True},
         {'pass': False},
         {'pass': True}
     ]
 
-    check = DummyAgentCheck('dummy_agent_check', {}, {}, instances)
-    instance_statuses = check.run()
-    assert len(instance_statuses) == 3
-    assert instance_statuses[0].status == STATUS_OK
-    assert instance_statuses[1].status == STATUS_ERROR
-    assert instance_statuses[2].status == STATUS_OK
-
+    count = 0
+    for instance in instances:
+        check = DummyAgentCheck('dummy_agent_check', {}, {}, [instance])
+        instance_statuses = check.run()
+        if instance['pass']:
+            assert instance_statuses[0].status == STATUS_OK
+        else:
+            assert instance_statuses[0].status == STATUS_ERROR
+        count += 1
+    assert count == len(instances)
 
 def test_check_status_pass():
     instances = [
@@ -40,12 +44,13 @@ def test_check_status_pass():
         {'pass': True},
     ]
 
-    check = DummyAgentCheck('dummy_agent_check', {}, {}, instances)
-    instances_status = check.run()
-    assert len(instances_status) == 2
-    for i in instances_status:
-        assert i.status == STATUS_OK
-
+    count = 0
+    for instance in instances:
+        check = DummyAgentCheck('dummy_agent_check', {}, {}, [instance])
+        instance_statuses = check.run()
+        assert instance_statuses[0].status == STATUS_OK
+        count += 1
+    assert count == len(instances)
 
 def test_persistence():
     i1 = InstanceStatus(1, STATUS_OK)
