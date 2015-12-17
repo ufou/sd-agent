@@ -191,8 +191,8 @@ class Disk(AgentCheck):
     def _collect_metrics_manually(self, device):
         result = {}
 
-        used = float(device[3])
-        free = float(device[4])
+        used = float(device[3].replace('%', ''))
+        free = float(device[4].replace('%', ''))
 
         # device is
         # ["/dev/sda1", "ext4", 524288,  171642,  352646, "33%", "/"]
