@@ -34,11 +34,11 @@ class Disk(AgentCheck):
         """Get disk space/inode stats"""
         # Windows and Mac will always have psutil
         # (we have packaged for both of them)
-        #if self._psutil():
-        #    self.collect_metrics_psutil()
-        #else:
+        if self._psutil():
+            self.collect_metrics_psutil()
+        else:
             # FIXME: implement all_partitions (df -a)
-        self.collect_metrics_manually()
+            self.collect_metrics_manually()
 
     @classmethod
     def _psutil(cls):
