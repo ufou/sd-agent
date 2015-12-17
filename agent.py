@@ -1,12 +1,10 @@
 #!/usr/share/python/sd-agent/bin/python
 '''
-    Datadog
-    www.datadoghq.com
+    Server Density
+    www.serverdensity.com
     ----
-    Make sense of your IT Data
-
     Licensed under Simplified BSD License (see LICENSE)
-    (C) Boxed Ice 2010 all rights reserved
+    (C) Server Density 2009-2015 all rights reserved
     (C) Datadog, Inc. 2010-2014 all rights reserved
 '''
 # set up logging before importing any other components

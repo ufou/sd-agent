@@ -4,5 +4,3 @@ instances:
   - apache_status_url: http://localhost/server-status?auto
     # apache_user: example_user
     # apache_password: example_password
-    # tags:
-    #   - optional_tag

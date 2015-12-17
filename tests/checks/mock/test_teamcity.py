@@ -75,7 +75,7 @@ class TeamCityCheckTest(unittest.TestCase):
             check.check(check.instances[0])
 
         events = check.get_events()
-        # Events are disabled and not supported.
+        # Events are disabled and not supported.
         #self.assertEquals(len(events), 1)
         self.assertEquals(0, len(events))
         self.assertEquals(events[0]['msg_title'], "Build for One test build successful")

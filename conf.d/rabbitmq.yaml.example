@@ -1,8 +1,8 @@
 init_config:
 
 instances:
-  # for every instance a 'rabbitmq_api_url' must be provided, pointing to the api
-  # url of the RabbitMQ Managment Plugin (http://www.rabbitmq.com/management.html)
+  # A 'rabbitmq_api_url' must be provided, pointing to the api url of the
+  # RabbitMQ Managment Plugin (http://www.rabbitmq.com/management.html)
   # optional: 'rabbitmq_user' (default: guest) and 'rabbitmq_pass' (default: guest)
   - rabbitmq_api_url: http://localhost:15672/api/
     rabbitmq_user: guest
@@ -31,12 +31,3 @@ instances:
     # queues_regexes:
     #   - thisqueue-.*
     #   - another_\d+queue
-
-    # Service checks:
-    # By default a list of all vhosts is fetched and each one will be checked
-    # using the aliveness API. If you prefer only certain vhosts to be monitored
-    # with service checks then you can list the vhosts you care about.
-    #
-    # vhosts:
-    #   - vhost1
-    #   - vhost2

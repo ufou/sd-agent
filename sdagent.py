@@ -1,12 +1,10 @@
 #!/usr/share/python/sd-agent/bin/python
 '''
-    Datadog
-    www.datadoghq.com
+    Server Density
+    www.serverdensity.com
     ----
-    Make sense of your IT Data
-
     Licensed under Simplified BSD License (see LICENSE)
-    (C) Boxed Ice 2010 all rights reserved
+    (C) Server Density 2009-2015 all rights reserved
     (C) Datadog, Inc. 2010-2013 all rights reserved
 '''
 # set up logging before importing any other components
@@ -248,7 +246,8 @@ class AgentTransaction(Transaction):
 
             if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
                 ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-                tornado_client_params['ca_certs'] = ssl_certificate
+                # Disable this feature, it needs more testing.
+                # tornado_client_params['ca_certs'] = ssl_certificate
 
             req = tornado.httpclient.HTTPRequest(**tornado_client_params)
             use_curl = force_use_curl or self._application._agentConfig.get("use_curl_http_client") and not self._application.use_simple_http_client
