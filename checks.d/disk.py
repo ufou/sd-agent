@@ -34,11 +34,11 @@ class Disk(AgentCheck):
         """Get disk space/inode stats"""
         # Windows and Mac will always have psutil
         # (we have packaged for both of them)
-        if self._psutil():
-            self.collect_metrics_psutil()
-        else:
+        #if self._psutil():
+        #    self.collect_metrics_psutil()
+        #else:
             # FIXME: implement all_partitions (df -a)
-            self.collect_metrics_manually()
+        self.collect_metrics_manually()
 
     @classmethod
     def _psutil(cls):
@@ -191,12 +191,25 @@ class Disk(AgentCheck):
     def _collect_metrics_manually(self, device):
         result = {}
 
-        used = float(device[3].replace('%', ''))
-        free = float(device[4].replace('%', ''))
+        # deal with a df output across multiple lines
+        if len(device) == 6:
+            used = float(device[3])
+            free = float(device[4])
+            total = float(device[2])
+
+        elif len(device) == 5:
+            used = float(device[2])
+            free = float(device[3])
+            total = float(device[1])
+
+        else:
+            self.log.error('Unable to process df -k output for: {}'.format(device))
+            # return nothing so the loop can carry on
+            return []
 
         # device is
         # ["/dev/sda1", "ext4", 524288,  171642,  352646, "33%", "/"]
-        result[self.METRIC_DISK.format('total')] = float(device[2])
+        result[self.METRIC_DISK.format('total')] = total
         result[self.METRIC_DISK.format('used')] = used
         result[self.METRIC_DISK.format('free')] = free
 
