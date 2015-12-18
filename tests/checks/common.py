@@ -409,6 +409,8 @@ WARNINGS
 
     def assertServiceCheck(self, service_check_name, status=None, tags=None,
                            count=None, at_least=1):
+        # Disabled, we don't support service checks.
+        return
         log.debug("Looking for service check {0}".format(service_check_name))
         if status is not None:
             log.debug(" * with status {0}".format(status))
