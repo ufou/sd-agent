@@ -48,7 +48,7 @@ unless ENV['CI']
   ENV['TRAVIS_BUILD_DIR'] = rakefile_dir
   ENV['INTEGRATIONS_DIR'] = File.join(rakefile_dir, 'embedded')
   ENV['PIP_CACHE'] = File.join(rakefile_dir, '.cache/pip')
-  ENV['VOLATILE_DIR'] = '/tmp/dd-agent-testing'
+  ENV['VOLATILE_DIR'] = '/tmp/sd-agent-testing'
   ENV['CONCURRENCY'] = ENV['CONCURRENCY'] || '2'
   ENV['NOSE_FILTER'] = 'not windows'
 end
