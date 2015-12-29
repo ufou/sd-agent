@@ -199,12 +199,12 @@ class Disk(AgentCheck):
         result = {}
 
         # deal with a df output across multiple lines
-        if len(device) == 6:
+        if len(device) == 7:
             used = float(device[3])
             free = float(device[4])
             total = float(device[2])
 
-        elif len(device) == 5:
+        elif len(device) == 6:
             used = float(device[2])
             free = float(device[3])
             total = float(device[1])
