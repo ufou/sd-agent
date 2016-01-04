@@ -324,9 +324,6 @@ class AgentCheck(object):
             histogram_percentiles=agentConfig.get('histogram_percentiles')
         )
 
-        if instances is not None and len(instances) > 1:
-            raise Exception("SD Checks only support one configured instance.")
-
         self.events = []
         self.service_checks = []
         self.instances = instances or []
