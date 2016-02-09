@@ -35,8 +35,7 @@ class TCPCheckTest(AgentCheckTest):
     CHECK_NAME = 'tcp_check'
 
     def tearDown(self):
-        if self.check is not None:
-            self.check.stop()
+        self.check.stop()
 
     def wait_for_async(self, method, attribute, count):
         """
@@ -77,7 +76,6 @@ class TCPCheckTest(AgentCheckTest):
         """
         Check coverage.
         """
-        raise SkipTest("Service checks are not supported.")
         # Run the check
         self.run_check(CONFIG)
 

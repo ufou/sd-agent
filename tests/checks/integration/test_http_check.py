@@ -148,7 +148,6 @@ class HTTPCheckTest(AgentCheckTest):
         """
         Headers format.
         """
-        raise SkipTest("Service checks are not supported.")
         # Run the check
         self.load_check(CONFIG_HTTP_HEADERS, AGENT_CONFIG)
 
