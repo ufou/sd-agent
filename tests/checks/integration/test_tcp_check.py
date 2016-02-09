@@ -3,7 +3,6 @@ import time
 
 # 3p
 from nose.plugins.attrib import attr
-from nose.plugins.skip import SkipTest
 
 # project
 from tests.checks.common import AgentCheckTest
