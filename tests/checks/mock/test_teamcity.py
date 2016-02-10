@@ -75,9 +75,7 @@ class TeamCityCheckTest(unittest.TestCase):
             check.check(check.instances[0])
 
         events = check.get_events()
-        # Events are disabled and not supported.
-        #self.assertEquals(len(events), 1)
-        self.assertEquals(0, len(events))
+        self.assertEquals(len(events), 1)
         self.assertEquals(events[0]['msg_title'], "Build for One test build successful")
         self.assertEquals(events[0]['msg_text'], "Build Number: 2\nDeployed To: buildhost42.dtdg.co\n\nMore Info: http://localhost:8111/viewLog.html?buildId=2&buildTypeId=TestProject_TestBuild")
         self.assertEquals(events[0]['tags'], ['build', 'one:tag', 'one:test'])
