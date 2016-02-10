@@ -2,9 +2,6 @@
 import tempfile
 import time
 
-# 3p
-from nose.plugins.skip import SkipTest
-
 # project
 from tests.checks.common import AgentCheckTest, Fixtures
 
@@ -97,7 +94,6 @@ class EventLogTailerTestCase(NagiosTestCase):
         """
         Make sure the tailer continues to parse nagios as the file grows
         """
-        raise SkipTest("Skipped until we support Nagios plugin.")
         x = open(self.NAGIOS_TEST_LOG).read()
         events = []
         ITERATIONS = 10

@@ -6,7 +6,6 @@ because it requires psutil to function properly
 import os
 
 # 3p
-from nose.plugins.skip import SkipTest
 from mock import patch
 import psutil
 
@@ -209,7 +208,6 @@ class ProcessCheckTest(AgentCheckTest):
         return [os.getpid()] * self.CONFIG_STUBS[int(idx)]['mocked_processes']
 
     def test_check(self):
-        raise SkipTest("Skipped until we are able to support multi-instances")
         mocks = {
             'find_pids': self.mock_find_pids
         }
@@ -218,10 +216,11 @@ class ProcessCheckTest(AgentCheckTest):
             'instances': [stub['config'] for stub in self.CONFIG_STUBS]
         }
 
-        self.run_check(config, mocks=mocks)
 
         for stub in self.CONFIG_STUBS:
             mocked_processes = stub['mocked_processes']
+            single_config = {'instances': [stub['config']]}
+            self.run_check(single_config, mocks=mocks)
 
             # Assert metrics
             for mname in self.PROCESS_METRIC:

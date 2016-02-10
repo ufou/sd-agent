@@ -3,7 +3,6 @@ import re
 
 # 3p
 import mock
-from nose.plugins.skip import SkipTest
 
 # project
 from tests.checks.common import AgentCheckTest, Fixtures
@@ -96,7 +95,6 @@ class TestCheckDisk(AgentCheckTest):
     @mock.patch('psutil.disk_usage', return_value=MockDiskMetrics())
     @mock.patch('os.statvfs', return_value=MockInodesMetrics())
     def test_psutil(self, mock_partitions, mock_usage, mock_inodes):
-        raise SkipTest("Skipped until we are able to support tags")
         for tag_by in ['yes', 'no']:
             self.run_check({'instances': [{'tag_by_filesystem': tag_by}]},
                            force_reload=True)
@@ -168,7 +166,7 @@ class TestCheckDisk(AgentCheckTest):
         self.load_check({'instances': [{}]})
         self.check._load_conf({})
 
-        self.assertTrue(self.check._use_mount)
+        self.assertFalse(self.check._use_mount)
         self.assertEqual(self.check._excluded_filesystems, ['iso9660'])
         self.assertEqual(self.check._excluded_disks, [])
         self.assertFalse(self.check._tag_by_filesystem)
