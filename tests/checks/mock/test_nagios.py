@@ -1,7 +1,6 @@
 # stdlib
 import tempfile
 import time
-from unittest import skip
 
 # 3p
 from nose.plugins.skip import SkipTest
@@ -38,7 +37,7 @@ class NagiosTestCase(AgentCheckTest):
 
 class EventLogTailerTestCase(NagiosTestCase):
 
-    @skip("temporarily disabled")
+    @unit_test_disabled
     def test_line_parser(self):
         """
         Parse lines
