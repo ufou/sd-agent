@@ -166,7 +166,7 @@ class TestCheckDisk(AgentCheckTest):
         self.load_check({'instances': [{}]})
         self.check._load_conf({})
 
-        self.assertFalse(self.check._use_mount)
+        self.assertTrue(self.check._use_mount)
         self.assertEqual(self.check._excluded_filesystems, ['iso9660'])
         self.assertEqual(self.check._excluded_disks, [])
         self.assertFalse(self.check._tag_by_filesystem)
