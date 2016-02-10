@@ -98,9 +98,9 @@ class DirectoryTestCase(AgentCheckTest):
             'instances': config_stubs
         }
 
-        for config in config_stubs:
-            self.run_check({'instances': [config]})
+        self.run_check(config)
 
+        for config in config_stubs:
             dirtagname = config.get('dirtagname', "name")
             name = config.get('name', self.temp_dir)
             dir_tags = [dirtagname + ":%s" % name]
@@ -133,9 +133,9 @@ class DirectoryTestCase(AgentCheckTest):
             'instances': config_stubs
         }
 
-        for config in config_stubs:
-            self.run_check({'instances': [config]})
+        self.run_check(config)
 
+        for config in config_stubs:
             dirtagname = config.get('dirtagname', "name")
             name = config.get('name', self.temp_dir)
             filetagname = config.get('filetagname', "filename")
