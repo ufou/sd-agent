@@ -177,7 +177,7 @@ class TestCore(unittest.TestCase):
             all_tags.extend(metric[3]['tags'])
         for check in checks:
             tag = "check:%s" % check.name
-            #assert tag in all_tags, all_tags
+            assert tag in all_tags, all_tags
 
     def test_apptags(self):
         '''
