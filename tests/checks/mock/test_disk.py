@@ -9,6 +9,7 @@ from tests.checks.common import AgentCheckTest, Fixtures
 
 
 DEFAULT_DEVICE_NAME = '/dev/sda1'
+DEFAULT_MOUNT_POINT = '/'
 
 
 class MockPart(object):
@@ -103,7 +104,7 @@ class TestCheckDisk(AgentCheckTest):
             tags = ['ext4'] if tag_by == 'yes' else []
             for metric, value in self.GAUGES_VALUES.iteritems():
                 self.assertMetric(metric, value=value, tags=tags,
-                                  device_name=DEFAULT_DEVICE_NAME)
+                                  device_name=DEFAULT_MOUNT_POINT)
 
             self.coverage_report()
 
