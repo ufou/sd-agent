@@ -1,6 +1,7 @@
 # stdlib
 import tempfile
 import time
+from unittest import skip
 
 # 3p
 from nose.plugins.skip import SkipTest
