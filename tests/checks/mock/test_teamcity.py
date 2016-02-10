@@ -3,6 +3,7 @@ import unittest
 
 # 3p
 from mock import MagicMock, patch
+from nose.plugins.skip import SkipTest
 
 # project
 from tests.checks.common import load_check
@@ -54,6 +55,7 @@ class TeamCityCheckTest(unittest.TestCase):
     """
 
     def test_build_event(self):
+        raise SkipTest("Skipped, events are not supported.")
         agent_config = {
             'version': '0.1',
             'agent_key': 'toto'
