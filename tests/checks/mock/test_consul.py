@@ -1,5 +1,8 @@
 import random
 
+# 3p
+from nose.plugins.skip import SkipTest
+
 from tests.checks.common import AgentCheckTest, load_check
 
 MOCK_CONFIG = {
@@ -205,6 +208,7 @@ class TestCheckConsul(AgentCheckTest):
         self.assertEqual(set(self.check._cull_services_list(services, whitelist)), set(whitelist))
 
     def test_new_leader_event(self):
+        raise SkipTest("Skipped, events are not supported.")
         self.check = load_check(self.CHECK_NAME, MOCK_CONFIG_LEADER_CHECK, self.DEFAULT_AGENT_CONFIG)
         self.check._last_known_leader = 'My Old Leader'
 
