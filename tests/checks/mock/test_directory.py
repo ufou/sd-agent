@@ -4,9 +4,6 @@ import os
 import shutil
 import tempfile
 
-# 3p
-from nose.plugins.skip import SkipTest
-
 # project
 from tests.checks.common import AgentCheckTest
 
@@ -95,8 +92,6 @@ class DirectoryTestCase(AgentCheckTest):
         """
         Directory metric coverage
         """
-
-        raise SkipTest("Skipped until we are able to support multi-instances")
         config_stubs = self.get_config_stubs(self.temp_dir)
 
         config = {
@@ -132,7 +127,6 @@ class DirectoryTestCase(AgentCheckTest):
         """
         File metric coverage
         """
-        raise SkipTest("Skipped until we are able to support multi-instances")
         config_stubs = self.get_config_stubs(self.temp_dir, filegauges=True)
 
         config = {
@@ -142,7 +136,6 @@ class DirectoryTestCase(AgentCheckTest):
         self.run_check(config)
 
         for config in config_stubs:
-
             dirtagname = config.get('dirtagname', "name")
             name = config.get('name', self.temp_dir)
             filetagname = config.get('filetagname', "filename")

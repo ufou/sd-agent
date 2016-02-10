@@ -55,16 +55,13 @@ class TestMetadata(unittest.TestCase):
         config = {'instances': [{'metadata': True}, {}, {'metadata': True}]}
 
         instances = config.get('instances')
-        count = 0
-        for instance in instances:
-            check = TestMetadata.FakeCheck("fake_check", config, {}, [instance])
-            check.run()
+        check = TestMetadata.FakeCheck("fake_check", config, {}, instances)
+        check.run()
 
-            service_metadata = check.get_service_metadata()
-            count += 1
-            if instance.get('metadata', False):
-                self.assertEquals(service_metadata[0], {'foo': "bar"})
-            else:
-                self.assertEquals(service_metadata[0], {})
+        service_metadata = check.get_service_metadata()
+        service_metadata_count = len(service_metadata)
 
-        self.assertEquals(len(instances), count)
+        self.assertEquals(service_metadata_count, 3)
+        self.assertEquals(service_metadata[0], {'foo': "bar"})
+        self.assertEquals(service_metadata[1], {})
+        self.assertEquals(service_metadata[2], {'foo': "bar"})
