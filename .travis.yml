@@ -3,8 +3,6 @@ sudo: false
 branches:
   only:
     - master
-    - sd-agentv2-branding
-    - build-fixes
     - /^\d+\.\d+\.x$/ # release forked patches branch
 
 language: python
@@ -23,7 +21,7 @@ matrix:
 env:
   global:
     - CONCURRENCY=2
-    # - COVERAGE=true
+    - COVERAGE=true
     - NOSE_FILTER="not windows"
     - INTEGRATIONS_DIR=$HOME/embedded
     - PIP_CACHE=$HOME/.cache/pip
@@ -85,8 +83,8 @@ env:
 # hugepages are enabled
 #    - TRAVIS_FLAVOR=tokumx
     #- TRAVIS_FLAVOR=tomcat # JMX testing machine / need the other ones before
-    #- TRAVIS_FLAVOR=varnish FLAVOR_VERSION=3.0.7
-    #- TRAVIS_FLAVOR=varnish FLAVOR_VERSION=4.0.3
+    - TRAVIS_FLAVOR=varnish FLAVOR_VERSION=3.0.7
+    - TRAVIS_FLAVOR=varnish FLAVOR_VERSION=4.0.3
     #- TRAVIS_FLAVOR=zookeeper
 
 # Override travis defaults with empty jobs

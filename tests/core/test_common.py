@@ -171,13 +171,13 @@ class TestCore(unittest.TestCase):
 
         # Check that we got a timing metric for all checks.
         timing_metrics = [m for m in metrics
-            if m[0] == 'datadog.agent.check_run_time']
+            if m[0] == 'sd.agent.check_run_time']
         all_tags = []
         for metric in timing_metrics:
             all_tags.extend(metric[3]['tags'])
         for check in checks:
             tag = "check:%s" % check.name
-            #assert tag in all_tags, all_tags
+            assert tag in all_tags, all_tags
 
     def test_apptags(self):
         '''

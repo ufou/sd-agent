@@ -60,6 +60,71 @@ init_config:
 
 instances:
   - name: server0
+    host: localhost
+    port: 9001
+    user: user
+    pass: pass
+    proc_names:
+      - apache2
+      - webapp
+  - name: server1
+    host: 10.60.130.82""",
+        'expected_instances': [{
+            'name': 'server0',
+            'host': 'localhost',
+            'port': 9001,
+            'user': 'user',
+            'pass': 'pass',
+            'proc_names': ['apache2', 'webapp'],
+        }, {
+            'host': '10.60.130.82',
+            'name': 'server1'
+        }],
+        'expected_metrics': {
+            'server0': [
+                ('supervisord.process.count', 0, {'type': 'gauge', 'tags': ['supervisord_server:server0', 'status:up']}),
+                ('supervisord.process.count', 2, {'type': 'gauge', 'tags': ['supervisord_server:server0', 'status:down']}),
+                ('supervisord.process.count', 0, {'type': 'gauge', 'tags': ['supervisord_server:server0', 'status:unknown']}),
+                ('supervisord.process.uptime', 0, {'type': 'gauge', 'tags': ['supervisord_server:server0', 'supervisord_process:apache2']}),
+                ('supervisord.process.uptime', 2, {'type': 'gauge', 'tags': ['supervisord_server:server0', 'supervisord_process:webapp']}),
+            ],
+            'server1': [
+                ('supervisord.process.count', 0, {'type': 'gauge', 'tags': ['supervisord_server:server1', 'status:up']}),
+                ('supervisord.process.count', 1, {'type': 'gauge', 'tags': ['supervisord_server:server1', 'status:down']}),
+                ('supervisord.process.count', 0, {'type': 'gauge', 'tags': ['supervisord_server:server1', 'status:unknown']}),
+                ('supervisord.process.uptime', 0, {'type': 'gauge', 'tags': ['supervisord_server:server1', 'supervisord_process:ruby']})
+            ]
+        },
+        'expected_service_checks': {
+            'server0': [{
+                'status': AgentCheck.OK,
+                'tags': ['supervisord_server:server0'],
+                'check': 'supervisord.can_connect',
+            }, {
+                'status': AgentCheck.CRITICAL,
+                'tags': ['supervisord_server:server0', 'supervisord_process:apache2'],
+                'check': 'supervisord.process.status'
+            }, {
+                'status': AgentCheck.CRITICAL,
+                'tags': ['supervisord_server:server0', 'supervisord_process:webapp'],
+                'check': 'supervisord.process.status'
+            }],
+            'server1': [{
+                'status': AgentCheck.OK,
+                'tags': ['supervisord_server:server1'],
+                'check': 'supervisord.can_connect',
+            }, {
+                'status': AgentCheck.CRITICAL,
+                'tags': ['supervisord_server:server1', 'supervisord_process:ruby'],
+                'check': 'supervisord.process.status'
+            }]
+        }
+    }, {
+        'yaml': """
+init_config:
+
+instances:
+  - name: server0
     host: invalid_host
     port: 9009""",
         'expected_instances': [{
