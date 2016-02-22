@@ -25,6 +25,7 @@ pymongo==2.8
 # checks.d/kafka_consumer.py
 # Requires a compiler because zope.interface is a dep
 kazoo==1.3.1
+zope.interface==4.1.3
 
 # checks.d/ssh_check.py
 # Require a compiler because pycrypto is a dep
