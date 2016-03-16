@@ -213,7 +213,7 @@ except ConfigParser.NoOptionError, e:
     print 'There are some items missing from your config file, but nothing fatal'
 
 # Check to make sure the default config values have been changed (only core config values)
-if (re.match('http(s)?(\:\/\/)example\.serverdensity\.(com|io)',
+if (re.match('http(s)?(\:\/\/)example\.(agent\.|)serverdensity\.(com|io)',
              agentConfig['sdUrl']) is not None or
         agentConfig['agentKey'] == 'keyHere'):
     print 'You have not modified config.cfg for your server'
@@ -221,12 +221,20 @@ if (re.match('http(s)?(\:\/\/)example\.serverdensity\.(com|io)',
     sys.exit(1)
 
 # Check to make sure sd_url is in correct
-if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.(com|io)',
+if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(agent\.|)serverdensity\.(com|io)',
              agentConfig['sdUrl']) is None):
-    print 'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or https://example.serverdensity.io'
+    print 'Your sd_url is incorrect. It needs to be in the form https://example.serverdensity.com or https://example.agent.serverdensity.io'
     print 'Agent will now quit'
     sys.exit(1)
 
+# Convert old urls into the new agent only host
+if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.io',
+             agentConfig['sdUrl']) is not None):
+    print agentConfig['sdUrl']
+    agentConfig['sdUrl'] = agentConfig['sdUrl'].replace(
+        '.serverdensity.io', '.agent.serverdensity.io').replace(
+        'http:', 'https:')
+    print agentConfig['sdUrl']
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] is None:
     print ('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, '
