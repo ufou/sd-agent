@@ -190,9 +190,6 @@ try:
     if config.has_option('Main', 'rabbitmq_pass'):
         agentConfig['rabbitMQPass'] = config.get('Main', 'rabbitmq_pass')
 
-    if config.has_option('Main', 'logtail_paths'):
-        agentConfig['logTailPaths'] = config.get('Main', 'logtail_paths')
-
     if config.has_option('Main', 'rabbitmq_queue_filter'):
         agentConfig['rabbitMQQueueFilter'] = config.get('Main', 'rabbitmq_queue_filter')
 
@@ -322,26 +319,6 @@ class agent(Daemon):
             systemStats['fbsdV'] = ('freebsd', version, '')  # no codename for FreeBSD
 
         mainLogger.info('System: ' + str(systemStats))
-
-        # Log tailer
-        if agentConfig.get('logTailPaths', '') != '':
-
-            from logtail import LogTailer
-
-            logFiles = []
-
-            for path in agentConfig['logTailPaths'].split(','):
-                files = glob.glob(path)
-
-                for file in files:
-                    logFiles.append(file)
-
-            for file in logFiles:
-                mainLogger.info('Starting log tailer: %s', file)
-
-                logThread = LogTailer(agentConfig, mainLogger, file)
-                logThread.setName(file)
-                logThread.start()
 
         # Checks instance
         mainLogger.debug('Creating checks instance')
