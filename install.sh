@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
- 
+
 ##
 ###
 ### Based on the original script by the friendly guys at Boundary
@@ -19,9 +19,9 @@
 ### See the License for the specific language governing permissions and
 ### limitations under the License.
 ###
- 
-PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux")
- 
+
+PLATFORMS=("Ubuntu" "Debian" "CentOS" "Amazon" "RHEL" "CloudLinux" "Fedora")
+
 # Put additional version numbers here.
 # These variables take the form ${platform}_VERSIONS, where $platform matches
 # the tags in $PLATFORMS
@@ -31,17 +31,18 @@ CentOS_VERSIONS=("5" "6")
 Amazon_VERSIONS=("2012.09" "2013.03")
 RHEL_VERSIONS=("5" "6")
 CloudLinux_VERSIONS=("5" "6")
- 
+Fedora_VERSIONS=("21")
+
 # For version number updates you hopefully don't need to modify below this line
 # -----------------------------------------------------------------------------
- 
+
 SUPPORTED_ARCH=0
 SUPPORTED_PLATFORM=0
 APT_CMD="apt-get -q -y --force-yes"
 YUM_CMD="yum -d0 -e0 -y"
- 
+
 trap "exit" INT TERM EXIT
- 
+
 function print_supported_platforms() {
     echo "Supported platforms are:"
     for d in ${PLATFORMS[*]}
@@ -56,20 +57,20 @@ function print_supported_platforms() {
         echo ""
     done
 }
- 
+
 function check_distro_version() {
     PLATFORM=$1
     DISTRO=$2
     VERSION=$3
- 
+
     TEMP="\${${DISTRO}_versions[*]}"
     VERSIONS=`eval echo $TEMP`
- 
+
     if [ $DISTRO = "Ubuntu" ]; then
         MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
         MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
         PATCH_VERSION=`echo $VERSION | awk -F. '{print $3}'`
- 
+
         TEMP="\${${DISTRO}_VERSIONS[*]}"
         VERSIONS=`eval echo $TEMP`
         for v in $VERSIONS ; do
@@ -77,11 +78,11 @@ function check_distro_version() {
                 return 0
             fi
         done
- 
+
     elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
         MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
         MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
- 
+
         TEMP="\${${DISTRO}_VERSIONS[*]}"
         VERSIONS=`eval echo $TEMP`
         for v in $VERSIONS ; do
@@ -89,12 +90,12 @@ function check_distro_version() {
                 return 0
             fi
         done
- 
+
     elif [ $DISTRO = "Amazon" ]; then
         VERSION=`echo $PLATFORM | awk '{print $5}'`
         # Some of these include minor numbers. Trim.
         VERSION=${VERSION:0:7}
- 
+
         TEMP="\${${DISTRO}_VERSIONS[*]}"
         VERSIONS=`eval echo $TEMP`
         for v in $VERSIONS ; do
@@ -102,11 +103,11 @@ function check_distro_version() {
                 return 0
             fi
         done
- 
+
     elif [ $DISTRO = "Debian" ]; then
         MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
         MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
- 
+
         TEMP="\${${DISTRO}_VERSIONS[*]}"
         VERSIONS=`eval echo $TEMP`
         for v in $VERSIONS ; do
@@ -114,45 +115,59 @@ function check_distro_version() {
                 return 0
             fi
         done
+
+    elif [ $DISTRO = "Fedora" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $3}'`
+        # Some of these include minor numbers. Trim.
+
+        TEMP="\${${DISTRO}_VERSIONS[*]}"
+        VERSIONS=`eval echo $TEMP`
+        for v in $VERSIONS ; do
+            if [ "$VERSION" = "$v" ]; then
+                return 0
+            fi
+        done
     fi
- 
+
     echo "Detected $DISTRO but with an unsupported version ($VERSION)"
     return 1
 }
- 
+
 function print_help() {
     echo "   $0 -a https://example.serverdensity.io -k agentKey"
     echo "      -a: Required. Account URL in form https://example.serverdensity.io"
     echo "      -k: Agent key. Not required if API token provided. "
-    echo "      -t: API token. Not required if agent key provided. "   
-    echo "      -g: Group. Optional. Group to add the new device into."   
-    echo "      -T: Tag. Optional. Tag this device - multiple tags not supported."   
+    echo "      -t: API token. Not required if agent key provided. "
+    echo "      -g: Group. Optional. Group to add the new device into."
+    echo "      -T: Tag. Optional. Tag this device - multiple tags not supported."
+    echo "      -p: Provider. Optional. Hosting provider."
+    echo "      -i: Provider Id. Optional. Requires Provider. Cloud device Id."
     exit 0
 }
- 
+
 function do_install() {
     if [ "$DISTRO" = "Ubuntu" ] || [ "$DISTRO" = "Debian" ]; then
         sudo $APT_CMD update > /dev/null
- 
+
         APT_STRING="deb http://www.serverdensity.com/downloads/linux/deb all main"
         echo "Adding repository"
         sudo sh -c "echo \"deb http://www.serverdensity.com/downloads/linux/deb all main\" > /etc/apt/sources.list.d/sd-agent.list"
- 
+
         $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo apt-key add -
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
         fi
- 
+
         echo "Installing agent"
- 
+
         sudo $APT_CMD update > /dev/null
         sudo $APT_CMD install sd-agent
         return $?
-    
-    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then        
+
+    elif [ "$DISTRO" = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ] || [ $DISTRO = "Fedora" ]; then
         echo "Adding repository"
- 
+
         sudo sh -c "cat - > /etc/yum.repos.d/serverdensity.repo <<EOF
 [serverdensity]
 name=Server Density
@@ -161,48 +176,48 @@ enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity
 EOF"
- 
+
         $CURL -Ls https://www.serverdensity.com/downloads/boxedice-public.key | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-serverdensity > /dev/null
         if [ $? -gt 0 ]; then
             echo "Error downloading key"
             exit 1
         fi
- 
+
         echo "Installing agent"
- 
+
         sudo $YUM_CMD install sd-agent
         return $?
     fi
 }
- 
+
 function configure_agent() {
     echo "Configuring agent"
- 
+
     sudo sh -c "cat - > /etc/sd-agent/config.cfg <<EOF
 #
 # Server Density Agent Config
 # Docs: http://www.serverdensity.com/docs/agent/configvariables/
 #
- 
+
 [Main]
 sd_url: $ACCOUNT
 agent_key: $AGENTKEY
- 
+
 #
 # Plugins
 #
 # Leave blank to ignore. See http://www.serverdensity.com/docs/agent/writingplugins/
 #
- 
+
 plugin_directory:
- 
+
 #
 # Optional status monitoring
 #
 # See http://www.serverdensity.com/docs/agent/config/
 # Ignore these if you do not wish to monitor them
 #
- 
+
 # Apache
 # See http://www.serverdensity.com/docs/agent/apache/
 
@@ -254,10 +269,10 @@ rabbitmq_pass: guest
 
 # logging_level: debug
 EOF"
- 
+
     sudo /etc/init.d/sd-agent restart
 }
- 
+
 function pre_install_sanity() {
     SUDO=`which sudo`
     if [ $? -ne 0 ]; then
@@ -265,25 +280,65 @@ function pre_install_sanity() {
         echo "Please install sudo. For assistance, hello@serverdensity.com"
         exit 1
     fi
- 
+
     which curl > /dev/null
     if [ $? -gt 0 ]; then
         echo "The 'curl' command is either not installed or not on the PATH ..."
- 
+
         echo "Installing curl ..."
- 
+
         if [ $DISTRO = "Ubuntu" ] || [ $DISTRO = "Debian" ]; then
             sudo $APT_CMD update > /dev/null
             sudo $APT_CMD install curl
- 
-        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ]; then
+
+        elif [ $DISTRO = "CentOS" ] || [ $DISTRO = "Amazon" ] || [ $DISTRO = "RHEL" ] || [ $DISTRO = "CloudLinux" ] || [ $DISTRO = "Fedora" ]; then
             sudo $YUM_CMD install curl
         fi
     fi
- 
+
     CURL="`which curl`"
 }
- 
+
+function get_existing_device() {
+
+    RESULT=`curl -v "https://api.serverdensity.io/inventory/resources/?token=$1&filter=$2"`
+    exit_status=$?
+
+    # an exit status of 1 indicates an unsupported protocol. (e.g.,
+    # https hasn't been baked in.)
+    if [ "$exit_status" -eq "1" ]; then
+        echo "Your local version of curl has not been built with HTTPS support: `which curl`"
+        exit 1
+
+    # if the exit code is 7, that means curl couldnt connect so we can bail
+    elif [ "$exit_status" -eq "7" ]; then
+        echo "Could not connect to create server"
+        exit 1
+
+    # it appears that an exit code of 28 is also a can't connect error
+    elif [ "$exit_status" -eq "28" ]; then
+        echo "Could not connect to create server"
+        exit 1
+
+    elif [ "$exit_status" -ne "0" ]; then
+        echo "Error connecting to api.serverdensity.io; status $exit_status."
+        exit 1
+    fi
+
+    AGENTKEY=`echo $RESULT | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w agentKey | cut -d"|" -f2| sed -e 's/^ *//g' -e 's/ *$//g'`
+
+    if [ "$AGENTKEY" = "401" ]; then
+        echo "Authentication error: $OUTPUT"
+        echo "Verify that you have passed in the correct account URL and API token"
+        exit 1
+
+    elif [ "$AGENTKEY" = "403" ]; then
+        echo "Forbidden error: $OUTPUT"
+        echo "Verify that you have passed in the correct account URL and API token"
+        exit 1
+    fi
+}
+
 # Grab some system information
 if [ -f /etc/redhat-release ] ; then
     PLATFORM=`cat /etc/redhat-release`
@@ -295,6 +350,8 @@ if [ -f /etc/redhat-release ] ; then
         VERSION=`echo $PLATFORM | awk '{print $3}'`
     elif [ "$DISTRO" = "CloudLinux" ]; then
         VERSION=`echo $PLATFORM | awk '{print $4}'`
+    elif [ "$DISTRO" = "Fedora" ]; then
+        VERSION=`echo $PLATFORM | awk '{print $3}'`
     else
         DISTRO="unknown"
         PLATFORM="unknown"
@@ -328,17 +385,17 @@ else
       VERSION=`cat /etc/product | grep 'Image' | awk '{ print $3}' | awk -F. '{print $1}'`
       MACHINE="i686"
       JOYENT=`cat /etc/product | grep 'Name' | awk '{ print $2}'`
- 
+
     elif [ "$?" != "0" ]; then
         PLATFORM="unknown"
         DISTRO="unknown"
         MACHINE=`uname -m`
     fi
 fi
- 
+
 IGNORE_RELEASE=0
 
-while getopts ":a:k:g:t:T:" opt; do
+while getopts ":a:k:g:t:T:p:i:" opt; do
   case $opt in
     a)
       ACCOUNT="$OPTARG" >&2
@@ -355,6 +412,12 @@ while getopts ":a:k:g:t:T:" opt; do
     T)
       TAGNAME="$OPTARG" >&2
       ;;
+    p)
+      PROVIDER="$OPTARG" >&2
+      ;;
+    i)
+      PROVIDERID="$OPTARG" >&2
+      ;;
     \?)
       exit
       ;;
@@ -365,27 +428,38 @@ while getopts ":a:k:g:t:T:" opt; do
   esac
 done
 
- 
+
 if [ -z $ACCOUNT ]; then
     print_help
 fi
- 
+
 if [ -z $AGENTKEY ]; then
     if [ "${HOSTNAME}" = "" ]; then
         echo "Host does not appear to have a hostname set!"
         exit 1
     fi
 
+    if [ "${PROVIDERID}" != "" ]; then
+        if [ -z "${PROVIDER}" ]; then
+            echo "We need a provider argument if you pass a provider id!"
+            exit 1
+        fi
+    fi
+
     echo ""
     echo "Using API key $API_KEY to automatically create device with hostname ${HOSTNAME}"
     echo ""
+
+    TAG_ARG=""
+    GROUP_ARG=""
+    CLOUD_ARG=""
 
     if [ "${TAGNAME}" != "" ]; then
 
         TAGS=`curl --silent -X GET https://api.serverdensity.io/inventory/tags?token=${API_KEY}`
 
         # very messy way to get the tag ID without using any json tools
-        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i "\"$TAGNAME"\" | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'` 
+        TAGID=`echo $TAGS | sed -e $'s/},{/\\\n/g'| grep -i "\"$TAGNAME"\" | sed 's/.*"_id":"\([a-z0-9]*\)".*/\1/g'`
 
         if [ ! -z $TAGID ]; then
             echo "Found $TAGNAME, using tag ID $TAGID"
@@ -405,68 +479,64 @@ if [ -z $AGENTKEY ]; then
             echo "Tag cretated, using tag ID $TAGID"
 
         fi
-
-        if [ "${GROUPNAME}" = "" ]; then
-            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}&tags=[\"$TAGID\"]"`
-        fi
-
-        if [ "${GROUPNAME}" != "" ]; then
-            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}&tags=[\"$TAGID\"]"`
-        fi 
-
-    else
-
-        if [ "${GROUPNAME}" = "" ]; then
-            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}"`
-        fi
-
-        if [ "${GROUPNAME}" != "" ]; then
-            RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "group=${GROUPNAME}&name=${HOSTNAME}"`
-        fi 
-
+        TAG_ARG="&tags=[\"${TAGID}\"]"
     fi
 
-    exit_status=$?
-
-    # an exit status of 1 indicates an unsupported protocol. (e.g.,
-    # https hasn't been baked in.)
-    if [ "$exit_status" -eq "1" ]; then
-        echo "Your local version of curl has not been built with HTTPS support: `which curl`"
-        exit 1
-
-    # if the exit code is 7, that means curl couldnt connect so we can bail
-    elif [ "$exit_status" -eq "7" ]; then
-        echo "Could not connect to create server"
-        exit 1
-
-    # it appears that an exit code of 28 is also a can't connect error
-    elif [ "$exit_status" -eq "28" ]; then
-        echo "Could not connect to create server"
-        exit 1
-
-    elif [ "$exit_status" -ne "0" ]; then
-        echo "Error connecting to api.serverdensity.io; status $exit_status."
-        exit 1
+    if [ "${GROUPNAME}" != "" ]; then
+        GROUP_ARG="&group=${GROUPNAME}"
     fi
 
-    AGENTKEY=`echo $RESULT | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w agentKey | cut -d"|" -f2| sed -e 's/^ *//g' -e 's/ *$//g'`
+    if [ "${PROVIDERID}" != "" ]; then
+        CLOUD_ARG="&provider=${PROVIDER}&providerId=${PROVIDERID}"
+        FILTER="\{\"provider\":\"${PROVIDER}\",\"providerId\":\"${PROVIDERID}\",\"type\":\"device\"\}"
 
-    if [ "$AGENTKEY" = "" ]; then
-        echo "Unknown error communicating with api.serverdensity.io: $OUTPUT"
-        exit 1
+        get_existing_device ${API_KEY} ${FILTER}
+    fi
 
-    elif [ "$AGENTKEY" = "401" ]; then
-        echo "Authentication error: $OUTPUT"
-        echo "Verify that you have passed in the correct account URL and API token"
-        exit 1
+    if [ "${AGENTKEY}" = "" ]; then
+        RESULT=`curl -v https://api.serverdensity.io/inventory/devices/?token=${API_KEY} --data "name=${HOSTNAME}${GROUP_ARG}${TAG_ARG}${CLOUD_ARG}"`
+        exit_status=$?
 
-    elif [ "$AGENTKEY" = "403" ]; then
-        echo "Forbidden error: $OUTPUT"
-        echo "Verify that you have passed in the correct account URL and API token"
-        exit 1
+        # an exit status of 1 indicates an unsupported protocol. (e.g.,
+        # https hasn't been baked in.)
+        if [ "$exit_status" -eq "1" ]; then
+            echo "Your local version of curl has not been built with HTTPS support: `which curl`"
+            exit 1
+
+        # if the exit code is 7, that means curl couldnt connect so we can bail
+        elif [ "$exit_status" -eq "7" ]; then
+            echo "Could not connect to create server"
+            exit 1
+
+        # it appears that an exit code of 28 is also a can't connect error
+        elif [ "$exit_status" -eq "28" ]; then
+            echo "Could not connect to create server"
+            exit 1
+
+        elif [ "$exit_status" -ne "0" ]; then
+            echo "Error connecting to api.serverdensity.io; status $exit_status."
+            exit 1
+        fi
+
+        AGENTKEY=`echo $RESULT | sed 's/\\\\\//\//g' | sed 's/[{}]//g' | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w agentKey | cut -d"|" -f2| sed -e 's/^ *//g' -e 's/ *$//g'`
+
+        if [ "$AGENTKEY" = "" ]; then
+            echo "Unknown error communicating with api.serverdensity.io: $OUTPUT"
+            exit 1
+
+        elif [ "$AGENTKEY" = "401" ]; then
+            echo "Authentication error: $OUTPUT"
+            echo "Verify that you have passed in the correct account URL and API token"
+            exit 1
+
+        elif [ "$AGENTKEY" = "403" ]; then
+            echo "Forbidden error: $OUTPUT"
+            echo "Verify that you have passed in the correct account URL and API token"
+            exit 1
+        fi
     fi
 fi
- 
+
 echo ""
 echo "Server Density Agent Installer"
 echo ""
@@ -474,24 +544,24 @@ echo "Account: $ACCOUNT"
 echo "Agent Key: $AGENTKEY"
 echo "OS: $DISTRO $VERSION..."
 echo ""
- 
+
 if [ $MACHINE = "i686" ]; then
     ARCH="32"
     SUPPORTED_ARCH=1
 fi
- 
+
 if [ $MACHINE = "x86_64" ] || [ $MACHINE = "amd64" ]; then
     ARCH="64"
     SUPPORTED_ARCH=1
 fi
- 
+
 if [ $SUPPORTED_ARCH -eq 0 ]; then
     echo "Unsupported architecture ($MACHINE) ..."
     echo "This is an unsupported platform for the sd-agent."
     echo "Please contact hello@serverdensity.com to request support for this architecture."
     exit 1
 fi
- 
+
 # Check the distribution
 for d in ${PLATFORMS[*]} ; do
     if [ $DISTRO = $d ]; then
@@ -505,7 +575,7 @@ if [ $SUPPORTED_PLATFORM -eq 0 ]; then
     print_supported_platforms
     exit 0
 fi
- 
+
 if [ $IGNORE_RELEASE -ne 1 ]; then
     # Check the version number
     check_distro_version "$PLATFORM" $DISTRO $VERSION
@@ -514,7 +584,7 @@ if [ $IGNORE_RELEASE -ne 1 ]; then
         echo "Detected $PLATFORM $DISTRO $VERSION"
     fi
 fi
- 
+
 # The version number hasn't been found; let's just try and masquerade
 # (and tell users what we're doing)
 if [ $IGNORE_RELEASE ] ; then
@@ -524,25 +594,25 @@ if [ $IGNORE_RELEASE ] ; then
     VERSION=`echo $VERSIONS | awk '{print $NF}'`
     MAJOR_VERSION=`echo $VERSION | awk -F. '{print $1}'`
     MINOR_VERSION=`echo $VERSION | awk -F. '{print $2}'`
- 
+
     echo ""
     echo "Continuing; for reference, script is masquerading as: $DISTRO $VERSION"
     echo ""
 fi
- 
+
 # At this point, we think we have a supported OS.
 pre_install_sanity $d $v
- 
+
 do_install
- 
+
 configure_agent
- 
+
 if [ $? -ne 0 ]; then
     echo "I added the correct repositories, but the agent installation failed."
     echo "Please contact hello@serverdensity.com about this problem."
     exit 1
 fi
- 
+
 echo ""
 echo "The agent has been installed successfully!"
 echo "Head back to $ACCOUNT to see your stats and set up some alerts."
