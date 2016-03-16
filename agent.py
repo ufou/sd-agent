@@ -52,7 +52,7 @@ from daemon import Daemon
 agentConfig = {
     'logging': logging.INFO,
     'checkFreq': 60,
-    'version': '1.14.1'
+    'version': '1.14.2'
 }
 
 rawConfig = {}
