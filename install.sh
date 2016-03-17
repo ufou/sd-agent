@@ -134,8 +134,8 @@ function check_distro_version() {
 }
 
 function print_help() {
-    echo "   $0 -a https://example.serverdensity.io -k agentKey"
-    echo "      -a: Required. Account URL in form https://example.serverdensity.io"
+    echo "   $0 -a https://example.agent.serverdensity.io -k agentKey"
+    echo "      -a: Required. Account URL in form https://example.agent.serverdensity.io"
     echo "      -k: Agent key. Not required if API token provided. "
     echo "      -t: API token. Not required if agent key provided. "
     echo "      -g: Group. Optional. Group to add the new device into."
