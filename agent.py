@@ -52,7 +52,7 @@ from daemon import Daemon
 agentConfig = {
     'logging': logging.INFO,
     'checkFreq': 60,
-    'version': '1.14.2'
+    'version': '1.14.3'
 }
 
 rawConfig = {}
@@ -227,11 +227,10 @@ if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.(agent\.|)serverdensity\.(com|io)
 # Convert old urls into the new agent only host
 if (re.match('http(s)?(\:\/\/)[a-zA-Z0-9_\-]+\.serverdensity\.io',
              agentConfig['sdUrl']) is not None):
-    print agentConfig['sdUrl']
     agentConfig['sdUrl'] = agentConfig['sdUrl'].replace(
         '.serverdensity.io', '.agent.serverdensity.io').replace(
         'http:', 'https:')
-    print agentConfig['sdUrl']
+
 # Check apache_status_url is not empty (case 27073)
 if 'apacheStatusUrl' in agentConfig and agentConfig['apacheStatusUrl'] is None:
     print ('You must provide a config value for apache_status_url. If you do not wish to use Apache monitoring, '
