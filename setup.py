@@ -110,7 +110,7 @@ if sys.platform == 'win32':
         'windows': [{'script': 'win32\gui.py',
                      'dest_base': "agent-manager",
                      'uac_info': "requireAdministrator", # The manager needs to be administrator to stop/start the service
-                     'icon_resources': [(1, r"packaging\datadog-agent\win32\install_files\dd_agent_win_256.ico")],
+                     'icon_resources': [(1, r"packaging\sd-agent\win32\install_files\sd_agent_win_256.ico")],
                      }],
         'data_files': [
             ("Microsoft.VC90.CRT", glob(r'C:\Python27\redist\*.*')),

@@ -122,12 +122,12 @@ def _windows_commondata_path():
 
 def _windows_config_path():
     common_data = _windows_commondata_path()
-    return _config_path(os.path.join(common_data, 'Datadog'))
+    return _config_path(os.path.join(common_data, 'ServerDensity'))
 
 
 def _windows_confd_path():
     common_data = _windows_commondata_path()
-    return _confd_path(os.path.join(common_data, 'Datadog'))
+    return _confd_path(os.path.join(common_data, 'ServerDensity'))
 
 
 def _windows_checksd_path():
@@ -373,7 +373,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         elif get_os() == 'windows':
             # default windows location
             common_path = _windows_commondata_path()
-            agentConfig['additional_checksd'] = os.path.join(common_path, 'Datadog', 'checks.d')
+            agentConfig['additional_checksd'] = os.path.join(common_path, 'ServerDensity', 'checks.d')
 
         if config.has_option('Main', 'use_dogstatsd'):
             agentConfig['use_dogstatsd'] = config.get('Main', 'use_dogstatsd').lower() in ("yes", "true")
@@ -476,9 +476,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['device_blacklist_re'] = re.compile(filter_device_re)
         except ConfigParser.NoOptionError:
             pass
-
-        if config.has_option('datadog', 'ddforwarder_log'):
-            agentConfig['has_datadog'] = True
 
         if config.has_option("Main", "nagios_perf_cfg"):
             agentConfig["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")

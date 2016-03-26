@@ -14,7 +14,7 @@ class TestRunFiles(unittest.TestCase):
     # Mac run directory expected location
     _my_dir = os.path.dirname(os.path.abspath(__file__))
     _mac_run_dir = '/'.join(_my_dir.split('/')[:-4])
-    _linux_run_dir = '/opt/datadog-agent/run'
+    _linux_run_dir = '/opt/sd-agent/run'
 
     @mock.patch('checks.check_status._windows_commondata_path', return_value="C:\Windows\App Data")
     @mock.patch('utils.platform.Platform.is_win32', return_value=True)
@@ -46,5 +46,5 @@ class TestRunFiles(unittest.TestCase):
     @mock.patch('utils.platform.Platform.is_mac', return_value=False)
     def test_agent_status_pickle_file_linux(self, *mocks):
         ''' Test pickle file location when running on Linux '''
-        expected_path = os.path.join('/opt/datadog-agent/run', 'AgentStatus.pickle')
+        expected_path = os.path.join('/opt/sd-agent/run', 'AgentStatus.pickle')
         self.assertEqual(AgentStatus._get_pickle_path(), expected_path)

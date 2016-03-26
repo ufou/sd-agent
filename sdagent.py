@@ -161,8 +161,8 @@ class AgentTransaction(Transaction):
     @classmethod
     def set_endpoints(cls):
 
-        # Only send data to Datadog if an API KEY exists
-        # i.e. user is also Datadog user
+        # Only send data to Server Density if an agent key exists
+        # i.e. user is also Server Densisty user
         try:
             is_dd_user = 'agent_key' in cls._application._agentConfig\
                 and 'use_sd' in cls._application._agentConfig\

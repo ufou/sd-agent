@@ -1,19 +1,18 @@
 Testing & dd-agent
 ==================
 
-[![Build Status](https://travis-ci.org/DataDog/dd-agent.svg)](https://travis-ci.org/DataDog/dd-agent) [![Build status](https://ci.appveyor.com/api/projects/status/y7v5la94393mi5lc?svg=true)](https://ci.appveyor.com/project/Datadog/dd-agent)
+[![Build Status](https://travis-ci.org/serverdensity/sd-agent.svg?branch=master)](https://travis-ci.org/serverdensity/sd-agent)
 
 # Lint
 
 Your code should always be clean when doing `rake lint`. It runs `flake8`, ignoring these [rules](../tox.ini).
-
 
 # Organisation of the tests directory
 
 ```bash
 tests
 ├── checks # tests of checks.d/*
-│   ├── integration # contains all real integration tests (run on Travis/Appveyor)
+│   ├── integration # contains all real integration tests (run on Travis)
 │   ├── mock # contains mocked tests (run on Travis)
 │   └── fixtures # files needed by tests (conf files, mocks, ...)
 └── core # core agent tests (unit and integration tests, run on Travis)
@@ -59,7 +58,7 @@ They ensure that the agent is correctly talking to third party software which is
 
 They are great because they mimic a real setup where someone would enable a check on a machine with this service running. Using mocks or pre-saved responses often hides corner-cases and are the source of lots of issues.
 
-We run these tests by creating a build machine "flavor" (see Travis/Appveyor section), basically each flavor is defined by the third party software we install on this machine.
+We run these tests by creating a build machine "flavor" (see Travis section), basically each flavor is defined by the third party software we install on this machine.
 
 Most of the times `flavor == check_name`.
 
@@ -70,8 +69,8 @@ Each flavor is defined in `ci/flavor.rb`, and we set different steps for running
 * **before_script** generally setups the software and launch it in background
 * **script** runs nosetests with a filter (see how to write tests)
 * **cleanup** stops the software and remove unnecessary data (not running on Travis/Appveyor, because the buildboxes are disposable)
-* **before_cache** is run on Travis _(not run on Appveyor)_ to delete logs files, configuration files, ... before caching
-* **cache** tars and uploads the cache to S3 _(not run on Appveyor)_
+* **before_cache** is run on Travis to delete logs files, configuration files, ... before caching
+* **cache** tars and uploads the cache to S3
 
 Your test cases must be written in `tests/test_flavor.py` and they must use the nose `attr` decorator to be filtered by the flavors.
 
@@ -102,19 +101,6 @@ Travis is configured to cache python libs and ruby gems between runs. We use a c
 We use the newly released [docker-based infrastructure](http://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/).
 
 To add a new flavour, append your `TRAVIS_FLAVOR` to [.travis.yml](../.travis.yml).
-
-
-# Appveyor
-
-Its configuration is stored in [appveyor.yml](../appveyor.yml).
-
-It's using the same command as Travis, `rake ci:run[flavor]`, but runs only tests with the `windows` attr: `@attr('windows', requires='flavor')`. It tests only Windows-specific checks, with python 2.7 (32 and 64 bits).
-
-Third parties softwares are not build from source, instead it uses [pre-installed programs](http://www.appveyor.com/docs/installed-software#services-and-databases).
-
-Appveyor is caching gems & pywin32 exe (needed for WMI), there is no custom caching.
-
-To add a new flavour, append the flavor to the comma-separated list of `FLAVORS` to [appveyor.yml](../appveyor.yml).
 
 
 # Add an integration test

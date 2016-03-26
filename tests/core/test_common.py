@@ -382,7 +382,6 @@ class TestCore(unittest.TestCase):
         self.assertEqual(ntp_args["timeout"], 1.0)
 
 
-
 class TestAggregator(unittest.TestCase):
     def setUp(self):
         self.aggr = MetricsAggregator('test-aggr')

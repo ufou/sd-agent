@@ -1,7 +1,12 @@
 [Main]
 
-# The Server Density account where this device is registered.
+# The Server Density account where this device is used.
+# Only the account name, e.g. abc not abc.serverdensity.io
 sd_account:
+
+# The Server Density agent key to associate your Agent's data with a device
+# on your account.
+agent_key:
 
 # If you need a proxy to connect to the Internet, provide the settings here
 # proxy_host: my-proxy.com
@@ -10,136 +15,22 @@ sd_account:
 # proxy_password: password
 # To be used with some proxys that return a 302 which make curl switch from POST to GET
 # See http://stackoverflow.com/questions/8156073/curl-violate-rfc-2616-10-3-2-and-switch-from-post-to-get
-# proxy_forbid_method_switch: no 
-
-# If you run the agent behind haproxy, you might want to set this to yes
-# skip_ssl_validation: no
-
-# The Server Density agent key to associate your Agent's data with your
-# device.
-agent_key:
+# proxy_forbid_method_switch: no
 
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
 
-# Set the host's tags
-#tags: mytag0, mytag1
-
-# Collect AWS EC2 custom tags as agent tags
-# collect_ec2_tags: no
-
-# Collect instance metadata
-# The Agent will try to collect instance metadata for EC2 and GCE instances by
-# trying to connect to the local endpoint: http://169.254.169.254
-# See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html
-# and https://developers.google.com/compute/docs/metadata
-# for more information
-# collect_instance_metadata: yes
-
-# Set the threshold for accepting points to allow anything
-# with recent_point_threshold seconds
-# Defaults to 30 seconds if no value is provided
-#recent_point_threshold: 30
-
-# Use mount points instead of volumes to track disk and fs metrics
-use_mount: no
-
-# Change port the Agent is listening to
-# listen_port: 17123
-
-# Start a graphite listener on this port
-# graphite_listen_port: 17124
-
-# Additional directory to look for Datadog checks
-# additional_checksd: /etc/dd-agent/checks.d/
-
-# Allow non-local traffic to this Agent
-# This is required when using this Agent as a proxy for other Agents
-# that might not have an internet connection
-# For more information, please see
-# https://github.com/DataDog/dd-agent/wiki/Network-Traffic-and-Proxy-Configuration
-# non_local_traffic: no
-
-# Select the Tornado HTTP Client in the forwarder
-# Default to the simple http client
-# use_curl_http_client: False
-
-# The loopback address the Forwarder and Dogstatsd will bind.
-# Optional, it is mainly used when running the agent on Openshift
-# bind_host: localhost
-
-# If enabled the collector will capture a metric for check run times.
-# check_timings: no
-
-# If you want to remove the 'ww' flag from ps catching the arguments of processes
-# for instance for security reasons
-# exclude_process_args: no
-
-# ========================================================================== #
-# DogStatsd configuration                                                    #
-# ========================================================================== #
-
-# If you don't want to enable the DogStatsd server, set this option to no
-# use_dogstatsd: yes
-
-# DogStatsd is a small server that aggregates your custom app metrics. For
-# usage information, check out http://api.datadoghq.com
-
-#  Make sure your client is sending to the same port.
-# dogstatsd_port : 8125
-
-# By default dogstatsd will post aggregate metrics to the Agent (which handles
-# errors/timeouts/retries/etc). To send directly to the datadog api, set this
-# to https://app.datadoghq.com.
-# dogstatsd_target : http://localhost:17123
-
-# If you want to forward every packet received by the dogstatsd server
-# to another statsd server, uncomment these lines.
-# WARNING: Make sure that forwarded packets are regular statsd packets and not "dogstatsd" packets,
-# as your other statsd server might not be able to handle them.
-# statsd_forward_host: address_of_own_statsd_server
-# statsd_forward_port: 8125
-
-# ========================================================================== #
-# Service-specific configuration                                             #
-# ========================================================================== #
-
-# -------------------------------------------------------------------------- #
-#   Disk                                                                     #
-# -------------------------------------------------------------------------- #
-
-# Some infrastrucures have many constantly changing virtual devices (e.g. folks
-# running constantly churning linux containers) whose metrics aren't
-# interesting for datadog. To filter out a particular pattern of devices
-# from collection, configure a regex here:
-# device_blacklist_re: .*\/dev\/mapper\/lxc-box.*
-
-# -------------------------------------------------------------------------- #
-#   Ganglia                                                                  #
-# -------------------------------------------------------------------------- #
-
-# Ganglia host where gmetad is running
-#ganglia_host: localhost
-
-# Ganglia port where gmetad is running
-#ganglia_port: 8651
-
-# ========================================================================== #
-# Custom Emitters                                                            #
-# ========================================================================== #
-
-# Comma-separated list of emitters to be used in addition to the standard one
 #
-# Expected to be passed as a comma-separated list of colon-delimited
-# name/object pairs.
+# Plugins
 #
-# custom_emitters: /usr/local/my-code/emitters/rabbitmq.py:RabbitMQEmitter
+# Leave blank to ignore.
+# See https://support.serverdensity.com/hc/en-us/articles/213074438-Information-about-Custom-Plugins
 #
-# If the name of the emitter function is not specified, 'emitter' is assumed.
-
+plugin_directory:
 
 # ========================================================================== #
 # Logging
+# See https://support.serverdensity.com/hc/en-us/articles/213093038-Log-levels-agent-debug-mode
 # ========================================================================== #
 
 # log_level: INFO
