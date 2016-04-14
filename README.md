@@ -23,7 +23,7 @@ See [information about custom plugins](https://support.serverdensity.com/hc/en-u
 # Legacy (v1) agent
 Our legacy [v1 agent source code](https://github.com/serverdensity/sd-agent) is still availabile but will soon be sunset.
 
-## Legacy (v1) agent plugins
+## Legacy plugins
 
 We have maintained compatibility with the v1 agent's plugins. All
 "old style" plugins are fully usable with the v2 agent.
