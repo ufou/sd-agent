@@ -21,7 +21,7 @@ See [information about agent plugins](https://support.serverdensity.com/hc/en-us
 See [information about custom plugins](https://support.serverdensity.com/hc/en-us/articles/213074438-Information-about-Custom-Plugins).
 
 # Legacy (v1) agent
-Our legacy [v1 agent source code](https://github.com/serverdensity/sd-agent) is still availabile but will soon be sunset.
+Our legacy [v1 agent source code](https://github.com/serverdensity/sd-agent/tree/v1) is still availabile but will soon be sunset.
 
 ## Legacy plugins
 
