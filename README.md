@@ -1,100 +1,37 @@
 [![Build Status](https://travis-ci.org/serverdensity/sd-agent.svg?branch=master)](https://travis-ci.org/serverdensity/sd-agent)
 
-The Datadog Agent faithfully collects events and metrics and brings
-them to [Datadog](https://app.datadoghq.com) on your behalf so that
-you can do something useful with your monitoring and performance data.
+This is the source code for the Server Density agent (v2). If you're looking to install the agent, we also provide [pre-packaged binaries](https://support.serverdensity.com/hc/en-us/articles/213625957-Officially-supported-Linux-distros) for most operating systems. 
 
-You're looking at the source code right now. We provide a number of
-[pre-packaged binaries](https://app.datadoghq.com/account/settings#agent) for your convenience.
+# Release notes
+See [agent release notes](https://support.serverdensity.com/hc/en-us/articles/213513688-Agent-release-notes).
 
-# [Change log](https://github.com/DataDog/dd-agent/blob/master/CHANGELOG.md)
+# Agent configuration
 
-# How to contribute code
-
-First of all and most importantly, **thank you** for sharing.
-
-If you want to submit code, please fork this repository and submit pull requests against the `master` branch.
-For more information, please read our [contributing guidelines](CONTRIBUTING.md).
-
-Please note that the Agent is licensed for simplicity's sake
-under a simplified BSD license, as indicated in the `LICENSE` file.
-Exceptions are marked with LICENSE-xxx where xxx is the component name.
-If you do **not** agree with the licensing terms and wish to contribute code nonetheless,
-please email us at <info@datadoghq.com> before submitting your
-pull request.
-
-## Setup your environment
-
-Required:
-- python 2.6 or 2.7
-- bundler
-
-```
-# Clone the repository
-git clone git@github.com:DataDog/dd-agent.git
-
-# Create a virtual environment and install the dependencies:
-cd dd-agent
-bundle install
-rake setup_env
-
-# Activate the virtual environment
-source venv/bin/activate
-
-# Lint
-bundle exec rake lint
-
-# Run a flavored test
-bundle exec rake ci:run[apache]
-```
-
-## Test suite
-
-More about how to write tests and run them [here](tests/README.md)
-
-# How to configure the Agent
-
-If you are using packages on linux, the main configuration file lives
-in `/etc/dd-agent/datadog.conf`. Per-check configuration files are in
-`/etc/dd-agent/conf.d`. We provide an example in the same directory
+If you are using packages on Linux, the main configuration file can be found
+in `/etc/sd-agent/config.cfg`. Per-check configuration files are in
+`/etc/sd-agent/conf.d`. We provide an example in the same directory
 that you can use as a template.
 
-# How to write your own checks
+# [Agent plugins](https://support.serverdensity.com/hc/en-us/sections/202477098-Agent-Plugins)
 
-Writing your own checks is easy using our checks.d interface. Read more about
-how to use it on our [Guide to Agent Checks](http://docs.datadoghq.com/guides/agent_checks/).
+## Installing plugins
+See [information about agent plugins](https://support.serverdensity.com/hc/en-us/articles/212601137-Information-about-Agent-Plugins).
+
+## Writing custom plugins
+See [information about custom plugins](https://support.serverdensity.com/hc/en-us/articles/213074438-Information-about-Custom-Plugins).
+
+# Legacy (v1) agent
+Our legacy [v1 agent source code](https://github.com/serverdensity/sd-agent/tree/v1) is still availabile but will soon be sunset.
+
+## Legacy plugins
+
+We have maintained compatibility with the v1 agent's plugins. All
+"old style" plugins are fully usable with the v2 agent.
+
+See [information about custom plugins](https://support.serverdensity.com/hc/en-us/articles/213074438-Information-about-Custom-Plugins) for installation / configuration.
 
 # Contributors
 
 ```bash
 git log --all | gawk '/Author/ {print}' | sort | uniq
-```
-
-# Run check manually
-```
-export PYTHONPATH=`pwd`
-python checks.d/server_density.py
-```
-
-# Installing Server Density Old Style Plugins
-
-We have maintained compatibility with the original agent's plugins. All "old style" plugins are 
-full usable with this new agent.
-
-You can add your old plugins using the following steps:
-
-## Add plugin_directory to your config.cfg
-```
-plugin_directory: plugins.d
-```
-
-## Create the directory mentioned above
-```
-mkdir plugins.d
-```
-
-## Transfer any config across to plugins.cfg inside the directory above
-```
-[Temperature]
-scale: c
 ```
