@@ -109,6 +109,4 @@ after_failure:
   - cat /tmp/ci.log
 
 notifications:
-  hipchat:
-    rooms:
-      secure: tUwoDte7ziA/vfKK2TB4U3KiupgBX6HRoBV20EiWryWJqFO9ay8KFi+u8NjZ1t+hdj7ZBHvXPMI+xg65/S26xeev8jcoESHok3eEtifPSqihKpm9jv4WSHuR8HrAeeNgfucD4mN3ldVd3v98HxPwUYD4iBXw7hIieSpRXbtzwAY=
+  slack: serverdensity:$SLACK_API_TOKEN
