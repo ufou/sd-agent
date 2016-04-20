@@ -17,8 +17,6 @@ import os
 import signal
 import sys
 import time
-import urllib
-import urllib2
 
 # For pickle & PID files, see issue 293
 os.umask(022)

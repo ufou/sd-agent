@@ -1,5 +1,3 @@
-*.pyc
-*.idea
 *.zip
 Gemfile.lock
 *.pyc
