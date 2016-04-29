@@ -33,7 +33,7 @@ curl -LO https://pypi.python.org/packages/source/v/virtualenv/virtualenv-13.1.2.
 tar xzf virtualenv-13.1.2.tar.gz
 python virtualenv-13.1.2/virtualenv.py %{__venv}
 
-%setup -qn sd-agentv2
+%setup -qn sd-agent
 %{__venv}/bin/python %{__venv}/bin/pip install -r requirements.txt
 %{__venv}/bin/python %{__venv}/bin/pip install -r requirements-opt.txt
 
