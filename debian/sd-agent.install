@@ -40,6 +40,7 @@ debian/build/lib/python2.7/site-packages/ntplib* usr/share/python/sd-agent/lib/p
 debian/build/lib/python2.7/site-packages/pip-* usr/share/python/sd-agent/lib/python2.7/site-packages
 debian/build/lib/python2.7/site-packages/psutil usr/share/python/sd-agent/lib/python2.7/site-packages
 debian/build/lib/python2.7/site-packages/_psutil_*.so usr/share/python/sd-agent/lib/python2.7/site-packages
+debian/build/lib/python2.7/site-packages/pycurl* usr/share/python/sd-agent/lib/python2.7/site-packages
 debian/build/lib/python2.7/site-packages/PyYAML* usr/share/python/sd-agent/lib/python2.7/site-packages
 debian/build/lib/python2.7/site-packages/requests* usr/share/python/sd-agent/lib/python2.7/site-packages
 debian/build/lib/python2.7/site-packages/sd_agent* usr/share/python/sd-agent/lib/python2.7/site-packages

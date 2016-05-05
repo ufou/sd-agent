@@ -59,6 +59,8 @@ chown -R sd-agent:sd-agent /var/run/sd-agent/
 chown -R sd-agent:sd-agent /etc/sd-agent/
 chown -R sd-agent:sd-agent /etc/sd-agent/config.cfg
 chmod 0660 /etc/sd-agent/config.cfg
+chown -R sd-agent:sd-agent /etc/sd-agent/plugins.cfg
+chmod 0660 /etc/sd-agent/plugins.cfg
 /sbin/chkconfig --add sd-agent
 /etc/init.d/sd-agent restart
 

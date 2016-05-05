@@ -1,6 +1,7 @@
 %install
 mkdir -p %{buildroot}/etc/sd-agent/conf.d
 cp config.cfg.example  %{buildroot}/etc/sd-agent/config.cfg
+cp plugins.cfg.example  %{buildroot}/etc/sd-agent/plugins.cfg
 
 cp -a packaging/supervisor.conf %{buildroot}/etc/sd-agent
 

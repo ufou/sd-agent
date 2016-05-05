@@ -3,6 +3,7 @@
 #%config(noreplace) %{_sysconfdir}/%{name}/%{name}.conf
 /etc/init.d/sd-agent
 %config(noreplace) /etc/sd-agent/config.cfg
+%config(noreplace) /etc/sd-agent/plugins.cfg
 %config(noreplace) /etc/sd-agent/conf.d/disk.yaml.default
 %config(noreplace) /etc/sd-agent/conf.d/network.yaml.default
 %config(noreplace) /etc/sd-agent/conf.d/sd.yaml.default
@@ -44,6 +45,7 @@
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/psutil
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/_psutil_*.so
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/PyYAML*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/pycurl*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/requests*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/sd_agent*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/setuptools*
