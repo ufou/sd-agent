@@ -43,7 +43,7 @@ sed -ie 's/^\(pycurl\|psycopg2\)/# \1/' requirements-opt.txt
 %{__venv}/bin/python setup.py install
 %{__venv}/bin/python ../virtualenv-13.1.2/virtualenv.py --relocatable %{__venv}
 
-%include %{_topdir}/inc/install
+%include %{_topdir}/inc/install.el5
 
 %clean
 rm -rf %{buildroot}
@@ -73,6 +73,6 @@ if [ $1 = 0 ] ; then
     rm -rf /var/run/sd-agent/
 fi
 
-%include %{_topdir}/inc/files
+%include %{_topdir}/inc/files.el5
 %include %{_topdir}/inc/subpackages
 %include %{_topdir}/inc/changelog

@@ -1,7 +1,8 @@
 %changelog
 * Thu May 05 2016 Server Density <hello@serverdensity.com> 2.0.4-1
 - Added default plugins.cfg file.
-- Fixed pycurl module installation to fix proxy support.
+- Fixed pycurl module installation to fix proxy support, except for el5 which
+  has a too old version of libcurl.
 - Include 32-bit support on RedHat / CentOS.
 - Renamed postgres package as postgresql to match Debian packages.
 * Thu Feb 11 2016 Server Density <hello@boxedice.com> 2.0.3-1

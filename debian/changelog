@@ -1,7 +1,8 @@
 sd-agent (2.0.4-1) precise; urgency=medium
 
-  * Added default plugins.cfg file.
-  * Fixed pycurl module installation to fix proxy support.
+  * Added default plugins.cfg file on 'el' based distributions.
+  * Fixed pycurl module installation to fix proxy support, except for el5 which
+    has a too old version of libcurl.
   * Include 32-bit support on RedHat / CentOS.
 
  -- Server Density <hello@serverdensity.com>  Thu, 05 May 2016 14:12:39 +0200
