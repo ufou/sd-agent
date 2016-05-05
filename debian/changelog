@@ -1,3 +1,11 @@
+sd-agent (2.0.4-1) precise; urgency=medium
+
+  * Added default plugins.cfg file.
+  * Fixed pycurl module installation to fix proxy support.
+  * Include 32-bit support on RedHat / CentOS.
+
+ -- Server Density <hello@serverdensity.com>  Thu, 05 May 2016 14:12:39 +0200
+
 sd-agent (2.0.3-1) precise; urgency=medium
 
   * Include the Kafka Consumer plugin.
