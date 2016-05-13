@@ -649,7 +649,7 @@ class Collector(object):
                 if e.errno == 2:  # file not found, expected when install from source
                     log.info("gohai file not found")
                 else:
-                    raise e
+                    log.info("gohai command failed with error %s" % str(e))
             except Exception as e:
                 log.warning("gohai command failed with error %s" % str(e))
 
