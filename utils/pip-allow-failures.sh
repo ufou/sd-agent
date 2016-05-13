@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 PIP_COMMAND=${PIP_COMMAND:-pip}
 PIP_OPTIONS=${PIP_OPTIONS:-}
