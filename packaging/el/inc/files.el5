@@ -42,6 +42,7 @@
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/_markerlib
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/meld3*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/ntplib*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/pip
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/psutil
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/_psutil_*.so
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/PyYAML*
