@@ -1,11 +1,8 @@
 %changelog
-* Thu May 19 2016 Server Density <hello@serverdensity.com> 2.0.5-1
-- Relax an exception that prevents the agent to start in some situations.
-- Fixed pip command to install third party modules inside the virtual-env.
 * Thu May 05 2016 Server Density <hello@serverdensity.com> 2.0.4-1
 - Added default plugins.cfg file.
-- Fixed pycurl module installation to fix proxy support, except for el5 which 
-has a too old version of libcurl.
+- Fixed pycurl module installation to fix proxy support, except for el5 which
+  has a too old version of libcurl.
 - Include 32-bit support on RedHat / CentOS.
 - Renamed postgres package as postgresql to match Debian packages.
 * Thu Feb 11 2016 Server Density <hello@boxedice.com> 2.0.3-1
@@ -99,4 +96,4 @@ has a too old version of libcurl.
 - Several bug fixes and auto-copy feature
 * Thu Dec 3 2009  Ryan Duffield <hello@boxedice.com> 1.4.1-1
 - Initial release
-
+	
