@@ -118,7 +118,10 @@ class ServerDensityCPUChecks(AgentCheck):
                         values = re.findall(itemRegexp, line)
 
                 if values and titles:
-                    cpu_stats['CPUs'] = dict(zip(titles, values))
+                    cpu_stats['ALL'] = dict(zip(titles, values))
+                    for headerIndex in range(0, len(titles)):
+                        key = titles[headerIndex].replace('%', '')
+                        self.gauge('serverdensity.cpu.{0}'.format(key), float(values[headerIndex]), device_name='ALL')
 
             except Exception:
                 import traceback
