@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <installer-gui-script minSpecVersion="2">
-    <pkg-ref id="com.serverdensity.agent"/>
+    <pkg-ref id="com.serverdensity.agent-service"/>
     <options customize="never" require-scripts="false"/>
     <volume-check>
         <allowed-os-versions>
@@ -9,12 +9,12 @@
     </volume-check>
     <choices-outline>
         <line choice="default">
-            <line choice="com.serverdensity.agent"/>
+            <line choice="com.serverdensity.agent-service"/>
         </line>
     </choices-outline>
     <choice id="default"/>
-    <choice id="com.serverdensity.agent" visible="false">
-        <pkg-ref id="com.serverdensity.agent"/>
+    <choice id="com.serverdensity.agent-service" visible="false">
+        <pkg-ref id="com.serverdensity.agent-service"/>
     </choice>
-    <pkg-ref id="com.serverdensity.agent" version="2.0.4" onConclusion="none">Server%20Density%20Agent.pkg</pkg-ref>
+    <pkg-ref id="com.serverdensity.agent-service" version="2.0.4" onConclusion="none">Server%20Density%20Agent%20Service.pkg</pkg-ref>
 </installer-gui-script>

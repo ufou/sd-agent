@@ -51,18 +51,19 @@ virtualenv --relocatable $SD_HOME/venv
 # Package it up
 cd $SOURCE_PATH/darwin
 source darwin_version.sh
-pkgbuild --identifier com.serverdensity.agent \
+pkgbuild --identifier com.serverdensity.agent-service \
 --version $AGENT_VERSION \
 --install-location "/usr/local/sd-agent/" \
 --scripts scripts \
 --ownership recommended \
 --root $SD_HOME \
 --component-plist AgentComponents.plist \
-"Server Density Agent.pkg"
+"Server Density Agent Service.pkg"
 
 # TODO: Package a preference pane as a separate component
 
 productbuild --distribution distribution.xml \
+--identifier com.serverdensity.agent \
 --resources . \
 "Server Density Agent Installer $AGENT_VERSION.pkg"    
 
