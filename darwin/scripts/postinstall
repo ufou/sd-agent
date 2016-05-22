@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Install launchd control file
+cp /usr/local/sd-agent/agent/darwin/com.serverdensity.agent.plist /Library/LaunchDaemons.plist
