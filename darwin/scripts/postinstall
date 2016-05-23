@@ -1,4 +1,13 @@
 #!/bin/sh
 
 # Install launchd control file
-cp /usr/local/sd-agent/agent/darwin/com.serverdensity.agent.plist /Library/LaunchDaemons.plist
+cp /usr/local/sd-agent/darwin/com.serverdensity.agent.plist /Library/LaunchDaemons
+
+# Configuration files
+mkdir -p /usr/local/etc/sd-agent/conf.d
+cp /usr/local/sd-agent/config.cfg.example /usr/local/etc/sd-agent/config.cfg
+cp /usr/local/sd-agent/plugins.cfg.example /usr/local/etc/sd-agent/plugins.cfg
+cp /usr/local/sd-agent/conf.d/disk.yaml.default \
+/usr/local/sd-agent/conf.d/sd.yaml.default \
+/usr/local/sd-agent/conf.d/sd_cpu_stats.yaml.default \
+/usr/local/sd-agent/conf.d/network.yaml.default  /usr/local/etc/sd-agent/conf.d

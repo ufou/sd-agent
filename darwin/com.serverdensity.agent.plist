@@ -10,8 +10,8 @@
 	<string>com.serverdensity.agent</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/local/sd-agent/venv/bin/python</string>
-		<string>/usr/local/sd-agent/agent/agent.py</string>
+		<string>/usr/local/sd-agent/bin/python</string>
+		<string>/usr/local/sd-agent/agent.py</string>
 		<string>foreground</string>
 	</array>
 	<key>KeepAlive</key>

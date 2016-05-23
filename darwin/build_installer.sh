@@ -19,11 +19,11 @@ cp ../requirements-opt.txt $SD_HOME
 # Prepare virtual environment
 
 cd $SD_HOME
-virtualenv venv --distribute
-source venv/bin/activate
+virtualenv $SD_HOME --distribute
+source bin/activate
 
-VENV_PYTHON_CMD="$SD_HOME/venv/bin/python"
-VENV_PIP_CMD="$SD_HOME/venv/bin/pip"
+VENV_PYTHON_CMD="$SD_HOME/bin/python"
+VENV_PIP_CMD="$SD_HOME//bin/pip"
 curl -k -L -o $SD_HOME/ez_setup.py https://bootstrap.pypa.io/ez_setup.py
 curl -k -L -o $SD_HOME/get-pip.py https://bootstrap.pypa.io/get-pip.py 
 
@@ -37,16 +37,49 @@ rm -f "$SD_HOME/get-pip.py"
 $VENV_PIP_CMD install -r requirements.txt
 $SOURCE_PATH/utils/pip-allow-failures.sh $SD_HOME/requirements-opt.txt
 
-mkdir -p $SD_HOME/agent
+mkdir -p $SD_HOME/checks.d
+mkdir -p $SD_HOME/conf.d
 
 # Copy agent code
+cd $SOURCE_PATH
 
-cp -R $SOURCE_PATH $SD_HOME/agent
+cp agent.py \
+aggregator.py \
+config.py \
+daemon.py \
+sdagent.py \
+emitter.py \
+graphite.py \
+modules.py \
+sd-cert.pem \
+transaction.py \
+util.py $SD_HOME
 
-rm $SD_HOME/*txt
-rm $SD_HOME/*zip
+cp checks.d/disk.py \
+checks.d/sd.py \
+checks.d/sd_cpu_stats.py \
+checks.d/network.py $SD_HOME/checks.d
 
-virtualenv --relocatable $SD_HOME/venv
+cp conf.d/disk.yaml.default \
+conf.d/sd.yaml.default \
+conf.d/sd_cpu_stats.yaml.default \
+conf.d/network.yaml.default $SD_HOME/conf.d
+
+cp config.cfg.example plugins.cfg.example $SD_HOME
+
+# Copy startup item
+mkdir $SD_HOME/darwin
+cp darwin/com.serverdensity.agent.plist $SD_HOME/darwin
+
+# Install plugins
+$VENV_PYTHON_CMD setup.py build
+$VENV_PYTHON_CMD setup.py install
+
+
+
+
+# FIXME: Fix paths
+virtualenv --relocatable $SD_HOME
 
 # Package it up
 cd $SOURCE_PATH/darwin

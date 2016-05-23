@@ -29,7 +29,7 @@ from utils.subprocess_output import subprocess
 AGENT_VERSION = "2.0.4"
 SD_CONF = "config.cfg"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
-MAC_CONFIG_PATH = '/opt/sd-agent/etc'
+MAC_CONFIG_PATH = '/usr/local/etc/sd-agent/'
 DEFAULT_CHECK_FREQUENCY = 60   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 
