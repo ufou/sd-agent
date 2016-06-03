@@ -1,18 +1,23 @@
+# (C) Datadog, Inc. 2014-2016
+# (C) Steeve Morin <steeve.morin@gmail.com> 2014
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
-from collections import defaultdict
+import urllib2
+import urllib
 import httplib
+import socket
 import os
 import re
-import socket
 import time
-import urllib
-import urllib2
 from urlparse import urlsplit
+from util import json
+from collections import defaultdict
 
 # project
 from checks import AgentCheck
 from config import _is_affirmative
-from util import json
 
 EVENT_TYPE = SOURCE_TYPE_NAME = 'docker'
 
@@ -131,7 +136,9 @@ class Docker(AgentCheck):
 
     def check(self, instance):
         # Report image metrics
-        if _is_affirmative(instance.get('collect_images_stats', False)):
+        self.warning('Using the "docker" check is deprecated and will be removed'
+        ' in a future version of the agent. Please use the "docker_daemon" one instead')
+        if _is_affirmative(instance.get('collect_images_stats', True)):
             self._count_images(instance)
 
         # Get the list of containers and the index of their names
@@ -237,9 +244,6 @@ class Docker(AgentCheck):
             for name in container["Names"]:
                 container_tags.append(self._make_tag("name", name.lstrip("/"), instance))
             for key in DOCKER_TAGS:
-                if key == 'Image' and ':' in container[key]:
-                    tag = self._make_tag('image_repository', container[key].split(':')[0], instance)
-                    container_tags.append(tag)
                 tag = self._make_tag(key, container[key], instance)
                 if tag:
                     container_tags.append(tag)
@@ -408,14 +412,13 @@ class Docker(AgentCheck):
 
     # Cgroups
 
-    def _find_cgroup_filename_pattern(self, container_id):
+    def _find_cgroup_filename_pattern(self):
         if self._mountpoints:
             # We try with different cgroups so that it works even if only one is properly working
             for mountpoint in self._mountpoints.values():
                 stat_file_path_lxc = os.path.join(mountpoint, "lxc")
                 stat_file_path_docker = os.path.join(mountpoint, "docker")
                 stat_file_path_coreos = os.path.join(mountpoint, "system.slice")
-                stat_file_path_kubernetes = os.path.join(mountpoint, container_id)
 
                 if os.path.exists(stat_file_path_lxc):
                     return os.path.join('%(mountpoint)s/lxc/%(id)s/%(file)s')
@@ -423,15 +426,13 @@ class Docker(AgentCheck):
                     return os.path.join('%(mountpoint)s/docker/%(id)s/%(file)s')
                 elif os.path.exists(stat_file_path_coreos):
                     return os.path.join('%(mountpoint)s/system.slice/docker-%(id)s.scope/%(file)s')
-                elif os.path.exists(stat_file_path_kubernetes):
-                    return os.path.join('%(mountpoint)s/%(id)s/%(file)s')
 
         raise Exception("Cannot find Docker cgroup directory. Be sure your system is supported.")
 
     def _get_cgroup_file(self, cgroup, container_id, filename):
         # This can't be initialized at startup because cgroups may not be mounted yet
         if not self._cgroup_filename_pattern:
-            self._cgroup_filename_pattern = self._find_cgroup_filename_pattern(container_id)
+            self._cgroup_filename_pattern = self._find_cgroup_filename_pattern()
 
         return self._cgroup_filename_pattern % (dict(
             mountpoint=self._mountpoints[cgroup],

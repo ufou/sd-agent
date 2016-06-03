@@ -5,10 +5,10 @@
     ----
     Licensed under Simplified BSD License (see LICENSE)
     (C) Server Density 2009-2015 all rights reserved
-    (C) Datadog, Inc. 2010-2014 all rights reserved
+    (C) Datadog, Inc. 2010-2016 all rights reserved
 '''
 # set up logging before importing any other components
-from config import get_version, initialize_logging # noqa
+from config import get_version, initialize_logging  # noqa
 initialize_logging('collector')
 
 # stdlib
@@ -41,9 +41,13 @@ from utils.flare import configcheck
 from utils.jmx import jmx_command
 from utils.pidfile import PidFile
 from utils.profile import AgentProfiler
+from utils.service_discovery.configcheck import sd_configcheck
+from utils.service_discovery.config_stores import get_config_store, TRACE_CONFIG
+from utils.service_discovery.sd_backend import get_sd_backend
 
 # Constants
 PID_NAME = "sd-agent"
+PID_DIR = None
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
@@ -66,8 +70,15 @@ class Agent(Daemon):
         self.collector = None
         self.start_event = start_event
         self.in_developer_mode = in_developer_mode
+        self._agentConfig = {}
+        self._checksd = []
+        self.collector_profile_interval = DEFAULT_COLLECTOR_PROFILE_INTERVAL
+        self.check_frequency = None
+        self.configs_reloaded = False
+        self.sd_backend = None
 
     def _handle_sigterm(self, signum, frame):
+        """Handles SIGTERM and SIGINT, which gracefully stops the agent."""
         log.debug("Caught sigterm. Stopping run loop.")
         self.run_forever = False
 
@@ -76,8 +87,31 @@ class Agent(Daemon):
         log.debug("Collector is stopped.")
 
     def _handle_sigusr1(self, signum, frame):
+        """Handles SIGUSR1, which signals an exit with an autorestart."""
         self._handle_sigterm(signum, frame)
         self._do_restart()
+
+    def _handle_sighup(self, signum, frame):
+        """Handles SIGHUP, which signals a configuration reload."""
+        log.info("SIGHUP caught!")
+        self.reload_configs()
+        self.configs_reloaded = True
+
+    def reload_configs(self):
+        """Reloads the agent configuration and checksd configurations."""
+        log.info("Attempting a configuration reload...")
+
+        # Reload checksd configs
+        hostname = get_hostname(self._agentConfig)
+        self._checksd = load_check_directory(self._agentConfig, hostname)
+
+        # Logging
+        num_checks = len(self._checksd['initialized_checks'])
+        if num_checks > 0:
+            log.info("Successfully reloaded {num_checks} checks".
+                     format(num_checks=num_checks))
+        else:
+            log.info("No checksd configs found")
 
     @classmethod
     def info(cls, verbose=None):
@@ -96,6 +130,9 @@ class Agent(Daemon):
         # Handle Keyboard Interrupt
         signal.signal(signal.SIGINT, self._handle_sigterm)
 
+        # A SIGHUP signals a configuration reload
+        signal.signal(signal.SIGHUP, self._handle_sighup)
+
         # Save the agent start-up stats.
         CollectorStatus().persist()
 
@@ -103,25 +140,31 @@ class Agent(Daemon):
         if not config:
             config = get_config(parse_args=True)
 
-        agentConfig = self._set_agent_config_hostname(config)
-        hostname = get_hostname(agentConfig)
+        self._agentConfig = self._set_agent_config_hostname(config)
+        hostname = get_hostname(self._agentConfig)
         systemStats = get_system_stats()
-        emitters = self._get_emitters(agentConfig)
-        # Load the checks.d checks
-        checksd = load_check_directory(agentConfig, hostname)
+        emitters = self._get_emitters()
 
-        self.collector = Collector(agentConfig, emitters, systemStats, hostname)
+        # Initialize service discovery
+        if self._agentConfig.get('service_discovery'):
+            self.sd_backend = get_sd_backend(self._agentConfig)
+
+        # Load the checks.d checks
+        self._checksd = load_check_directory(self._agentConfig, hostname)
+
+        # Initialize the Collector
+        self.collector = Collector(self._agentConfig, emitters, systemStats, hostname)
 
         # In developer mode, the number of runs to be included in a single collector profile
-        collector_profile_interval = agentConfig.get('collector_profile_interval',
-                                                     DEFAULT_COLLECTOR_PROFILE_INTERVAL)
+        self.collector_profile_interval = self._agentConfig.get('collector_profile_interval',
+                                                                DEFAULT_COLLECTOR_PROFILE_INTERVAL)
 
         # Configure the watchdog.
-        check_frequency = int(agentConfig['check_freq'])
-        watchdog = self._get_watchdog(check_frequency, agentConfig)
+        self.check_frequency = int(self._agentConfig['check_freq'])
+        watchdog = self._get_watchdog(self.check_frequency)
 
         # Initialize the auto-restarter
-        self.restart_interval = int(agentConfig.get('restart_interval', RESTART_INTERVAL))
+        self.restart_interval = int(self._agentConfig.get('restart_interval', RESTART_INTERVAL))
         self.agent_start = time.time()
 
         profiled = False
@@ -129,6 +172,8 @@ class Agent(Daemon):
 
         # Run the main loop.
         while self.run_forever:
+            log.debug("Found {num_checks} checks".format(num_checks=len(self._checksd['initialized_checks'])))
+
             # Setup profiling if necessary
             if self.in_developer_mode and not profiled:
                 try:
@@ -139,9 +184,38 @@ class Agent(Daemon):
                     log.warn("Cannot enable profiler: %s" % str(e))
 
             # Do the work.
-            self.collector.run(checksd=checksd, start_event=self.start_event)
+            self.collector.run(checksd=self._checksd,
+                               start_event=self.start_event,
+                               configs_reloaded=self.configs_reloaded)
+
+            # This flag is used to know if the check configs have been reloaded at the current
+            # run of the agent yet or not. It's used by the collector to know if it needs to
+            # look for the AgentMetrics check and pop it out.
+            # See: https://github.com/DataDog/dd-agent/blob/5.6.x/checks/collector.py#L265-L272
+            self.configs_reloaded = False
+
+            # Look for change in the config template store.
+            # The self.sd_backend.reload_check_configs flag is set
+            # to True if a config reload is needed.
+            if self._agentConfig.get('service_discovery') and self.sd_backend and \
+               not self.sd_backend.reload_check_configs:
+                try:
+                    self.sd_backend.reload_check_configs = get_config_store(
+                        self._agentConfig).crawl_config_template()
+                except Exception as e:
+                    log.warn('Something went wrong while looking for config template changes: %s' % str(e))
+
+            # Check if we should run service discovery
+            # The `reload_check_configs` flag can be set through the docker_daemon check or
+            # using ConfigStore.crawl_config_template
+            if self._agentConfig.get('service_discovery') and self.sd_backend and \
+               self.sd_backend.reload_check_configs:
+                self.reload_configs()
+                self.configs_reloaded = True
+                self.sd_backend.reload_check_configs = False
+
             if profiled:
-                if collector_profiled_runs >= collector_profile_interval:
+                if collector_profiled_runs >= self.collector_profile_interval:
                     try:
                         profiler.disable_profiling()
                         profiled = False
@@ -153,33 +227,33 @@ class Agent(Daemon):
             if self.autorestart and self._should_restart():
                 self._do_restart()
 
-            # Only plan for the next loop if we will continue,
-            # otherwise just exit quickly.
+            # Only plan for next loop if we will continue, otherwise exit quickly.
             if self.run_forever:
                 if watchdog:
                     watchdog.reset()
                 if profiled:
                     collector_profiled_runs += 1
-                time.sleep(check_frequency)
+                log.debug("Sleeping for {0} seconds".format(self.check_frequency))
+                time.sleep(self.check_frequency)
+
         # Now clean-up.
         try:
             CollectorStatus.remove_latest_status()
         except Exception:
             pass
 
-        # Explicitly kill the process, because it might be running
-        # as a daemon.
+        # Explicitly kill the process, because it might be running as a daemon.
         log.info("Exiting. Bye bye.")
         sys.exit(0)
 
-    def _get_emitters(self, agentConfig):
+    def _get_emitters(self):
         return [http_emitter]
 
-    def _get_watchdog(self, check_freq, agentConfig):
+    def _get_watchdog(self, check_freq):
         watchdog = None
-        if agentConfig.get("watchdog", True):
+        if self._agentConfig.get("watchdog", True):
             watchdog = Watchdog(check_freq * WATCHDOG_MULTIPLIER,
-                                max_mem_mb=agentConfig.get('limit_memory_consumption', None))
+                                max_mem_mb=self._agentConfig.get('limit_memory_consumption', None))
             watchdog.reset()
         return watchdog
 
@@ -248,7 +322,7 @@ def main():
         deprecate_old_command_line_tools()
 
     if command in COMMANDS_AGENT:
-        agent = Agent(PidFile('sd-agent').get_path(), autorestart, in_developer_mode=in_developer_mode)
+        agent = Agent(PidFile(PID_NAME, PID_DIR).get_path(), autorestart, in_developer_mode=in_developer_mode)
 
     if command in START_COMMANDS:
         log.info('Agent version %s' % get_version())
@@ -323,6 +397,19 @@ def main():
 
     elif 'configcheck' == command or 'configtest' == command:
         configcheck()
+
+        if agentConfig.get('service_discovery', False):
+            # set the TRACE_CONFIG flag to True to make load_check_directory return
+            # the source of config objects.
+            # Then call load_check_directory here and pass the result to sd_configcheck
+            # to avoid circular imports
+            agentConfig[TRACE_CONFIG] = True
+            configs = {
+                # check_name: (config_source, config)
+            }
+            print("\nLoading check configurations...\n\n")
+            configs = load_check_directory(agentConfig, hostname)
+            sd_configcheck(agentConfig, configs)
 
     elif 'jmx' == command:
         jmx_command(args[1:], agentConfig)

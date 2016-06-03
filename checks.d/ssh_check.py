@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 from collections import namedtuple
 import time
@@ -84,7 +88,7 @@ class CheckSSH(AgentCheck):
                 sftp = client.open_sftp()
                 #Check response time of SFTP
                 start_time = time.time()
-                result = sftp.listdir('.')
+                sftp.listdir('.')
                 status = AgentCheck.OK
                 end_time = time.time()
                 time_taken = end_time - start_time

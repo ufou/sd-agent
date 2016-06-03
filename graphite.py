@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 import cPickle as pickle
 import logging
@@ -60,14 +64,14 @@ class GraphiteConnection(object):
         """
 
         try:
-            components = metric.split('.')
+            components = metric.split('.') # NOQA
 
             host = self.hostname
             metric = metric
             device = "N/A"
 
             return metric, host, device
-        except Exception, e:
+        except Exception:
             log.exception("Unparsable metric: %s" % metric)
             return None, None, None
 

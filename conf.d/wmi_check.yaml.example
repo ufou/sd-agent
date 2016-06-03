@@ -1,8 +1,12 @@
 init_config:
 
 instances:
-  # Each WMI query has 2 required options, `class` and `metrics` and four
-  # optional options, `filters`, `tag_by`, `constant_tags` and `tag_queries`.
+  # Each WMI query has 2 required options, `class` and `metrics` and six 
+  # optional options, `host`, `namespace`, `filters`, `tag_by`, `constant_tags` and `tag_queries`.
+  #
+  # `host` is the optional target of the WMI query, `localhost` is assumed by default
+  # if you set this option, make sure that Remote Management is enabled on the target host
+  # see https://technet.microsoft.com/en-us/library/Hh921475.aspx for more information
   #
   # `class` is the name of the WMI class, for example Win32_OperatingSystem
   # or Win32_PerfFormattedData_PerfProc_Process. You can find many of the
@@ -11,6 +15,7 @@ instances:
   # The Win32_FormattedData_* classes provide many useful performance counters
   # by default.
   #
+  # `namespace` is the optionnal WMI namespace to connect to (default to `cimv2`).
   #
   # `metrics` is a list of metrics you want to capture, with each item in the
   # list being a set of [WMI property name, metric name, metric type].
@@ -28,7 +33,8 @@ instances:
   # `filters` is a list of filters on the WMI query you may want. For example,
   # for a process-based WMI class you may want metrics for only certain
   # processes running on your machine, so you could add a filter for each
-  # process name. See below for an example of this case.
+  # process name. You can also use the '%' character as a wildcard.
+  # See below for examples.
   #
   #
   # `tag_by` optionally lets you tag each metric with a property from the
@@ -36,7 +42,7 @@ instances:
   # values for your WMI query. The examples below show how you can tag your
   # process metrics with the process name (giving a tag of "name:app_name").
   #
-  # `constant_tags` optionally lets you tag each metric with a set of fixed values
+  # `constant_tags` optionally lets you tag each metric with a set of fixed values.
   #
   # `tag_queries` optionally lets you specify a list of queries, to tag metrics
   # with a target class property. Each item in the list is a set of

@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 from datetime import datetime, timedelta
 import logging
@@ -20,7 +24,7 @@ class Transaction(object):
 
         self._id = None
         self._error_count = 0
-        self._next_flush = datetime.now()
+        self._next_flush = datetime.utcnow()
         self._size = None
 
     def get_id(self):
@@ -52,10 +56,10 @@ class Transaction(object):
         if td > max_delay:
             td = max_delay
 
-        newdate = datetime.now() + td
+        newdate = datetime.utcnow() + td
         self._next_flush = newdate.replace(microsecond=0)
 
-    def time_to_flush(self,now = datetime.now()):
+    def time_to_flush(self,now = datetime.utcnow()):
         return self._next_flush < now
 
     def flush(self):
@@ -79,12 +83,14 @@ class TransactionManager(object):
         self._transactions_received = 0
         self._transactions_flushed = 0
 
+        self._too_big_count = 0
+
         # Global counter to assign a number to each transaction: we may have an issue
         #  if this overlaps
         self._counter = 0
 
         self._trs_to_flush = None # Current transactions being flushed
-        self._last_flush = datetime.now() # Last flush (for throttling)
+        self._last_flush = datetime.utcnow() # Last flush (for throttling)
 
         # Track an initial status message.
         ForwarderStatus().persist()
@@ -138,7 +144,7 @@ class TransactionManager(object):
 
         to_flush = []
         # Do we have something to do ?
-        now = datetime.now()
+        now = datetime.utcnow()
         for tr in self._transactions:
             if tr.time_to_flush(now):
                 to_flush.append(tr)
@@ -169,13 +175,14 @@ class TransactionManager(object):
             queue_size=self._total_size,
             flush_count=self._flush_count,
             transactions_received=self._transactions_received,
-            transactions_flushed=self._transactions_flushed).persist()
+            transactions_flushed=self._transactions_flushed,
+            too_big_count=self._too_big_count).persist()
 
     def flush_next(self):
 
         if len(self._trs_to_flush) > 0:
 
-            td = self._last_flush + self._THROTTLING_DELAY - datetime.now()
+            td = self._last_flush + self._THROTTLING_DELAY - datetime.utcnow()
             # Python 2.7 has this built in, python < 2.7 don't...
             if hasattr(td,'total_seconds'):
                 delay = td.total_seconds()
@@ -184,7 +191,7 @@ class TransactionManager(object):
 
             if delay <= 0:
                 tr = self._trs_to_flush.pop()
-                self._last_flush = datetime.now()
+                self._last_flush = datetime.utcnow()
                 log.debug("Flushing transaction %d" % tr.get_id())
                 try:
                     tr.flush()
@@ -211,6 +218,24 @@ class TransactionManager(object):
         log.warn("Transaction %d in error (%s error%s), it will be replayed after %s" %
           (tr.get_id(), tr.get_error_count(), plural(tr.get_error_count()),
            tr.get_next_flush()))
+
+    def tr_error_too_big(self,tr):
+        tr.inc_error_count()
+        log.warn("Transaction %d is %sKB, it has been rejected as too large. \
+          It will not be replayed." % (tr.get_id(), tr.get_size() / 1024))
+        self._transactions.remove(tr)
+        self._total_count -= 1
+        self._total_size -= tr.get_size()
+        self._transactions_flushed += 1
+        self.print_queue_stats()
+        self._too_big_count += 1
+        ForwarderStatus(
+            queue_length=self._total_count,
+            queue_size=self._total_size,
+            flush_count=self._flush_count,
+            transactions_received=self._transactions_received,
+            transactions_flushed=self._transactions_flushed,
+            too_big_count=self._too_big_count).persist()
 
     def tr_success(self,tr):
         log.debug("Transaction %d completed" % tr.get_id())

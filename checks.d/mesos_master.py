@@ -1,10 +1,11 @@
+# (C) Datadog, Inc. 2015-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 """Mesos Master check
 
 Collects metrics from mesos master node, only the leader is sending metrics.
 """
-# stdlib
-from hashlib import md5
-
 # 3rd party
 import requests
 
@@ -123,8 +124,6 @@ class MesosMaster(AgentCheck):
     }
 
     def _get_json(self, url, timeout):
-        # Use a hash of the URL as an aggregation key
-        aggregation_key = md5(url).hexdigest()
         tags = ["url:%s" % url]
         msg = None
         status = None
@@ -152,6 +151,9 @@ class MesosMaster(AgentCheck):
                 self.service_check(self.SERVICE_CHECK_NAME, status, tags=tags,
                                    message=msg)
                 raise CheckException("Cannot connect to mesos, please check your configuration.")
+
+        if r.encoding is None:
+            r.encoding = 'UTF8'
 
         return r.json()
 
@@ -227,7 +229,8 @@ class MesosMaster(AgentCheck):
                                self.CLUSTER_FRAMEWORK_METRICS, self.STATS_METRICS]
                 for m in metrics:
                     for key_name, (metric_name, metric_func) in m.iteritems():
-                        metric_func(self, metric_name, stats_metrics[key_name], tags=tags)
+                        if key_name in stats_metrics:
+                            metric_func(self, metric_name, stats_metrics[key_name], tags=tags)
 
 
         self.service_check_needed = True

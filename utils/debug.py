@@ -1,7 +1,11 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
+from pprint import pprint
 import inspect
 import os
-from pprint import pprint
 import sys
 
 from config import get_checksd_path, get_confd_path

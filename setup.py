@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 from datetime import date
 import os
@@ -5,6 +9,7 @@ import sys
 
 # 3p
 from setuptools import find_packages, setup
+from requests.certs import where
 
 # project
 from config import get_version
@@ -51,6 +56,7 @@ if sys.platform == 'win32':
     # Modules to force-include in the exe
     include_modules = [
         # 3p
+        'wmi',
         'win32service',
         'win32serviceutil',
         'win32event',
@@ -71,11 +77,22 @@ if sys.platform == 'win32':
         'pysnmp.entity.rfc3413.oneliner.*',
         'pyVim.*',
         'pyVmomi.*',
+        'paramiko',
+        'Crypto',
+        'winrandom',
+        'uptime',
+        'pythoncom',
+        'dns.resolver',
+        'dns.rdtypes.ANY.*',
+        'dns.rdtypes.IN.*',
 
         # agent
         'checks.network_checks',
+        'checks.wmi_check',
         'checks.libs.vmware.*',
         'httplib2',
+        'utils.containers',
+        'scandir',
 
         # pup
         'tornado.websocket',
@@ -101,7 +118,7 @@ if sys.platform == 'win32':
                 'compressed': True,
                 'bundle_files': 3,
                 'excludes': ['numpy'],
-                'dll_excludes': ["IPHLPAPI.DLL", "NSI.dll",  "WINNSI.DLL",  "WTSAPI32.dll"],
+                'dll_excludes': ['crypt32.dll',"IPHLPAPI.DLL", "NSI.dll",  "WINNSI.DLL",  "WTSAPI32.dll"],
                 'ascii':False,
             },
         },
@@ -115,7 +132,8 @@ if sys.platform == 'win32':
         'data_files': [
             ("Microsoft.VC90.CRT", glob(r'C:\Python27\redist\*.*')),
             ('jmxfetch', [r'checks\libs\%s' % JMX_FETCH_JAR_NAME]),
-            ('gohai', [r'gohai\gohai.exe'])
+            ('gohai', [r'gohai\gohai.exe']),
+            ('', [where()]),  # CA certificates bundled with `requests`
         ],
     }
 

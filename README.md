@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/serverdensity/sd-agent.svg?branch=master)](https://travis-ci.org/serverdensity/sd-agent)
 
-This is the source code for the Server Density agent (v2). If you're looking to install the agent, we also provide [pre-packaged binaries](https://support.serverdensity.com/hc/en-us/articles/213625957-Officially-supported-Linux-distros) for most operating systems. 
+This is the source code for the Server Density agent (v2). If you're looking to install the agent, we also provide [pre-packaged binaries](https://support.serverdensity.com/hc/en-us/articles/213625957-Officially-supported-Linux-distros) for most operating systems.
 
 # Release notes
 See [agent release notes](https://support.serverdensity.com/hc/en-us/articles/213513688-Agent-release-notes).
