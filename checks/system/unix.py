@@ -563,7 +563,7 @@ class Processes(Check):
             processes.append(map(lambda s: s.strip(), line))
 
         return {'processes':   processes,
-                'agentKey':      agentConfig['agent_key'],
+                'agentKey':    agentConfig['agent_key'],
                 'host':        get_hostname(agentConfig)}
 
 

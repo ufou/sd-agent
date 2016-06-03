@@ -372,7 +372,8 @@ class Collector(object):
         gangliaData = self._ganglia.check(self.agentConfig)
         #dogstreamData = self._dogstream.check(self.agentConfig)
         dogstreamData = None
-        ddforwarderData = self._ddforwarder.check(self.agentConfig)
+        #ddforwarderData = self._ddforwarder.check(self.agentConfig)
+        ddforwarderData = None
 
         if gangliaData is not False and gangliaData is not None:
             payload['ganglia'] = gangliaData
@@ -390,7 +391,7 @@ class Collector(object):
 
         # metrics about the forwarder
         if ddforwarderData:
-            payload['serverdensity'] = ddforwarderData
+            payload['sd'] = ddforwarderData
 
         # process collector of gohai (compliant with payload of legacy "resources checks")
         if not Platform.is_windows() and self._should_send_additional_data('processes'):

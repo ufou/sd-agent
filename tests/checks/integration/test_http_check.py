@@ -143,7 +143,8 @@ class HTTPCheckTest(AgentCheckTest):
     CHECK_NAME = 'http_check'
 
     def tearDown(self):
-        self.check.stop()
+        if self.check:
+            self.check.stop()
 
     def wait_for_async(self, method, attribute, count):
         """
@@ -178,7 +179,6 @@ class HTTPCheckTest(AgentCheckTest):
         """
         Check coverage.
         """
-
         self.run_check(CONFIG)
         # Overrides self.service_checks attribute when values are available\
         self.service_checks = self.wait_for_async('get_service_checks', 'service_checks', 5)
