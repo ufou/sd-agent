@@ -94,12 +94,15 @@ pkgbuild --identifier com.serverdensity.agent-service \
 "Server Density Agent Service.pkg"
 
 # TODO: Package a preference pane as a separate component
-
+mkdir -p diskimage
 productbuild --distribution distribution.xml \
 --identifier com.serverdensity.agent \
---resources . \
-"Server Density Agent Installer $AGENT_VERSION.pkg"    
+--resources Resources \
+diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"    
 
+# Add the icon
+scripts/setIcon.py Resources/sd-agent-installer.icns diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg" 
 
-
+# Package the disk image
+hdiutil create -srcfolder diskimage "Server Density Agent $AGENT_VERSION.dmg"
 
