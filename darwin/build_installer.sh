@@ -104,5 +104,5 @@ diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"
 scripts/setIcon.py Resources/sd-agent-installer.icns diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg" 
 
 # Package the disk image
-hdiutil create -srcfolder diskimage "Server Density Agent $AGENT_VERSION.dmg"
+hdiutil create -srcfolder diskimage -volname "Agent Installer" "Server Density Agent $AGENT_VERSION.dmg"
 
