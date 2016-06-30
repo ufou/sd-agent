@@ -2,6 +2,7 @@
 <installer-gui-script minSpecVersion="2">
     <pkg-ref id="com.serverdensity.agent-service"/>
     <background file="bg-image.tiff" />
+    <license file="../../LICENSE" mime-type="text/plain"/>
     <options customize="never" require-scripts="false"/>
     <volume-check>
         <allowed-os-versions>
