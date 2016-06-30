@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <installer-gui-script minSpecVersion="2">
     <pkg-ref id="com.serverdensity.agent-service"/>
-    <background file="bg-image.png"/>
+    <background file="bg-image.tiff" />
     <options customize="never" require-scripts="false"/>
     <volume-check>
         <allowed-os-versions>
