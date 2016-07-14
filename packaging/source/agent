@@ -47,9 +47,9 @@ check_agent_status() {
         echo $SUPERVISOR_NOT_RUNNING
         return 1
     else
-        # Next, we check if supervisor is running all the datadog processes:
+        # Next, we check if supervisor is running all the sd-agent processes:
 
-        # Check the number of datadog processes supervisor is
+        # Check the number of sd-agent processes supervisor is
         # currently controlling, and make sure that it's the
         # same as the number of programs specified in the
         # supervisor config file:
@@ -61,7 +61,7 @@ check_agent_status() {
                                      grep -c '\[program:')
 
         echo "$status_output"
-        if [ "$sdsupervisor_processes" -ne "$supervisor_config_programs" ]; then
+        if [ "$sd_supervisor_processes" -ne "$supervisor_config_programs" ]; then
             echo "Supervisor is NOT running all child processes"
             return 1
         else
@@ -115,8 +115,6 @@ case $action in
               # Currently only agent.py takes additional arguments
         python agent/agent.py info $@
         RETURN_VALUE=$?
-#        python agent/dogstatsd.py info
-#        RETURN_VALUE=$(($RETURN_VALUE || $?))
         python agent/sdagent.py info
         RETURN_VALUE=$(($RETURN_VALUE || $?))
         exit $RETURN_VALUE
