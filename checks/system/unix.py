@@ -622,7 +622,7 @@ class Cpu(Check):
                 # OR
                 #
                 # Thanks to Mart Visser to spotting this one.
-                # blah:/etc/dd-agent# mpstat
+                # blah:/etc/sd-agent# mpstat
                 # Linux 2.6.26-2-xen-amd64 (atira)  02/17/2012  _x86_64_
                 #
                 # 05:27:03 PM  CPU    %user   %nice   %sys %iowait    %irq   %soft  %steal  %idle   intr/s
