@@ -93,16 +93,28 @@ pkgbuild --identifier com.serverdensity.agent-service \
 --component-plist AgentComponents.plist \
 "Server Density Agent Service.pkg"
 
+# Retrieve signing key from Travis environment and add it to a new default keychain
+echo $DARWIN_INSTALLER_KEY | base64 -D -o ServerDensity.p12
+KEYCHAIN_NAME = agent.keychain
+security create-keychain -p travis $KEYCHAIN_NAME
+security default-keychain -s $KEYCHAIN_NAME
+security unlock-keychain -p travis
+security set-keychain-settings -t 3600 -u
+security import ServerDensity.p12 -f pkcs12 -P ""
+
+CERT_COMMON_NAME='Developer ID Installer: victor jalencas (8T3Z42HHGB)'
+
 # TODO: Package a preference pane as a separate component
 mkdir -p diskimage
 productbuild --distribution distribution.xml \
 --identifier com.serverdensity.agent \
 --resources Resources \
+--sign $CERT_COMMON_NAME \
 diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"    
 
 # Add the icon
 scripts/setIcon.py Resources/sd-agent-installer.icns diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg" 
 
 # Package the disk image
-hdiutil create -srcfolder diskimage -volname "Agent Installer" "Server Density Agent $AGENT_VERSION.dmg"
+hdiutil create -srcfolder diskimage -volname "Agent Installer" "sd-agent-$AGENT_VERSION.dmg"
 
