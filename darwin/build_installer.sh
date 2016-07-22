@@ -95,7 +95,7 @@ pkgbuild --identifier com.serverdensity.agent-service \
 
 # Retrieve signing key from Travis environment and add it to a new default keychain
 echo $DARWIN_INSTALLER_KEY | base64 -D -o ServerDensity.p12
-KEYCHAIN_NAME = agent.keychain
+KEYCHAIN_NAME=agent.keychain
 security create-keychain -p travis $KEYCHAIN_NAME
 security default-keychain -s $KEYCHAIN_NAME
 security unlock-keychain -p travis
