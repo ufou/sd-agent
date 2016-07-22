@@ -109,7 +109,7 @@ mkdir -p diskimage
 productbuild --distribution distribution.xml \
 --identifier com.serverdensity.agent \
 --resources Resources \
---sign $CERT_COMMON_NAME \
+--sign "$CERT_COMMON_NAME" \
 diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"    
 
 # Add the icon
