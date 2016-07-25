@@ -102,7 +102,7 @@ security unlock-keychain -p travis
 security set-keychain-settings -t 3600 -u
 security import ServerDensity.p12 -f pkcs12 -P "" -k $KEYCHAIN_NAME -T /usr/bin/productbuild
 
-CERT_COMMON_NAME='Developer ID Installer: victor jalencas (8T3Z42HHGB)'
+CERT_COMMON_NAME='Developer ID Installer: Server Density Limited (66PY7YUC58)'
 
 # TODO: Package a preference pane as a separate component
 mkdir -p diskimage
