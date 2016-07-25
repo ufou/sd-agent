@@ -118,3 +118,6 @@ scripts/setIcon.py Resources/sd-agent-installer.icns diskimage/"Server Density A
 # Package the disk image
 hdiutil create -srcfolder diskimage -volname "Agent Installer" "sd-agent-$AGENT_VERSION.dmg"
 
+# copy to s3 bucket
+brew install s3cmd
+s3cmd put "sd-agent-$AGENT_VERSION.dmg" s3://sd-agent-upload-test
