@@ -113,11 +113,16 @@ notifications:
   slack: serverdensity:$SLACK_API_TOKEN
 
 deploy:
-  provider: releases
-  api_key:
-    secure: WggAIYHmj9OVs2ykRlQT+jMhWZ2N4slwDTHRvSbfy/G+oYAVSA9BzSfqFZTX3A/wSw+mYYOq6uaPk3m6fDYHu2W+zG2VwzstJVt93dUOAuc9b8Rl4WhVf54Ov8jGurzOM6CKrs4KSk1UKNLnH/h8HpUM0TgUzqfLzWkg1q1Df50=
-  skip_cleanup: true
-  file: darwin/sd-agent-$AGENT_VERSION.dmg
-  on:
-    repo: serverdensity/sd-agent
-    condition: $TRAVIS_OS_NAME == osx
+  - provider: releases
+    api_key:
+      secure: WggAIYHmj9OVs2ykRlQT+jMhWZ2N4slwDTHRvSbfy/G+oYAVSA9BzSfqFZTX3A/wSw+mYYOq6uaPk3m6fDYHu2W+zG2VwzstJVt93dUOAuc9b8Rl4WhVf54Ov8jGurzOM6CKrs4KSk1UKNLnH/h8HpUM0TgUzqfLzWkg1q1Df50=
+    skip_cleanup: true
+    file: darwin/sd-agent-$AGENT_VERSION.dmg
+    on:
+      repo: serverdensity/sd-agent
+      condition: $TRAVIS_OS_NAME == osx
+  - provider: s3
+    access_key_id: $AWS_ACCESS_KEY_ID
+    secret_access_key: $AWS_SECRET_ACCESS_KEY
+    bucket: agent
+    region: eu-central-1
