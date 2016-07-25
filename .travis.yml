@@ -126,3 +126,5 @@ deploy:
     secret_access_key: $AWS_SECRET_ACCESS_KEY
     bucket: agent
     region: eu-central-1
+    skip_cleanup: true
+    local_dir: darwin/diskimage
