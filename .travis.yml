@@ -6,9 +6,8 @@ branches:
     - /^\d+\.\d+\.x$/ # release forked patches branch
 
 os:
-  - linux
   - osx
-
+  - linux
 matrix:
   include:
     - python: 2.6
