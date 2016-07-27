@@ -1,4 +1,5 @@
 guidata==1.7.5
-PyQt5==5.7
+# PyQt5==5.7
 spyder==2.3.9
 pypiwin32==219
+git+git://github.com/goatpig/py2exe.git
