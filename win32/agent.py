@@ -39,9 +39,9 @@ MAX_FAILED_HEARTBEATS = 8  # runs of collector
 DEFAULT_COLLECTOR_PROFILE_INTERVAL = 20
 
 class AgentSvc(win32serviceutil.ServiceFramework):
-    _svc_name_ = "DatadogAgent"
-    _svc_display_name_ = "Datadog Agent"
-    _svc_description_ = "Sends metrics to Datadog"
+    _svc_name_ = "sd-agent"
+    _svc_display_name_ = "Server Density Agent"
+    _svc_description_ = "Sends metrics to Server Density"
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
@@ -51,7 +51,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         # Setup the correct options so the agent will use the forwarder
         opts, args = Values({
             'autorestart': False,
-            'sd_url': None,
+            'sd_account': None,
             'use_forwarder': True,
             'disabled_dd': False,
             'profile': False
