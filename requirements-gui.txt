@@ -3,3 +3,5 @@ guidata==1.7.5
 spyder==2.3.9
 pypiwin32==219
 git+git://github.com/goatpig/py2exe.git
+pysnmp-mibs==0.1.6
+pyvim==0.0.18
