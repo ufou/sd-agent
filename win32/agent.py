@@ -72,11 +72,11 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         # Keep a list of running processes so we can start/end as needed.
         # Processes will start started in order and stopped in reverse order.
         self.procs = {
-            'forwarder': ProcessWatchDog("forwarder", DDForwarder(config, self.hostname)),
+            # 'forwarder': ProcessWatchDog("forwarder", DDForwarder(config, self.hostname)),
             'collector': ProcessWatchDog("collector", DDAgent(agentConfig, self.hostname,
                                          heartbeat=self._collector_send_heartbeat)),
-            'dogstatsd': ProcessWatchDog("dogstatsd", DogstatsdProcess(config, self.hostname)),
-            'jmxfetch': ProcessWatchDog("jmxfetch", JMXFetchProcess(config, self.hostname), 3),
+            # 'dogstatsd': ProcessWatchDog("dogstatsd", DogstatsdProcess(config, self.hostname)),
+            # 'jmxfetch': ProcessWatchDog("jmxfetch", JMXFetchProcess(config, self.hostname), 3),
         }
 
     def SvcStop(self):
@@ -343,6 +343,8 @@ class JMXFetchProcess(multiprocessing.Process):
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
+    sys.frozen = 'windows_exe' # needed to run python win32/agent.py debug
+    print sys.argv
     if len(sys.argv) == 1:
         handle_exe_click(AgentSvc._svc_name_)
     else:
