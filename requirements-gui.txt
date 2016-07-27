@@ -1,0 +1,4 @@
+guidata==1.7.5
+PyQt5==5.7
+spyder==2.3.9
+pypiwin32==219
