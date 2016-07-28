@@ -22,7 +22,7 @@ class ServerDensityChecks(AgentCheck):
     """ Collects metrics about the machine's disks. """
 
     DF_COMMAND = ['df', '-k']
-    
+
     # According to SUSv3 (which Mac OS X follows)
     # the default is to show inode information
     # So we need to suppress that output with -P
