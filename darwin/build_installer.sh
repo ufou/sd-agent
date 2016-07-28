@@ -101,6 +101,8 @@ security default-keychain -s $KEYCHAIN_NAME
 security unlock-keychain -p travis
 security set-keychain-settings -t 3600 -u
 security import ServerDensity.p12 -f pkcs12 -P "" -k $KEYCHAIN_NAME -T /usr/bin/productbuild
+# this may help when debugging, lists the known identities:
+# security find-identity
 
 CERT_COMMON_NAME='Developer ID Installer: Server Density Limited (66PY7YUC58)'
 
@@ -112,12 +114,12 @@ productbuild --distribution distribution.xml \
 --sign "$CERT_COMMON_NAME" \
 diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"    
 
+# Trust, but verify
+spctl --assess --type install diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg"
+
 # Add the icon
 scripts/setIcon.py Resources/sd-agent-installer.icns diskimage/"Server Density Agent Installer $AGENT_VERSION.pkg" 
 
 # Package the disk image
+# This may fail sometimes due to a "Resource busy" error, in that case re-running the job usually fixes it
 hdiutil create -srcfolder diskimage -volname "Agent Installer" "sd-agent-$AGENT_VERSION.dmg"
-
-# copy to s3 bucket
-brew install s3cmd
-s3cmd put "sd-agent-$AGENT_VERSION.dmg" s3://sd-agent-upload-test

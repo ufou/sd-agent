@@ -8,21 +8,22 @@ branches:
 os:
   - osx
   - linux
-matrix:
-  include:
-    - python: 2.6
-    - python: 2.7
-    - language: generic
-      os: osx
 
+matrix:
+  fast_finish: true
+  include:
+    - os: linux
+      python: 2.6  
+    - os: linux
+      python: 2.7
+    - os: osx
+      env: TRAVIS_FLAVOR = default
 
 cache:
   directories:
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
     - vendor/cache
 
-matrix:
-  fast_finish: true
 
 env:
   global:
@@ -120,10 +121,3 @@ deploy:
     on:
       repo: serverdensity/sd-agent
       condition: $TRAVIS_OS_NAME == osx
-  - provider: s3
-    access_key_id: $AWS_ACCESS_KEY_ID
-    secret_access_key: $AWS_SECRET_ACCESS_KEY
-    bucket: sd-agent-upload-test
-    region: eu-central-1
-    skip_cleanup: true
-    local_dir: darwin/diskimage
