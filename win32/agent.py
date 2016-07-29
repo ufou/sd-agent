@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 from optparse import Values
 import sys
+import os
 import time
 
 # 3p
@@ -343,8 +344,9 @@ class JMXFetchProcess(multiprocessing.Process):
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
+    multiprocessing.set_executable(os.path.join('C:\python27', 'pythonw.exe'))
     sys.frozen = 'windows_exe' # needed to run python win32/agent.py debug
-    print sys.argv
+
     if len(sys.argv) == 1:
         handle_exe_click(AgentSvc._svc_name_)
     else:
