@@ -519,7 +519,7 @@ class MySql(AgentCheck):
         if _is_affirmative(options.get('replication', False)):
             # Get replica stats
             results.update(self._get_replica_stats(db))
-            results.update(self._get_slave_status(db, performance_schema_enabled))
+            results.update(self._get_slave_status(db))
             metrics.update(REPLICA_VARS)
 
             # get slave running form global status page
@@ -529,35 +529,37 @@ class MySql(AgentCheck):
             # slaves will only be collected iff user has PROCESS privileges.
             slaves = self._collect_scalar('Slaves_connected', results)
 
-            if slave_running is not None:
-                if slave_running.lower().strip() == 'on':
-                    slave_running_status = AgentCheck.OK
-                else:
-                    slave_running_status = AgentCheck.CRITICAL
-            elif slaves or binlog_running:
-                if slaves and slaves > 0 and binlog_running:
-                    slave_running_status = AgentCheck.OK
-                else:
-                    slave_running_status = AgentCheck.WARNING
-            else:
-                # MySQL 5.7.x might not have 'Slave_running'. See: https://bugs.mysql.com/bug.php?id=78544
-                # look at replica vars collected at the top of if-block
-                if self._version_compatible(db, host, "5.7.0"):
-                    slave_io_running = self._collect_string('Slave_IO_Running', results)
-                    slave_sql_running = self._collect_string('Slave_SQL_Running', results)
-                    if slave_io_running:
-                        slave_io_running = (slave_io_running.lower().strip() == "yes")
-                    if slave_sql_running:
-                        slave_sql_running = (slave_sql_running.lower().strip() == "yes")
+            # MySQL 5.7.x might not have 'Slave_running'. See: https://bugs.mysql.com/bug.php?id=78544
+            # look at replica vars collected at the top of if-block
+            if self._version_compatible(db, host, "5.7.0"):
+                slave_io_running = self._collect_string('Slave_IO_Running', results)
+                slave_sql_running = self._collect_string('Slave_SQL_Running', results)
+                if slave_io_running:
+                    slave_io_running = (slave_io_running.lower().strip() == "yes")
+                if slave_sql_running:
+                    slave_sql_running = (slave_sql_running.lower().strip() == "yes")
 
-                    if not (slave_io_running is None and slave_sql_running is None):
-                        if slave_io_running and slave_sql_running:
-                            slave_running_status = AgentCheck.OK
-                        elif not slave_io_running and not slave_sql_running:
-                            slave_running_status = AgentCheck.CRITICAL
-                        else:
-                            # not everything is running smoothly
-                            slave_running_status = AgentCheck.WARNING
+                if not (slave_io_running is None and slave_sql_running is None):
+                    if slave_io_running and slave_sql_running:
+                        slave_running_status = AgentCheck.OK
+                    elif not slave_io_running and not slave_sql_running:
+                        slave_running_status = AgentCheck.CRITICAL
+                    else:
+                        # not everything is running smoothly
+                        slave_running_status = AgentCheck.WARNING
+
+            # if we don't yet have a status - inspect
+            if slave_running_status == AgentCheck.UNKNOWN:
+                if self._is_master(slaves, binlog_running):  # master
+                    if slaves > 0 and binlog_running:
+                        slave_running_status = AgentCheck.OK
+                    else:
+                        slave_running_status = AgentCheck.WARNING
+                elif slave_running:  # slave (or standalone)
+                    if slave_running.lower().strip() == 'on':
+                        slave_running_status = AgentCheck.OK
+                    else:
+                        slave_running_status = AgentCheck.CRITICAL
 
             # deprecated in favor of service_check("mysql.replication.slave_running")
             self.gauge(self.SLAVE_SERVICE_CHECK_NAME, (1 if slave_running_status == AgentCheck.OK else 0), tags=tags)
@@ -591,6 +593,14 @@ class MySql(AgentCheck):
             if len(queries) > self.MAX_CUSTOM_QUERIES:
                 self.warning("Maximum number (%s) of custom queries reached.  Skipping the rest."
                              % self.MAX_CUSTOM_QUERIES)
+
+
+    def _is_master(self, slaves, binlog):
+        if slaves > 0 or binlog:
+            return True
+
+        return False
+
 
     def _collect_metadata(self, db, host):
         version = self._get_version(db, host)
@@ -843,7 +853,7 @@ class MySql(AgentCheck):
             self.warning("Privileges error getting replication status (must grant REPLICATION CLIENT): %s" % str(e))
             return {}
 
-    def _get_slave_status(self, db, nonblocking=False):
+    def _get_slave_status(self, db, nonblocking=True):
         try:
             with closing(db.cursor()) as cursor:
                 # querying threads instead of PROCESSLIST to avoid mutex impact on

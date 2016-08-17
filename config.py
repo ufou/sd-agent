@@ -1,3 +1,4 @@
+# (C) Server Density 2009-2016
 # (C) Datadog, Inc. 2010-2016
 # All rights reserved
 # Licensed under Simplified BSD License (see LICENSE)
@@ -40,6 +41,7 @@ UNIX_CONFIG_PATH = '/etc/sd-agent'
 MAC_CONFIG_PATH = '/opt/sd-agent/etc'
 DEFAULT_CHECK_FREQUENCY = 60   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
+SDK_INTEGRATIONS_DIR = 'integrations'
 
 log = logging.getLogger(__name__)
 
@@ -663,14 +665,14 @@ def get_checksd_path(osname=None):
         return _unix_checksd_path()
 
 
-def get_3rd_party_path(osname=None):
+def get_sdk_integrations_path(osname=None):
     if not osname:
         osname = get_os()
     if osname in ['windows', 'mac']:
         raise PathNotFound()
 
     cur_path = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(cur_path, '../3rd-party')
+    path = os.path.join(cur_path, '..', SDK_INTEGRATIONS_DIR)
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
@@ -798,18 +800,24 @@ def _service_disco_configs(agentConfig):
     """ Retrieve all the service disco configs and return their conf dicts
     """
     if agentConfig.get('service_discovery') and agentConfig.get('service_discovery_backend') in SD_BACKENDS:
-        sd_backend = get_sd_backend(agentConfig=agentConfig)
-        service_disco_configs = sd_backend.get_configs()
+        try:
+            log.info("Fetching service discovery check configurations.")
+            sd_backend = get_sd_backend(agentConfig=agentConfig)
+            service_disco_configs = sd_backend.get_configs()
+        except Exception:
+            log.exception("Loading service discovery configurations failed.")
     else:
         service_disco_configs = {}
 
     return service_disco_configs
+
 
 def _conf_path_to_check_name(conf_path):
     f = os.path.splitext(os.path.split(conf_path)[1])
     if f[1] and f[1] == ".default":
         f = os.path.splitext(f[0])
     return f[0]
+
 
 def get_checks_places(osname, agentConfig):
     """ Return a list of methods which, when called with a check name, will each return a check path to inspect
@@ -823,10 +831,10 @@ def get_checks_places(osname, agentConfig):
     places = [lambda name: os.path.join(agentConfig['additional_checksd'], '%s.py' % name)]
 
     try:
-        third_party_path = get_3rd_party_path(osname)
-        places.append(lambda name: os.path.join(third_party_path, name, 'check.py'))
+        sdk_integrations = get_sdk_integrations_path(osname)
+        places.append(lambda name: os.path.join(sdk_integrations, name, 'check.py'))
     except PathNotFound:
-        log.debug('No 3rd-party path found')
+        log.debug('No sdk integrations path found')
 
     places.append(lambda name: os.path.join(checksd_path, '%s.py' % name))
     return places
