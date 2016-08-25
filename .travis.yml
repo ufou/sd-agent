@@ -5,19 +5,19 @@ branches:
     - master
     - /^\d+\.\d+\.x$/ # release forked patches branch
 
+
 language: python
+python:
+  - 2.6
+  - 2.7
 
 matrix:
   fast_finish: true
   include:
-    - os: linux
-      python: 2.6
-    - os: linux
-      python: 2.7
     - os: osx
       language: generic
+      python:
       env: TRAVIS_FLAVOR=default
-
 
 cache:
   directories:
@@ -101,23 +101,22 @@ install: echo "OVERRIDING TRAVIS STEPS"
 before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd darwin; ./build_installer.sh; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./linux_script.sh; fi
-
+  - ./.travis/build_installer.sh
 
 after_failure:
   - echo "Logs from installation process come here / DEBUG LOGS"
   - cat /tmp/ci.log
 
-notifications:
-  slack: serverdensity:$SLACK_API_TOKEN
+#notifications:
+#  slack:
+#    secure: N7WQuQNLn4wJqGHnLmTOZL18NGdr7vKNyHSV0TnXcgijnoqt+yxOq7mEu+h/KLgflAQObyKF8A3ChmbTB99xL6fR8xYVvxLSPk7+g9PU6Vf7absN9yY0rUQfXcPLVyYsZ11R1UqkizYbxc9B2A588S48/TMP2KB6LnII+PNajyg=
 
-deploy:
-  - provider: releases
-    api_key:
-      secure: WggAIYHmj9OVs2ykRlQT+jMhWZ2N4slwDTHRvSbfy/G+oYAVSA9BzSfqFZTX3A/wSw+mYYOq6uaPk3m6fDYHu2W+zG2VwzstJVt93dUOAuc9b8Rl4WhVf54Ov8jGurzOM6CKrs4KSk1UKNLnH/h8HpUM0TgUzqfLzWkg1q1Df50=
-    skip_cleanup: true
-    file: darwin/sd-agent-$AGENT_VERSION.dmg
-    on:
-      repo: serverdensity/sd-agent
-      condition: $TRAVIS_OS_NAME == osx
+#deploy:
+#  - provider: releases
+#    api_key:
+#      secure: WggAIYHmj9OVs2ykRlQT+jMhWZ2N4slwDTHRvSbfy/G+oYAVSA9BzSfqFZTX3A/wSw+mYYOq6uaPk3m6fDYHu2W+zG2VwzstJVt93dUOAuc9b8Rl4WhVf54Ov8jGurzOM6CKrs4KSk1UKNLnH/h8HpUM0TgUzqfLzWkg1q1Df50=
+#    skip_cleanup: true
+#    file: darwin/sd-agent-$AGENT_VERSION.dmg
+#    on:
+#      repo: serverdensity/sd-agent
+#      condition: $TRAVIS_OS_NAME == osx
