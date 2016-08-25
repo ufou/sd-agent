@@ -270,9 +270,9 @@ class DDForwarder(multiprocessing.Process):
         initialize_logging('windows_forwarder')
         log.debug("Windows Service - Starting forwarder")
         set_win32_cert_path()
-        port = self.config.get('listen_port', 17123)
+        port = self.config.get('listen_port', 17124)
         if port is None:
-            port = 17123
+            port = 17124
         else:
             port = int(port)
         app_config = get_config(parse_args=False)
