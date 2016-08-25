@@ -402,7 +402,7 @@ class Memory(Check):
 
             # Deal with top
             lines = top.split('\n')
-            physParts = re.findall(r'([0-9]\d+)', lines[self.topIndex])
+            physParts = re.findall(r'([0-9]\d+[MG])', lines[self.topIndex])
 
             # Deal with sysctl
             swapParts = re.findall(r'([0-9]+\.\d+)', sysctl)
@@ -413,6 +413,15 @@ class Memory(Check):
             if macV and (macV_minor_version >= 9):
                 physUsedPartIndex = 0
                 physFreePartIndex = 2
+
+            # large values become G, rather than M
+            finalParts = []
+            for part in physParts:
+                if 'G' in part:
+                    finalParts.append(str(int(part[:-1]) * 1024))
+                else:
+                    finalParts.append(part[:-1])
+            physParts = finalParts
 
             return {'physUsed': physParts[physUsedPartIndex], 'physFree': physParts[physFreePartIndex], 'swapUsed': swapParts[1], 'swapFree': swapParts[2]}
 
