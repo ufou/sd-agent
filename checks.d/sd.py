@@ -23,6 +23,13 @@ class ServerDensityChecks(AgentCheck):
 
     DF_COMMAND = ['df', '-k']
 
+    # According to SUSv3 (which Mac OS X follows)
+    # the default is to show inode information
+    # So we need to suppress that output with -P
+    # See df(1) for details
+    if sys.platform == 'darwin':
+        DF_COMMAND = ['df', '-k', '-P']
+
     def check(self, instance):
         #self.log.debug('hello')
         ##self.gauge('serverdensity.disk.free', 1)

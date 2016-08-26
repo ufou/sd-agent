@@ -357,7 +357,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['sd_account'] = config.get('Main', 'sd_account')
         agentConfig['use_forwarder'] = False
         if options is not None and options.use_forwarder:
-            listen_port = 17123
+            listen_port = 17124
             if config.has_option('Main', 'listen_port'):
                 listen_port = int(config.get('Main', 'listen_port'))
             agentConfig['sd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)

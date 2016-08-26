@@ -392,7 +392,7 @@ class Docker(AgentCheck):
             request = self.url_opener.open(req)
         except urllib2.URLError, e:
             if "Errno 13" in str(e):
-                raise Exception("Unable to connect to socket. dd-agent user must be part of the 'docker' group")
+                raise Exception("Unable to connect to socket. sd-agent user must be part of the 'docker' group")
             raise
 
         response = request.read()

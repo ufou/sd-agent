@@ -13,11 +13,11 @@ from utils.subprocess_output import get_subprocess_output
 class PostfixCheck(AgentCheck):
     """This check provides metrics on the number of messages in a given postfix queue
 
-    WARNING: the user that dd-agent runs as must have sudo access for the 'find' command
-             sudo access is not required when running dd-agent as root (not recommended)
+    WARNING: the user that sd-agent runs as must have sudo access for the 'find' command
+             sudo access is not required when running sd-agent as root (not recommended)
 
     example /etc/sudoers entry:
-             dd-agent ALL=(ALL) NOPASSWD:/usr/bin/find
+             sd-agent ALL=(ALL) NOPASSWD:/usr/bin/find
 
     YAML config options:
         "directory" - the value of 'postconf -h queue_directory'
@@ -55,16 +55,16 @@ class PostfixCheck(AgentCheck):
 
             count = 0
             if os.geteuid() == 0:
-                # dd-agent is running as root (not recommended)
+                # sd-agent is running as root (not recommended)
                 count = sum(len(files) for root, dirs, files in os.walk(queue_path))
             else:
-                # can dd-agent user run sudo?
+                # can sd-agent user run sudo?
                 test_sudo = os.system('setsid sudo -l < /dev/null')
                 if test_sudo == 0:
                     output, _, _ = get_subprocess_output(['sudo', 'find', queue_path, '-type', 'f'], self.log)
                     count = len(output.splitlines())
                 else:
-                    raise Exception('The dd-agent user does not have sudo access')
+                    raise Exception('The sd-agent user does not have sudo access')
 
             # emit an individually tagged metric
             self.gauge('postfix.queue.size', count, tags=tags + ['queue:%s' % queue, 'instance:%s' % os.path.basename(directory)])
