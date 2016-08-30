@@ -4,7 +4,8 @@ set -ev
 # Build requisites
 PATH=~/Library/Python/2.7/bin:$PATH
 
-BUILD_DIR=build/darwin
+BUILD_DIR=/tmp/build
+INSTALL_DIR=/tmp/installation
 DEST_VENV=/usr/local/sd-agent/
 DARWIN_SCRIPTS=packaging/darwin
 
@@ -36,15 +37,11 @@ grep -l -r -e '^#!.*bin/\(env \)\?\(python\|pypy\|ipy\|jython\)' ${BUILD_DIR}/bi
 # Remove backup files
 rm -f ${BUILD_DIR}/bin/*.bak
 
-mkdir -p ${BUILD_DIR}/etc/
-cp config.cfg.example ${BUILD_DIR}/etc/config.cfg
-cp plugins.cfg.example ${BUILD_DIR}/etc/plugins.cfg
+# Copy the files to the install dir.
 
-mkdir -p ${BUILD_DIR}/checks.d
-mkdir -p ${BUILD_DIR}/conf.d
-
-# Copy agent code
-
+# Copy main agent code.
+mkdir -p ${INSTALL_DIR}/sd-agent
+mkdir -p ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp agent.py \
 aggregator.py \
 config.py \
@@ -55,29 +52,138 @@ graphite.py \
 modules.py \
 sd-cert.pem \
 transaction.py \
-util.py ${BUILD_DIR}
+util.py ${INSTALL_DIR}/sd-agent
 
+cp -a ${BUILD_DIR}/.Python ${INSTALL_DIR}/sd-agent/
+cp -a ${BUILD_DIR}/bin ${INSTALL_DIR}/sd-agent/
+cp -a ${BUILD_DIR}/include ${INSTALL_DIR}/sd-agent/
+cp -a ${BUILD_DIR}/lib/python2.7/*.py ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/distutils ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/encodings ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/lib-dynload ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/no-global-site-packages.txt ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/orig-prefix.txt ${INSTALL_DIR}/sd-agent/lib/python2.7
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/backports* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/boto* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/easy-install* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/_markerlib ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/meld3* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/ntplib* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pip* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pkg_resources ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/_psutil_*.so ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pycurl* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/PyYAML* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/requests* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/sd_agent* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/setuptools* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/simplejson* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/six.py ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/six-*-info ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/tornado* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/yaml ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+
+# Copy default plugins.
+mkdir -p ${INSTALL_DIR}/sd-agent/checks.d
 cp checks.d/disk.py \
 checks.d/sd.py \
 checks.d/sd_cpu_stats.py \
-checks.d/network.py ${BUILD_DIR}/checks.d
+checks.d/network.py ${INSTALL_DIR}/sd-agent/checks.d
 
+# Copy default config files.
+mkdir -p ${INSTALL_DIR}/etc/sd-agent
+mkdir -p ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp config.cfg.example ${INSTALL_DIR}/etc/sd-agent/config.cfg
+cp plugins.cfg.example ${INSTALL_DIR}/etc/sd-agent/plugins.cfg
 cp conf.d/disk.yaml.default \
 conf.d/sd.yaml.default \
 conf.d/sd_cpu_stats.yaml.default \
-conf.d/network.yaml.default ${BUILD_DIR}/conf.d
+conf.d/network.yaml.default ${INSTALL_DIR}/etc/sd-agent/conf.d
 
 # Copy startup item
-mkdir ${BUILD_DIR}/darwin
-cp ${DARWIN_SCRIPTS}/com.serverdensity.agent.plist ${BUILD_DIR}/darwin
+cp ${DARWIN_SCRIPTS}/com.serverdensity.agent.plist ${INSTALL_DIR}/sd-agent
+
+# Supported plugins.
+
+# Apache
+cp checks.d/apache.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/apache.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Consul
+cp checks.d/consul.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/consul.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# CouchDB
+cp checks.d/couch.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/couch.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Directory
+cp checks.d/directory.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/directory.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Docker
+cp checks.d/docker.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/docker.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Memcache
+cp checks.d/mcache.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/mcache.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/memcache.py ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+
+# MySQL
+cp checks.d/mysql.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/mysql.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pymysql ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/PyMySQL* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+
+# Nginx
+cp checks.d/nginx.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/nginx.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# ntp
+cp checks.d/ntp.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/ntp.yaml.default ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# phpfpm
+cp checks.d/php_fpm.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/php_fpm.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# postfix
+cp checks.d/postfix.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/postfix.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# PostgreSQL
+cp checks.d/postgres.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/postgres.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pg8000 ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+
+# RabbitMQ
+cp checks.d/rabbitmq.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/rabbitmq.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Redis
+cp checks.d/redisdb.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/redisdb.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/redis ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+
+# Riak
+cp checks.d/riak.py ${INSTALL_DIR}/sd-agent/checks.d
+cp checks.d/riakcs.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/riak.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp conf.d/riakcs.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
+# Varnish
+cp checks.d/varnish.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/varnish.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 
 # Package it up
 pkgbuild --identifier com.serverdensity.agent-service \
 --version ${AGENT_VERSION} \
---install-location "/usr/local/sd-agent/" \
+--install-location "/usr/local/" \
 --scripts ${DARWIN_SCRIPTS}/scripts \
 --ownership recommended \
---root ${BUILD_DIR} \
+--root ${INSTALL_DIR} \
 --component-plist ${DARWIN_SCRIPTS}/AgentComponents.plist \
 "Server Density Agent Service.pkg"
 

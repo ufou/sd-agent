@@ -27,6 +27,3 @@ $dscl . -read "/Users/${user}" &> /dev/null || {
 
 # Stop the service if it was already installed
 /bin/launchctl unload /Library/LaunchDaemons/com.serverdensity.agent.plist &> /dev/null
-
-mkdir -p /var/log/sd-agent
-chown sd-agent /var/log/sd-agent
