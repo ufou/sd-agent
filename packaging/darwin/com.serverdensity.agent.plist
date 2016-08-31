@@ -27,5 +27,9 @@
 	</dict>
 	<key>ProcessType</key>
 	<string>Background</string>
+	<key>StandardOutPath</key>
+	<string>/var/log/sd-agent/launchd.log</string>
+	<key>StandardErrorPath</key>
+	<string>/var/log/sd-agent/launchd.log</string>
 </dict>
 </plist>
