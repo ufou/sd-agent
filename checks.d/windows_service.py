@@ -64,7 +64,9 @@ class WindowsService(WinWMICheck):
             self._process_services(wmi_sampler, services, tags)
 
     def _process_services(self, wmi_sampler, services, tags):
-        collected_services_by_names = {sc['Name'].lower(): sc for sc in wmi_sampler}
+        collected_services_by_names = {}
+        for sc in wmi_sampler:
+            collected_services_by_names[sc['Name'].lower()] = sc
 
         for service in services:
             service_lower = service.lower()
