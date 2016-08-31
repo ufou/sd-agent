@@ -5,17 +5,25 @@ branches:
     - master
     - /^\d+\.\d+\.x$/ # release forked patches branch
 
+
 language: python
 python:
-  - "2.7"
+  - 2.6
+  - 2.7
+
+matrix:
+  fast_finish: true
+  include:
+    - os: osx
+      language: generic
+      python:
+      env: TRAVIS_FLAVOR=default
 
 cache:
   directories:
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
     - vendor/cache
 
-matrix:
-  fast_finish: true
 
 env:
   global:
@@ -26,6 +34,7 @@ env:
     - SKIP_CLEANUP=true
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
+    - AGENT_VERSION=2.0.5
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=core_integration
@@ -97,20 +106,23 @@ install: echo "OVERRIDING TRAVIS STEPS"
 before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
-  - bundle install
-  - bundle package
-  # Needed if no cache exists
-  - mkdir -p $INTEGRATIONS_DIR
-  - ls -al $INTEGRATIONS_DIR
-  - rm -rf /home/travis/virtualenv/python$TRAVIS_PYTHON_VERSION.9/lib/python$TRAVIS_PYTHON_VERSION/site-packages/pip-6.0.7.dist-info
-  - rm -rf /home/travis/virtualenv/python$TRAVIS_PYTHON_VERSION.9/lib/python$TRAVIS_PYTHON_VERSION/site-packages/setuptools-12.0.5.dist-info
-  - 'rake ci:run'
-  - ls -al $INTEGRATIONS_DIR
-
+  - ./.travis/build_installer.sh
 
 after_failure:
   - echo "Logs from installation process come here / DEBUG LOGS"
   - cat /tmp/ci.log
 
 notifications:
-  slack: serverdensity:$SLACK_API_TOKEN
+  slack:
+    secure: N7WQuQNLn4wJqGHnLmTOZL18NGdr7vKNyHSV0TnXcgijnoqt+yxOq7mEu+h/KLgflAQObyKF8A3ChmbTB99xL6fR8xYVvxLSPk7+g9PU6Vf7absN9yY0rUQfXcPLVyYsZ11R1UqkizYbxc9B2A588S48/TMP2KB6LnII+PNajyg=
+
+deploy:
+  - provider: releases
+    api_key:
+      secure: Z5+eBL1ptbRkmRAv3wdIomULJhtWvunbQv5SpI/38sCYIHLLgnaXh8mzIiaRFBMH/o8bWGuMjjO5tEaKsK964k7e9eTWlM3g0Dc3lqxkBdALJkNnWo8shZJS0DSZwiIN5h5DdhAnvgvU4BJ8r53CO6YknuSvSgvdFSy/O1JitRQ=
+    skip_cleanup: true
+    file: sd-agent-$AGENT_VERSION.dmg
+    on:
+      tags: true
+      condition: $TRAVIS_OS_NAME == osx
+      repo: serverdensity/sd-agent

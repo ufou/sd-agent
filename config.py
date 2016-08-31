@@ -38,7 +38,7 @@ from utils.subprocess_output import (
 AGENT_VERSION = "2.1.0"
 SD_CONF = "config.cfg"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
-MAC_CONFIG_PATH = '/opt/sd-agent/etc'
+MAC_CONFIG_PATH = '/usr/local/etc/sd-agent/'
 DEFAULT_CHECK_FREQUENCY = 60   # seconds
 LOGGING_MAX_BYTES = 5 * 1024 * 1024
 SDK_INTEGRATIONS_DIR = 'integrations'
