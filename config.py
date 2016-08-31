@@ -324,7 +324,7 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     }
 
     if Platform.is_mac():
-        agentConfig['additional_checksd'] = '/opt/sd-agent/etc/checks.d'
+        agentConfig['additional_checksd'] = '/usr/local/etc/sd-agent/checks.d/'
 
     # Config handling
     try:
