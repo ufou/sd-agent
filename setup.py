@@ -1,6 +1,6 @@
 # stdlib
-from datetime import date
-import os
+#from datetime import date
+#import os
 import sys
 
 # 3p
@@ -119,31 +119,31 @@ if sys.platform == 'win32':
         ],
     }
 
-elif sys.platform == 'darwin':
-    app_name = 'Server Density Agent'
-
-    from plistlib import Plist
-    plist = Plist.fromFile(os.path.dirname(os.path.realpath(__file__)) + '/packaging/Info.plist')
-    plist.update(dict(
-        CFBundleGetInfoString="{0}, Copyright (c) 2009-{1}, Server Density, Ltd.".format(
-            get_version(), date.today().year),
-        CFBundleVersion=get_version()
-    ))
-
-    extra_args = {
-        'app': ['gui.py'],
-        'data_files': [
-            'images',
-            'status.html',
-        ],
-        'options': {
-            'py2app': {
-                'optimize': 0,
-                'iconfile': 'packaging/Agent.icns',
-                'plist': plist
-            }
-        }
-    }
+# elif sys.platform == 'darwin':
+#     app_name = 'Server Density Agent'
+#
+#     from plistlib import Plist
+#     plist = Plist.fromFile(os.path.dirname(os.path.realpath(__file__)) + '/packaging/Info.plist')
+#     plist.update(dict(
+#         CFBundleGetInfoString="{0}, Copyright (c) 2009-{1}, Server Density, Ltd.".format(
+#             get_version(), date.today().year),
+#         CFBundleVersion=get_version()
+#     ))
+#
+#     extra_args = {
+#         'app': ['gui.py'],
+#         'data_files': [
+#             'images',
+#             'status.html',
+#         ],
+#         'options': {
+#             'py2app': {
+#                 'optimize': 0,
+#                 'iconfile': 'packaging/Agent.icns',
+#                 'plist': plist
+#             }
+#         }
+#     }
 
 
 setup(
