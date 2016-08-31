@@ -3,6 +3,10 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 # stdlib
+import atexit
+import cStringIO as StringIO
+from collections import namedtuple
+from functools import partial
 import glob
 try:
     import grp
@@ -16,21 +20,35 @@ try:
 except ImportError:
     # Same as above (exists on Unix platforms only)
     pwd = None
+import re
+import stat
+import subprocess
+import sys
+import tarfile
+import tempfile
+from time import strftime
+import traceback
 
 # 3p
+import requests
 
 # DD imports
+from checks.check_status import CollectorStatus, DogstatsdStatus, ForwarderStatus
 from config import (
     get_confd_path,
+    get_config,
+    get_config_path,
+    get_logging_config,
+    get_url_endpoint,
 )
 from jmxfetch import JMXFetch
 from util import get_hostname
 from utils.jmx import jmx_command, JMXFiles
 from utils.platform import Platform
 from utils.configcheck import configcheck, sd_configcheck
-
 # Globals
 log = logging.getLogger(__name__)
+
 
 class Flare(object):
     """
