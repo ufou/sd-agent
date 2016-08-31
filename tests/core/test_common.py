@@ -390,6 +390,7 @@ class TestCore(unittest.TestCase):
 
         NTPUtil._drop()
 
+
 class TestAggregator(unittest.TestCase):
     def setUp(self):
         self.aggr = MetricsAggregator('test-aggr')
