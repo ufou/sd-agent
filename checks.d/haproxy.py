@@ -319,7 +319,7 @@ class HAProxy(AgentCheck):
 
     def _process_backend_hosts_metric(self, hosts_statuses, services_incl_filter=None,
                                       services_excl_filter=None):
-        agg_statuses = defaultdict(lambda: {status: 0 for status in Services.COLLATED_STATUSES})
+        agg_statuses = defaultdict(lambda: {AVAILABLE: 0, UNAVAILABLE: 0})
         for host_status, count in hosts_statuses.iteritems():
             try:
                 service, hostname, status = host_status
@@ -351,7 +351,7 @@ class HAProxy(AgentCheck):
     def _process_status_metric(self, hosts_statuses, collect_status_metrics_by_host,
                                services_incl_filter=None, services_excl_filter=None,
                                collate_status_tags_per_host=False, count_status_by_service=True):
-        agg_statuses_counter = defaultdict(lambda: {status: 0 for status in Services.COLLATED_STATUSES})
+        agg_statuses_counter = defaultdict(lambda: {AVAILABLE: 0, UNAVAILABLE: 0})
 
         # Initialize `statuses_counter`: every value is a defaultdict initialized with the correct
         # keys, which depends on the `collate_status_tags_per_host` option
