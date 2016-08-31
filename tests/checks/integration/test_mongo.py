@@ -45,12 +45,11 @@ class TestMongoUnit(AgentCheckTest):
         build_metric_list = self.check._build_metric_list_to_collect
 
         # Default metric list
-        DEFAULT_METRICS = {
-            m_name: m_type for d in [
-                self.check.BASE_METRICS, self.check.DURABILITY_METRICS,
-                self.check.LOCKS_METRICS, self.check.WIREDTIGER_METRICS]
-            for m_name, m_type in d.iteritems()
-        }
+        DEFAULT_METRICS = {}
+        for d in [self.check.BASE_METRICS, self.check.DURABILITY_METRICS,
+                  self.check.LOCKS_METRICS, self.check.WIREDTIGER_METRICS]:
+            for m_name, m_type in d.iteritems():
+                DEFAULT_METRICS[m_name] = m_type
 
         # No option
         no_additional_metrics = build_metric_list([])
