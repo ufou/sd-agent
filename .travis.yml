@@ -111,12 +111,13 @@ notifications:
   slack:
     secure: N7WQuQNLn4wJqGHnLmTOZL18NGdr7vKNyHSV0TnXcgijnoqt+yxOq7mEu+h/KLgflAQObyKF8A3ChmbTB99xL6fR8xYVvxLSPk7+g9PU6Vf7absN9yY0rUQfXcPLVyYsZ11R1UqkizYbxc9B2A588S48/TMP2KB6LnII+PNajyg=
 
-#deploy:
-#  - provider: releases
-#    api_key:
-#      secure: WggAIYHmj9OVs2ykRlQT+jMhWZ2N4slwDTHRvSbfy/G+oYAVSA9BzSfqFZTX3A/wSw+mYYOq6uaPk3m6fDYHu2W+zG2VwzstJVt93dUOAuc9b8Rl4WhVf54Ov8jGurzOM6CKrs4KSk1UKNLnH/h8HpUM0TgUzqfLzWkg1q1Df50=
-#    skip_cleanup: true
-#    file: darwin/sd-agent-$AGENT_VERSION.dmg
-#    on:
-#      repo: serverdensity/sd-agent
-#      condition: $TRAVIS_OS_NAME == osx
+deploy:
+  - provider: releases
+    api_key:
+      secure: Z5+eBL1ptbRkmRAv3wdIomULJhtWvunbQv5SpI/38sCYIHLLgnaXh8mzIiaRFBMH/o8bWGuMjjO5tEaKsK964k7e9eTWlM3g0Dc3lqxkBdALJkNnWo8shZJS0DSZwiIN5h5DdhAnvgvU4BJ8r53CO6YknuSvSgvdFSy/O1JitRQ=
+    skip_cleanup: true
+    file: sd-agent-$AGENT_VERSION.dmg
+    on:
+      tags: true
+      condition: $TRAVIS_OS_NAME == osx
+      repo: serverdensity/sd-agent
