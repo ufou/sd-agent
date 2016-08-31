@@ -50,7 +50,7 @@ PID_DIR = None
 WATCHDOG_MULTIPLIER = 10
 RESTART_INTERVAL = 4 * 24 * 60 * 60  # Defaults to 4 days
 START_COMMANDS = ['start', 'restart', 'foreground']
-DD_AGENT_COMMANDS = ['check', 'flare', 'jmx']
+SD_AGENT_COMMANDS = ['check', 'jmx']
 
 DEFAULT_COLLECTOR_PROFILE_INTERVAL = 20
 
@@ -302,7 +302,6 @@ def main():
         'check',
         'configcheck',
         'jmx',
-        'flare',
     ]
 
     COMMANDS = COMMANDS_AGENT + COMMANDS_NO_AGENT
@@ -317,7 +316,7 @@ def main():
         return 3
 
     # Deprecation notice
-    if command not in DD_AGENT_COMMANDS:
+    if command not in SD_AGENT_COMMANDS:
         # Will become an error message and exit after deprecation period
         from utils.deprecations import deprecate_old_command_line_tools
         deprecate_old_command_line_tools()
