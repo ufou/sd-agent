@@ -71,8 +71,7 @@ cp -a ${BUILD_DIR}/lib/python2.7/site-packages/meld3* ${INSTALL_DIR}/sd-agent/li
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/ntplib* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pip* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pkg_resources ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
-cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
-cp -a ${BUILD_DIR}/lib/python2.7/site-packages/_psutil_*.so ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pycurl* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/PyYAML* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/requests* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
