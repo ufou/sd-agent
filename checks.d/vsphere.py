@@ -615,7 +615,7 @@ class VSphereCheck(AgentCheck):
                 )
                 self.morlist_raw[instance_key].append(watched_mor)
 
-                tags.append(u"vsphere_host:{}".format(obj.name))
+                tags.append(u"vsphere_host:{0}".format(obj.name))
                 for vm in obj.vm:
                     if vm.runtime.powerState != 'poweredOn':
                         continue

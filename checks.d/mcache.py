@@ -241,7 +241,7 @@ class Memcache(AgentCheck):
 
                     # Access the dict
                     stats = raw_stats[0][1]
-                    prefix = "memcache.{}".format(arg)
+                    prefix = "memcache.{0}".format(arg)
                     for metric, val in stats.iteritems():
                         # Check if metric is a gauge or rate
                         metric_tags = []
@@ -280,7 +280,7 @@ class Memcache(AgentCheck):
         slab_id = itemized_key[1]
         metric = itemized_key[2]
 
-        tags = ["slab:{}".format(slab_id)]
+        tags = ["slab:{0}".format(slab_id)]
 
         return metric, tags, value
 
@@ -299,7 +299,7 @@ class Memcache(AgentCheck):
         if len(slabbed_key) == 2:
             slab_id = slabbed_key[0]
             metric = slabbed_key[1]
-            tags = ["slab:{}".format(slab_id)]
+            tags = ["slab:{0}".format(slab_id)]
         else:
             metric = slabbed_key[0]
 

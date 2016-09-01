@@ -232,7 +232,7 @@ class Disk(AgentCheck):
             total = float(device[1])
 
         else:
-            self.log.error('Unable to process df -k output for: {}'.format(device))
+            self.log.error('Unable to process df -k output for: {0}'.format(device))
             # return nothing so the loop can carry on
             return []
 

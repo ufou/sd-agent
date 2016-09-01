@@ -70,6 +70,6 @@ class Kong(AgentCheck):
         databases_metrics = parsed.get('database').items()
         output.append((self.METRIC_PREFIX + 'table.count', len(databases_metrics), tags))
         for name, items in databases_metrics:
-            output.append((self.METRIC_PREFIX + 'table.items', items, tags + ['table:{}'.format(name)]))
+            output.append((self.METRIC_PREFIX + 'table.items', items, tags + ['table:{0}'.format(name)]))
 
         return output

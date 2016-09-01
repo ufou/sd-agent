@@ -38,9 +38,9 @@ class PowerDNSRecursorCheck(AgentCheck):
         stats = self._get_pdns_stats(config)
         for stat in stats:
             if stat['name'] in PowerDNSRecursorCheck.GAUGE_METRICS:
-                self.gauge('powerdns.recursor.{}'.format(stat['name']), float(stat['value']), tags=tags)
+                self.gauge('powerdns.recursor.{0}'.format(stat['name']), float(stat['value']), tags=tags)
             elif stat['name'] in PowerDNSRecursorCheck.RATE_METRICS:
-                self.rate('powerdns.recursor.{}'.format(stat['name']), float(stat['value']), tags=tags)
+                self.rate('powerdns.recursor.{0}'.format(stat['name']), float(stat['value']), tags=tags)
 
     def _get_config(self, instance):
         required = ['host', 'port', 'api_key']
@@ -62,8 +62,8 @@ class PowerDNSRecursorCheck(AgentCheck):
         return Config(host, port, api_key), tags
 
     def _get_pdns_stats(self, config):
-        url = "http://{}:{}/servers/localhost/statistics".format(config.host, config.port)
-        service_check_tags = ['recursor_host:{}'.format(config.host), 'recursor_port:{}'.format(config.port)]
+        url = "http://{0}:{1}/servers/localhost/statistics".format(config.host, config.port)
+        service_check_tags = ['recursor_host:{0}'.format(config.host), 'recursor_port:{0}'.format(config.port)]
         headers = {"X-API-Key": config.api_key}
         try:
             request = requests.get(url, headers=headers)
