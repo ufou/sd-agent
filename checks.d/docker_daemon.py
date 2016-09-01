@@ -3,13 +3,17 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 # stdlib
+import collections
 import os
 import re
 import requests
 import socket
 import urllib2
-from collections import defaultdict, Counter, deque
+from collections import defaultdict, deque
 from math import ceil
+from operator import itemgetter
+
+import six
 
 # project
 from checks import AgentCheck
@@ -18,6 +22,31 @@ from utils.dockerutil import DockerUtil, MountException
 from utils.kubeutil import KubeUtil
 from utils.platform import Platform
 from utils.service_discovery.sd_backend import get_sd_backend
+
+
+class _Counter(defaultdict):
+    """Partial replacement for Python 2.7 collections.Counter."""
+    def __init__(self, iterable=(), **kwargs):
+        super(_Counter, self).__init__(int, **kwargs)
+        self.update(iterable)
+
+    def most_common(self):
+        return sorted(six.iteritems(self), key=itemgetter(1), reverse=True)
+
+    def update(self, other):
+        """Adds counts for elements in other"""
+        if isinstance(other, self.__class__):
+            for x, n in six.iteritems(other):
+                self[x] += n
+        else:
+            for x in other:
+                self[x] += 1
+
+
+try:
+    Counter = collections.Counter
+except AttributeError:
+    Counter = _Counter
 
 
 EVENT_TYPE = 'docker'
