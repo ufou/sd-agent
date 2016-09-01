@@ -1,4 +1,3 @@
-# pylint: disable=E0401
 # stdlib
 from functools import partial
 import logging

@@ -1,6 +1,6 @@
 # stdlib
 import os
-from distutils.version import LooseVersion # pylint: disable=E0611,E0401
+from distutils.version import LooseVersion # pylint: disable=E0611
 from nose.plugins.attrib import attr
 
 # project

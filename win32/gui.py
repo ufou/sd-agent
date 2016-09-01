@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=E0401
 #
 # Copyright © 2009-2010 CEA
 # Pierre Raybaut
@@ -12,10 +11,10 @@ import os
 import os.path as osp
 import platform
 # To manage the agent on OSX
+import subprocess
 from subprocess import (
     CalledProcessError,
     check_call,
-    check_output,
 )
 import sys
 import thread  # To manage the windows process asynchronously
@@ -82,6 +81,17 @@ from config import (
 from util import yLoader
 from utils.flare import Flare
 from utils.platform import Platform
+
+
+def _check_output(args):
+    process = subprocess.Popen(args, stdout=subprocess.PIPE)
+    return process.communicate()[0]
+
+try:
+    check_output = subprocess.check_output
+except AttributeError:
+    check_output = _check_output
+
 
 # Constants describing the agent state
 AGENT_RUNNING = 0

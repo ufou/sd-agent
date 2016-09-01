@@ -105,6 +105,11 @@ def get_version():
     return AGENT_VERSION
 
 
+# Return url endpoint, here because needs access to version number
+def get_url_endpoint(default_url, endpoint_type='app'):
+    return default_url
+
+
 def skip_leading_wsp(f):
     "Works on a file, returns a file-like object"
     return StringIO("\n".join(map(string.strip, f.readlines())))
