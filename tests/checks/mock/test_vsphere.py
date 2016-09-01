@@ -5,6 +5,7 @@ from collections import defaultdict
 from mock import Mock
 from pyVmomi import vim  # pylint: disable=E0611
 import simplejson as json
+from nose.plugins.skip import SkipTest
 
 # datadog
 from tests.checks.common import AgentCheckTest, Fixtures
@@ -202,6 +203,7 @@ class TestvSphereUnit(AgentCheckTest):
                             - vm4
             ```
         """
+        raise SkipTest("This test doesn't apply to Server Density.")
         # Method to test
         discover_mor = self.check._discover_mor
 

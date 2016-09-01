@@ -3,6 +3,7 @@ from tests.core.test_wmi import TestCommonWMI
 from tests.checks.common import AgentCheckTest
 
 from mock import patch
+from nose.plugins.skip import SkipTest
 
 def to_time(wmi_ts):
     "Just return any time struct"
@@ -31,6 +32,7 @@ class W32LogEventTestCase(AgentCheckTest, TestCommonWMI):
         """
         Returns the right metrics and service checks
         """
+        raise SkipTest("This test doesn't apply to Server Density.")
         # Run check
         config = {
             'instances': [self.WIN_LOGEVENT_CONFIG]
