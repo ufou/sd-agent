@@ -232,7 +232,7 @@ class SDDockerBackend(AbstractSDBackend):
                         else:
                             configs[check_name] = (init_config, [instance])
                     else:
-                        conflict_init_msg = 'Different versions of `init_config` found for check {}. ' \
+                        conflict_init_msg = 'Different versions of `init_config` found for check {0}. ' \
                             'Keeping the first one found.'
                         if trace_config:
                             if configs[check_name][1][0] != init_config:
