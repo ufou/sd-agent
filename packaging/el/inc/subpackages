@@ -1,7 +1,7 @@
 %package apache
 Summary: Server Density Monitoring Agent. Apache plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description apache
@@ -16,7 +16,7 @@ This package installs the Apache plugin.
 %package mongo
 Summary: Server Density Monitoring Agent. MongoDB plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 
 %description mongo
 %{longdescription}
@@ -32,7 +32,7 @@ This package installs the MongoDB plugin.
 %package mysql
 Summary: Server Density Monitoring Agent. MySQL plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description mysql
@@ -49,7 +49,7 @@ This package installs the MySQL plugin.
 %package nginx
 Summary: Server Density Monitoring Agent. Nginx plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description nginx
@@ -64,7 +64,7 @@ This package installs the Nginx plugin.
 %package rabbitmq
 Summary: Server Density Monitoring Agent. rabbitMQ plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description rabbitmq
@@ -79,7 +79,7 @@ This package installs the rabbitMQ plugin.
 %package btrfs
 Summary: Server Density Monitoring Agent. btrfs plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.3
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description btrfs
@@ -94,7 +94,7 @@ This package installs the btrfs plugin.
 %package consul
 Summary: Server Density Monitoring Agent. Consul plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description consul
@@ -109,7 +109,7 @@ This package installs the Consul plugin.
 %package couchdb
 Summary: Server Density Monitoring Agent. CouchDB plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description couchdb
@@ -124,7 +124,7 @@ This package installs the CouchDB plugin.
 %package directory
 Summary: Server Density Monitoring Agent. directory plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description directory
@@ -139,7 +139,7 @@ This package installs the directory plugin.
 %package docker
 Summary: Server Density Monitoring Agent. Docker plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description docker
@@ -154,7 +154,7 @@ This package installs the Docker plugin.
 %package memcache
 Summary: Server Density Monitoring Agent. Memcached plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description memcache
@@ -170,7 +170,7 @@ This package installs the Memcached plugin.
 %package ntp
 Summary: Server Density Monitoring Agent. NTP plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description ntp
@@ -185,7 +185,7 @@ This package installs the NTP plugin.
 %package phpfpm
 Summary: Server Density Monitoring Agent. PHP-FPM plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description phpfpm
@@ -200,7 +200,7 @@ This package installs the PHP-FPM plugin.
 %package postfix
 Summary: Server Density Monitoring Agent. Postfix plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description postfix
@@ -215,7 +215,7 @@ This package installs the Postfix plugin.
 %package postgresql
 Summary: Server Density Monitoring Agent. PostgreSQL plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 Obsoletes: sd-agent-postgres < 2.0.3-2
 
@@ -232,7 +232,7 @@ This package installs the PostgreSQL plugin.
 %package redis
 Summary: Server Density Monitoring Agent. Redis plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description redis
@@ -248,7 +248,7 @@ This package installs the Redis plugin.
 %package riak
 Summary: Server Density Monitoring Agent. Riak plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description riak
@@ -265,7 +265,7 @@ This package installs the Riak and Riak CS plugin.
 %package supervisord
 Summary: Server Density Monitoring Agent. Supervisord plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description supervisord
@@ -280,7 +280,7 @@ This package installs the Supervisord plugin.
 %package varnish
 Summary: Server Density Monitoring Agent. Varnish plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.0
+Requires: %{name} >= 2.1.0
 BuildArch: noarch
 
 %description varnish
@@ -295,7 +295,7 @@ This package installs the Varnish plugin.
 %package kafka-consumer
 Summary: Server Density Monitoring Agent. Kafka Consumer plugin
 Group: System/Monitoring
-Requires: %{name} >= 2.0.3
+Requires: %{name} >= 2.1.0
 
 %description kafka-consumer
 %{longdescription}
@@ -313,4 +313,18 @@ This package installs the Kafka Consumer plugin.
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/zope.interface-*-info
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/zope.interface-*-nspkg.pth
 
+%package zookeeper
+Summary: Server Density Monitoring Agent. zookeeper plugin
+Group: System/Monitoring
+Requires: %{name} >= 2.1.0
+BuildArch: noarch
+
+%description zookeeper
+%{longdescription}
+This package installs the zookeeper plugin.
+
+%files zookeeper
+%defattr(-,root,root,-)
+/usr/share/python/sd-agent/checks.d/zk.py
+%config /etc/sd-agent/conf.d/zk.yaml.example
 

@@ -1,4 +1,10 @@
 %changelog
+* Fri Sep 02 2016 Server Density <hello@serverdensity.com> 2.1.0-1
+- Sync with latest upstream version.
+- Added official macOS packages.
+- Added a new docker plugin and deprecated the old one.
+- Fixed an issue with the agent not reporting metrics after Daylight Saving Time (DST) ending.
+- Added official zookeeper plugin.
 * Thu May 19 2016 Server Density <hello@serverdensity.com> 2.0.5-1
 - Relax an exception that prevents the agent to start in some situations.
 - Fixed pip command to install third party modules inside the virtual-env.
