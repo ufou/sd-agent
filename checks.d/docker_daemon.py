@@ -223,7 +223,7 @@ class DockerDaemon(AgentCheck):
             # Other options
             self.collect_image_stats = _is_affirmative(instance.get('collect_images_stats', False))
             self.collect_container_size = _is_affirmative(instance.get('collect_container_size', False))
-            self.collect_events = _is_affirmative(instance.get('collect_events', True))
+            self.collect_events = _is_affirmative(instance.get('collect_events', False))
             self.collect_image_size = _is_affirmative(instance.get('collect_image_size', False))
             self.collect_disk_stats = _is_affirmative(instance.get('collect_disk_stats', False))
             self.collect_ecs_tags = _is_affirmative(instance.get('ecs_tags', True)) and Platform.is_ecs_instance()
