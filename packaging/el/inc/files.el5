@@ -38,7 +38,12 @@
 /usr/share/python/sd-agent/checks.d/sd_cpu_stats.py
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/backports
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/boto*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/*consul*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/dns*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/docker*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/easy-install.pth
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/*etcd*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/ipaddress.py*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/_markerlib
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/meld3*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/ntplib*
@@ -54,5 +59,8 @@
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/pkg_resources
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/supervisor*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/tornado*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/uptime*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/urllib3*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/websocket*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/yaml
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/_yaml.so

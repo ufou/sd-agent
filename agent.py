@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/share/python/sd-agent/bin/python
 '''
     Server Density
     www.serverdensity.com

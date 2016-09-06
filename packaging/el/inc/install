@@ -28,7 +28,7 @@ for i in %{__venv}/lib/python%{__sd_python_version}/{*.py,*.pyc,distutils,encodi
     cp -a $i %{buildroot}/usr/share/python/sd-agent/lib/python%{__sd_python_version}
 done
 
-for i in %{__venv}/lib/python%{__sd_python_version}/site-packages/{backports,boto*,easy-install.pth,_markerlib,meld3*,ntplib*,psutil*,pip,pycurl*,PyYAML*,requests*,sd_agent*,setuptools*,simplejson*,six.py,six*-info,pkg_resources,supervisor*,tornado*,yaml,_yaml.so}; do
+for i in %{__venv}/lib/python%{__sd_python_version}/site-packages/{backports,boto*,*consul*,dns*,docker*,easy-install.pth,*etcd*,ipaddress.py*,_markerlib,meld3*,ntplib*,psutil*,pip,pycurl*,PyYAML*,requests*,sd_agent*,setuptools*,simplejson*,six.py,six*-info,pkg_resources,supervisor*,tornado*,uptime*,urllib3*,websocket*,yaml,_yaml.so}; do
     cp -a $i %{buildroot}/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages
 done
 

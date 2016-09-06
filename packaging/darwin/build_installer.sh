@@ -33,6 +33,7 @@ sed -i "'.bak'" "s|^set -gx VIRTUAL_ENV.*|set -gx VIRTUAL_ENV ${DEST_VENV}|" ${B
 
 # Fix venv shebangs
 grep -l -r -e '^#!.*bin/\(env \)\?\(python\|pypy\|ipy\|jython\)' ${BUILD_DIR}/bin | xargs sed -i ".bak" 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|'
+sed -i ".bak" 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|' ${BUILD_DIR}/agent.py
 
 # Remove backup files
 rm -f ${BUILD_DIR}/bin/*.bak
