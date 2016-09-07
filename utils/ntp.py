@@ -1,42 +1,47 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
+import os
 import random
 
-user_ntp_settings = {}
+# project
+from config import get_confd_path
+from util import check_yaml
+from utils.singleton import Singleton
 
-DEFAULT_VERSION = 3
-DEFAULT_TIMEOUT = 1 # in seconds
-DEFAULT_PORT = "ntp"
 
+class NTPUtil():
+    __metaclass__ = Singleton
 
-def set_user_ntp_settings(instance):
-    global user_ntp_settings
-    user_ntp_settings = instance
+    DEFAULT_VERSION = 3
+    DEFAULT_TIMEOUT = 1  # in seconds
+    DEFAULT_PORT = "ntp"
 
-def get_ntp_host(subpool=None):
-    """
-    Returns randomly a NTP hostname of our vendor pool. Or
-    a given subpool if given in input.
-    """
+    def __init__(self, config=None):
+        try:
+            if config:
+                ntp_config = config
+            else:
+                ntp_config = check_yaml(os.path.join(get_confd_path(), 'ntp.yaml'))
+            settings = ntp_config['instances'][0]
+        except Exception:
+            settings = {}
 
-    if user_ntp_settings.get('host') is not None:
-        return user_ntp_settings['host']
+        self.host = settings.get('host') or "{0}.datadog.pool.ntp.org".format(random.randint(0, 3))
+        self.version = int(settings.get("version") or NTPUtil.DEFAULT_VERSION)
+        self.port = settings.get('port') or NTPUtil.DEFAULT_PORT
+        self.timeout = float(settings.get('timeout') or NTPUtil.DEFAULT_TIMEOUT)
 
-    subpool = subpool or random.randint(0, 3)
-    return "{0}.datadog.pool.ntp.org".format(subpool)
+        self.args = {
+            'host':    self.host,
+            'port':    self.port,
+            'version': self.version,
+            'timeout': self.timeout,
+        }
 
-def get_ntp_port():
-    return user_ntp_settings.get('port') or DEFAULT_PORT
-
-def get_ntp_version():
-    return int(user_ntp_settings.get("version") or DEFAULT_VERSION)
-
-def get_ntp_timeout():
-    return float(user_ntp_settings.get('timeout') or DEFAULT_TIMEOUT)
-
-def get_ntp_args():
-    return {
-        'host':    get_ntp_host(),
-        'port':    get_ntp_port(),
-        'version': get_ntp_version(),
-        'timeout': get_ntp_timeout(),
-    }
+    @classmethod
+    def _drop(cls):
+        if cls in cls._instances:
+            del cls._instances[cls]

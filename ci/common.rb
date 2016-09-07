@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 require 'colorize'
 require 'httparty'
 require 'socket'
@@ -134,6 +138,7 @@ namespace :ci do
                            "--cache-dir #{ENV['PIP_CACHE']}",
                            "#{ENV['VOLATILE_DIR']}/ci.log")
       sh %(pip install\
+           --upgrade\
            -r requirements-test.txt\
            --cache-dir #{ENV['PIP_CACHE']}\
             2>&1 >> #{ENV['VOLATILE_DIR']}/ci.log)
@@ -197,7 +202,7 @@ namespace :ci do
         # separate dir we symlink stuff in the rootdir
         path = %(PATH="#{ENV['INTEGRATIONS_DIR']}/bin:#{ENV['PATH']}" )
       end
-      sh %(#{path}nosetests -v -A "#{nose}" #{tests_directory})
+      sh %(#{path}nosetests -s -v -A "#{nose}" #{tests_directory})
       t.reenable
     end
     task execute: [:before_install, :install, :before_script, :script]

@@ -33,6 +33,7 @@ sed -i "'.bak'" "s|^set -gx VIRTUAL_ENV.*|set -gx VIRTUAL_ENV ${DEST_VENV}|" ${B
 
 # Fix venv shebangs
 grep -l -r -e '^#!.*bin/\(env \)\?\(python\|pypy\|ipy\|jython\)' ${BUILD_DIR}/bin | xargs sed -i ".bak" 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|'
+sed -i ".bak" 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|' ${BUILD_DIR}/agent.py
 
 # Remove backup files
 rm -f ${BUILD_DIR}/bin/*.bak
@@ -71,11 +72,11 @@ cp -a ${BUILD_DIR}/lib/python2.7/site-packages/meld3* ${INSTALL_DIR}/sd-agent/li
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/ntplib* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pip* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pkg_resources ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
-cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
-cp -a ${BUILD_DIR}/lib/python2.7/site-packages/_psutil_*.so ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pycurl* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/PyYAML* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/requests* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/*scandir* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/sd_agent* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/setuptools* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/simplejson* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages

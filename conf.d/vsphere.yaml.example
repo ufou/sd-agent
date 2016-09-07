@@ -19,6 +19,15 @@ instances:
     username: datadog-readonly@vsphere.local
     password: mypassword
 
+    # Set to false to disable SSL verification, when connecting to vCenter
+    # optional
+    # ssl_verify: true
+
+    # Set to the absolute file path of a directory containing CA certificates
+    # in PEM format
+    # optional
+    # ssl_capath: "/path/to/directory"
+
     # Use a regex like this if you want only the check
     # to fetch metrics for these ESXi hosts and the VMs
     # running on it
@@ -29,6 +38,13 @@ instances:
     # matching this pattern.
     # optional
     # vm_include_only_regex: ".*\.sql\.datadoghq\.com"
+
+    # Set to true if you'd like to only collect metrics on vSphere VMs which
+    # are marked by a custom field with the value 'DatadogMonitored'
+    # To set this custom field with PowerCLI, use the follow command: 
+    #   Get-VM <MyVMName> | Set-CustomField -Name "DatadogMonitored" -Value "DatadogMonitored"
+    # optional
+    # include_only_marked: false
 
     # When set to true, this will collect EVERY metric
     # from vCenter, which means a LOT of metrics you probably

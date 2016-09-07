@@ -43,7 +43,7 @@ class ServerDensityChecks(AgentCheck):
         # Get output from df
         try:
             self.log.debug('getDiskUsage: attempting Popen')
-            df = utils.subprocess_output.get_subprocess_output(
+            df, _, _ = utils.subprocess_output.get_subprocess_output(
                 self.DF_COMMAND, self.log
             )
 

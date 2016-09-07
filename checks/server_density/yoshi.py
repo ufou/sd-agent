@@ -187,7 +187,7 @@ class CPUStats(Check):
                 # we dont have it installed return nothing
                 return False
 
-            except Exception as exception:
+            except Exception:
                 import traceback
                 self.logger.error("getCPUStats: exception = %s", traceback.format_exc())
 

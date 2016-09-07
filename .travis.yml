@@ -28,14 +28,13 @@ cache:
 env:
   global:
     - CONCURRENCY=2
-    - COVERAGE=true
     - NOSE_FILTER="not windows"
     - INTEGRATIONS_DIR=$HOME/embedded
     - PIP_CACHE=$HOME/.cache/pip
     - SKIP_CLEANUP=true
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.0.5
+    - AGENT_VERSION=2.1.0
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=core_integration
@@ -52,7 +51,10 @@ env:
     #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.3.9
     #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.4.5
     #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.5.2
-    #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.6.0
+    #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.6.2
+    #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=1.7.4
+    #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=2.0.2
+    #- TRAVIS_FLAVOR=elasticsearch FLAVOR_VERSION=2.1.1
     #- TRAVIS_FLAVOR=etcd
     #- TRAVIS_FLAVOR=fluentd
     #- TRAVIS_FLAVOR=go_expvar
@@ -62,6 +64,7 @@ env:
     #- TRAVIS_FLAVOR=haproxy FLAVOR_VERSION=1.3.27
     #- TRAVIS_FLAVOR=haproxy FLAVOR_VERSION=1.4.26
     #- TRAVIS_FLAVOR=haproxy FLAVOR_VERSION=1.5.11
+    #- TRAVIS_FLAVOR=kong FLAVOR_VERSION=0.8.1
     - TRAVIS_FLAVOR=lighttpd
     - TRAVIS_FLAVOR=memcache
     - TRAVIS_FLAVOR=mongo FLAVOR_VERSION=2.6.9
@@ -77,6 +80,7 @@ env:
     - TRAVIS_FLAVOR=postgres FLAVOR_VERSION=9.2.10
     - TRAVIS_FLAVOR=postgres FLAVOR_VERSION=9.3.6
     - TRAVIS_FLAVOR=postgres FLAVOR_VERSION=9.4.1
+    #- TRAVIS_FLAVOR=powerdns_recursor
     - TRAVIS_FLAVOR=rabbitmq
     - TRAVIS_FLAVOR=redis FLAVOR_VERSION=2.4.18
     - TRAVIS_FLAVOR=redis FLAVOR_VERSION=2.6.17
@@ -93,7 +97,8 @@ env:
     #- TRAVIS_FLAVOR=tomcat # JMX testing machine / need the other ones before
     - TRAVIS_FLAVOR=varnish FLAVOR_VERSION=3.0.7
     - TRAVIS_FLAVOR=varnish FLAVOR_VERSION=4.0.3
-    #- TRAVIS_FLAVOR=zookeeper
+    - TRAVIS_FLAVOR=zookeeper FLAVOR_VERSION=3.4.7
+    - TRAVIS_FLAVOR=zookeeper FLAVOR_VERSION=3.3.6
 
 # Override travis defaults with empty jobs
 before_install: echo "OVERRIDING TRAVIS STEPS"

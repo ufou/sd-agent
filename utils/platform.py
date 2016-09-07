@@ -1,5 +1,14 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
+# stdlib
 import sys
 
+# project
+from utils.dockerutil import DockerUtil
+
+_is_ecs = None
 
 class Platform(object):
     """
@@ -53,3 +62,14 @@ class Platform(object):
     @staticmethod
     def is_windows(name=None):
         return Platform.is_win32(name)
+
+    @staticmethod
+    def python_architecture():
+        if sys.maxsize > 2**32:
+            return "64bit"
+        else:
+            return "32bit"
+
+    @staticmethod
+    def is_ecs_instance():
+        return DockerUtil().is_ecs()

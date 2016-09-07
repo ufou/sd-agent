@@ -5,7 +5,7 @@
     ----
     Licensed under Simplified BSD License (see LICENSE)
     (C) Server Density 2009-2015 all rights reserved
-    (C) Datadog, Inc. 2010-2013 all rights reserved
+    (C) Datadog, Inc. 2010-2016 all rights reserved
 '''
 # set up logging before importing any other components
 from config import initialize_logging  # noqa
@@ -53,14 +53,23 @@ from util import (
     json,
     Watchdog,
 )
+from utils.logger import RedactedLogRecord
 
+
+logging.LogRecord = RedactedLogRecord
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
 
 SD_ENDPOINT = "sd_url"
 
+# Transactions
 TRANSACTION_FLUSH_INTERVAL = 5000  # Every 5 seconds
+
+# Watchdog settings
 WATCHDOG_INTERVAL_MULTIPLIER = 10  # 10x flush interval
+WATCHDOG_HIGH_ACTIVITY_THRESHOLD = 1000  # Threshold to detect pathological activity
+
+# Misc
 HEADERS_TO_REMOVE = [
     'Host',
     'Content-Length',
@@ -73,7 +82,7 @@ MAX_WAIT_FOR_REPLAY = timedelta(seconds=90)
 # Maximum queue size in bytes (when this is reached, old messages are dropped)
 MAX_QUEUE_SIZE = 30 * 1024 * 1024  # 30MB
 
-THROTTLING_DELAY = timedelta(microseconds=1000000/2)  # 2 msg/second
+THROTTLING_DELAY = timedelta(microseconds=1000000 / 2)  # 2 msg/second
 
 
 class EmitterThread(threading.Thread):
@@ -160,21 +169,14 @@ class AgentTransaction(Transaction):
 
     @classmethod
     def set_endpoints(cls):
+        """
+        Set Datadog endpoint if an API key exists.
+        """
+        if not cls._application._agentConfig.get('agent_key'):
+            log.warning(u"No agent key was found. Aborting endpoint setting.")
+            return
 
-        # Only send data to Server Density if an agent key exists
-        # i.e. user is also Server Densisty user
-        try:
-            is_dd_user = 'agent_key' in cls._application._agentConfig\
-                and 'use_sd' in cls._application._agentConfig\
-                and cls._application._agentConfig['use_sd']\
-                and cls._application._agentConfig.get('agent_key')
-            if is_dd_user:
-                log.warn(
-                    "You are a Server Density user so we will send data to " +
-                    "%s" % cls._application._agentConfig.get('sd_url'))
-                cls._endpoints.append(SD_ENDPOINT)
-        except Exception:
-            log.info("Not a Server Density user")
+        cls._endpoints.append(SD_ENDPOINT)
 
     def __init__(self, data, headers, msg_type=""):
         self._data = data
@@ -208,7 +210,10 @@ class AgentTransaction(Transaction):
     def flush(self):
         for endpoint in self._endpoints:
             url = self.get_url(endpoint)
-            log.debug("Sending %s to endpoint %s at %s" % (self._type, endpoint, url))
+            log.debug(
+                u"Sending %s to endpoint %s at %s",
+                self._type, endpoint, url
+            )
 
             # Getting proxy settings
             proxy_settings = self._application._agentConfig.get('proxy_settings', None)
@@ -219,6 +224,7 @@ class AgentTransaction(Transaction):
                 'body': self._data,
                 'headers': self._headers,
                 'validate_cert': not self._application.skip_ssl_validation,
+                'allow_ipv6': True,
             }
 
             # Remove headers that were passed by the emitter. Those don't apply anymore
@@ -244,10 +250,10 @@ class AgentTransaction(Transaction):
                         # See http://stackoverflow.com/questions/8156073/curl-violate-rfc-2616-10-3-2-and-switch-from-post-to-get
                         tornado_client_params['prepare_curl_callback'] = lambda curl: curl.setopt(pycurl.POSTREDIR, pycurl.REDIR_POST_ALL)
 
-            if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
-                ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-                # Disable this feature, it needs more testing.
-                # tornado_client_params['ca_certs'] = ssl_certificate
+            # Disable this feature, it needs more testing.
+            # if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
+            #     ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
+            #     tornado_client_params['ca_certs'] = ssl_certificate
 
             req = tornado.httpclient.HTTPRequest(**tornado_client_params)
             use_curl = force_use_curl or self._application._agentConfig.get("use_curl_http_client") and not self._application.use_simple_http_client
@@ -266,7 +272,10 @@ class AgentTransaction(Transaction):
     def on_response(self, response):
         if response.error:
             log.error("Response: %s" % response)
-            self._trManager.tr_error(self)
+            if response.code == 413:
+                self._trManager.tr_error_too_big(self)
+            else:
+                self._trManager.tr_error(self)
         else:
             self._trManager.tr_success(self)
 
@@ -359,7 +368,7 @@ class ApiInputHandler(tornado.web.RequestHandler):
 
         if msg is not None:
             # Setup a transaction for this message
-            tr = APIMetricTransaction(msg, headers)
+            APIMetricTransaction(msg, headers)
         else:
             raise tornado.web.HTTPError(500)
 
@@ -401,10 +410,14 @@ class Application(tornado.web.Application):
         if self.skip_ssl_validation:
             log.info("Skipping SSL hostname validation, useful when using a transparent proxy")
 
+        # Monitor activity
         if watchdog:
-            watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
-            self._watchdog = Watchdog(watchdog_timeout,
-                                      max_mem_mb=agentConfig.get('limit_memory_consumption', None))
+            watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER / 1000
+            self._watchdog = Watchdog(
+                watchdog_timeout,
+                max_mem_mb=agentConfig.get('limit_memory_consumption', None),
+                max_resets=WATCHDOG_HIGH_ACTIVITY_THRESHOLD
+            )
 
     def log_request(self, handler):
         """ Override the tornado logging method.
@@ -416,9 +429,13 @@ class Application(tornado.web.Application):
             log_method = log.warning
         else:
             log_method = log.error
+
         request_time = 1000.0 * handler.request.request_time()
-        log_method("%d %s %.2fms", handler.get_status(),
-                   handler._request_summary(), request_time)
+        log_method(
+            u"%d %s %.2fms",
+            handler.get_status(),
+            handler._request_summary(), request_time
+        )
 
     def appendMetric(self, prefix, name, host, device, ts, value):
 

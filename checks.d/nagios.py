@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 from collections import namedtuple
 import re
@@ -326,7 +330,6 @@ class NagiosPerfDataTailer(NagiosTailer):
 
     def _parse_line(self, line):
         matched = self.line_pattern.match(line)
-        output = []
         if matched:
             self.log.debug("Matching line found %s" % line)
             data = matched.groupdict()

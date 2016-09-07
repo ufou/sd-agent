@@ -1,7 +1,11 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 require './ci/common'
 
 def supervisor_version
-  ENV['FLAVOR_VERSION'] || '3.1.3'
+  ENV['FLAVOR_VERSION'] || '3.3.0'
 end
 
 def supervisor_rootdir

@@ -1,3 +1,13 @@
+sd-agent (2.1.0-1) precise; urgency=medium
+
+  * Sync with latest upstream version.
+  * Added official macOS packages.
+  * Added a new docker plugin and deprecated the old one.
+  * Fixed an issue with the agent not reporting metrics after Daylight Saving Time (DST) ending.
+  * Added official zookeeper plugin.
+
+ -- Server Density <hello@serverdensity.com>  Fri, 02 Sep 2016 17:54:17 +0200
+
 sd-agent (2.0.5-1) precise; urgency=medium
 
   * Relax an exception that prevents the agent to start in some situations.

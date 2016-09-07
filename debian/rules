@@ -50,6 +50,7 @@ define fix_shebangs
 	@echo Fixing shebangs
 	grep -l -r -e '^#!.*bin/\(env \)\?\(python\|pypy\|ipy\|jython\)' $(BUILD_DIR)/bin | \
 	xargs sed -i 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|'
+	sed -i 's|^#!.*bin/\(env \)\?.*|#!$(DEST_VENV)/bin/python|' agent.py
 endef
 
 define fix_local_symlinks

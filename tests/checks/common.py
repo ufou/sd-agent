@@ -1,11 +1,15 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 import copy
 import inspect
 from itertools import product
+import imp
 import logging
 import os
 from pprint import pformat
-import signal
 import sys
 import time
 import traceback
@@ -19,6 +23,9 @@ from utils.debug import get_check  # noqa -  FIXME 5.5.0 AgentCheck tests should
 
 log = logging.getLogger('tests')
 
+
+def _is_sdk():
+    return "SDK_TESTING" in os.environ
 
 def get_check_class(name):
     checksd_path = get_checksd_path(get_os())
@@ -41,12 +48,32 @@ def get_check_class(name):
     return check_class
 
 
-def load_check(name, config, agentConfig):
+def load_class(check_name, class_name):
+    """
+    Retrieve a class with the given name within the given check module.
+    """
     checksd_path = get_checksd_path(get_os())
     if checksd_path not in sys.path:
         sys.path.append(checksd_path)
+    check_module = __import__(check_name)
+    classes = inspect.getmembers(check_module, inspect.isclass)
+    for name, clsmember in classes:
+        if name == class_name:
+            return clsmember
 
-    check_module = __import__(name)
+    raise Exception(u"Unable to import class {0} from the check module.".format(class_name))
+
+
+def load_check(name, config, agentConfig):
+    if not _is_sdk():
+        checksd_path = get_checksd_path(get_os())
+
+        # find (in checksd_path) and load the check module
+        fd, filename, desc = imp.find_module(name, [checksd_path])
+        check_module = imp.load_module(name, fd, filename, desc)
+    else:
+        check_module = __import__("check")
+
     check_class = None
     classes = inspect.getmembers(check_module, inspect.isclass)
     for _, clsmember in classes:
@@ -68,24 +95,10 @@ def load_check(name, config, agentConfig):
     # init the check class
     try:
         return check_class(name, init_config=init_config, agentConfig=agentConfig, instances=instances)
-    except Exception as e:
+    except TypeError as e:
         raise Exception("Check is using old API, {0}".format(e))
-
-
-def kill_subprocess(process_obj):
-    try:
-        process_obj.terminate()
-    except AttributeError:
-        # py < 2.6 doesn't support process.terminate()
-        if get_os() == 'windows':
-            import ctypes
-            PROCESS_TERMINATE = 1
-            handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False,
-                                                        process_obj.pid)
-            ctypes.windll.kernel32.TerminateProcess(handle, -1)
-            ctypes.windll.kernel32.CloseHandle(handle)
-        else:
-            os.kill(process_obj.pid, signal.SIGKILL)
+    except Exception:
+        raise
 
 
 class Fixtures(object):
@@ -110,8 +123,12 @@ class Fixtures(object):
         return os.path.join(Fixtures.directory(), file_name)
 
     @staticmethod
-    def read_file(file_name):
-        return open(Fixtures.file(file_name)).read()
+    def read_file(file_name, string_escape=True):
+        with open(Fixtures.file(file_name)) as f:
+            contents = f.read()
+            if string_escape:
+                contents = contents.decode('string-escape')
+            return contents.decode("utf-8")
 
 
 class AgentCheckTest(unittest.TestCase):
@@ -135,12 +152,27 @@ class AgentCheckTest(unittest.TestCase):
         agent_config = agent_config or self.DEFAULT_AGENT_CONFIG
         self.check = load_check(self.CHECK_NAME, config, agent_config)
 
+    def load_class(self, name):
+        """
+        Retrieve a class with the given name among the check module.
+        """
+        return load_class(self.CHECK_NAME, name)
+
     # Helper function when testing rates
     def run_check_twice(self, config, agent_config=None, mocks=None,
                         force_reload=False):
         self.run_check(config, agent_config, mocks, force_reload)
         time.sleep(1)
         self.run_check(config, agent_config, mocks)
+
+    def run_check_n(self, config, agent_config=None, mocks=None,
+                    force_reload=False, repeat=1, sleep=1):
+        for i in xrange(repeat):
+            if not i:
+                self.run_check(config, agent_config, mocks, force_reload)
+            else:
+                self.run_check(config, agent_config, mocks)
+            time.sleep(sleep)
 
     def run_check(self, config, agent_config=None, mocks=None, force_reload=False):
         # If not loaded already, do it!
@@ -179,7 +211,7 @@ class AgentCheckTest(unittest.TestCase):
                 self.service_metadata.append(metadata)
 
         if error is not None:
-            raise error
+            raise error  # pylint: disable=E0702
 
     def print_current_state(self):
         log.debug("""++++++++ CURRENT STATE ++++++++
@@ -268,7 +300,7 @@ WARNINGS
             untested_events=pformat(untested_events),
         ))
 
-        if os.getenv('COVERAGE'):
+        if not os.getenv('NO_COVERAGE'):
             self.assertEquals(coverage_metrics, 100.0)
             self.assertEquals(coverage_events, 100.0)
             self.assertEquals(coverage_sc, 100.0)
@@ -291,7 +323,7 @@ WARNINGS
             raise
 
     def assertMetric(self, metric_name, value=None, tags=None, count=None,
-                     at_least=1, hostname=None, device_name=None):
+                     at_least=1, hostname=None, device_name=None, metric_type=None):
         candidates = []
         for m_name, ts, val, mdata in self.metrics:
             if m_name == metric_name:
@@ -302,6 +334,8 @@ WARNINGS
                 if hostname is not None and mdata['hostname'] != hostname:
                     continue
                 if device_name is not None and mdata['device_name'] != device_name:
+                    continue
+                if metric_type is not None and mdata['type'] != metric_type:
                     continue
 
                 candidates.append((m_name, ts, val, mdata))

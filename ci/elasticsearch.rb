@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 require './ci/common'
 
 def es_version
@@ -26,6 +30,11 @@ namespace :ci do
     end
 
     task before_script: ['ci:common:before_script'] do
+      # Elasticsearch configuration
+      sh %(mkdir -p #{es_rootdir}/config)
+      sh %(cp $TRAVIS_BUILD_DIR/ci/resources/elasticsearch/elasticsearch.yml\
+           #{es_rootdir}/config/)
+      # Elasticsearch data
       sh %(mkdir -p $VOLATILE_DIR/es_data)
       pid = spawn %(#{es_rootdir}/bin/elasticsearch --path.data=$VOLATILE_DIR/es_data)
       Process.detach(pid)

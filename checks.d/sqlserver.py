@@ -1,3 +1,7 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 '''
 Check the performance counters from SQL Server
 
@@ -57,6 +61,7 @@ class SQLServer(AgentCheck):
     SERVICE_CHECK_NAME = 'sqlserver.can_connect'
     # FIXME: 6.x, set default to 5s (like every check)
     DEFAULT_COMMAND_TIMEOUT = 30
+    DEFAULT_DATABASE = 'master'
 
     METRICS = [
         ('sqlserver.buffer.cache_hit_ratio', 'Buffer cache hit ratio', ''),  # RAW_LARGE_FRACTION
@@ -83,7 +88,9 @@ class SQLServer(AgentCheck):
         custom_metrics = init_config.get('custom_metrics', [])
         for instance in instances:
             try:
+                self.open_db_connections(instance)
                 self._make_metric_list_to_collect(instance, custom_metrics)
+                self.close_db_connections(instance)
             except SQLConnectionError:
                 self.log.exception("Skipping SQL Server instance")
                 continue
@@ -167,7 +174,7 @@ class SQLServer(AgentCheck):
         host = instance.get('host', '127.0.0.1,1433')
         username = instance.get('username')
         password = instance.get('password')
-        database = instance.get('database', 'master')
+        database = instance.get('database', self.DEFAULT_DATABASE)
         return host, username, password, database
 
     def _conn_key(self, instance):
@@ -176,10 +183,13 @@ class SQLServer(AgentCheck):
         host, username, password, database = self._get_access_info(instance)
         return '%s:%s:%s:%s' % (host, username, password, database)
 
-    def _conn_string(self, instance):
+    def _conn_string(self, instance=None, conn_key=None):
         ''' Return a connection string to use with adodbapi
         '''
-        host, username, password, database = self._get_access_info(instance)
+        if instance:
+            host, username, password, database = self._get_access_info(instance)
+        elif conn_key:
+            host, username, password, database = conn_key.split(":")
         conn_str = 'Provider=SQLOLEDB;Data Source=%s;Initial Catalog=%s;' \
             % (host, database)
         if username:
@@ -190,50 +200,14 @@ class SQLServer(AgentCheck):
             conn_str += 'Integrated Security=SSPI;'
         return conn_str
 
-    def get_cursor(self, instance, cache_failure=False):
+    def get_cursor(self, instance):
         '''
         Return a cursor to execute query against the db
         Cursor are cached in the self.connections dict
         '''
         conn_key = self._conn_key(instance)
-        host = instance.get('host')
-        database = instance.get('database')
-        service_check_tags = [
-            'host:%s' % host,
-            'db:%s' % database
-        ]
 
-        if conn_key in self.failed_connections:
-            raise self.failed_connections[conn_key]
-
-        if conn_key not in self.connections:
-            try:
-                conn = adodbapi.connect(
-                    self._conn_string(instance),
-                    timeout=int(instance.get('command_timeout',
-                                             self.DEFAULT_COMMAND_TIMEOUT))
-                )
-                self.connections[conn_key] = conn
-                self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK, tags=service_check_tags)
-            except Exception:
-                cx = "%s - %s" % (host, database)
-                message = "Unable to connect to SQL Server for instance %s." % cx
-                self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.CRITICAL,
-                                   tags=service_check_tags, message=message)
-
-                password = instance.get('password')
-                tracebk = traceback.format_exc()
-                if password is not None:
-                    tracebk = tracebk.replace(password, "*" * 6)
-
-                # Avoid multiple connection timeouts (too slow):
-                # save the exception, re-raise it when needed
-                cxn_failure_exp = SQLConnectionError("%s \n %s" % (message, tracebk))
-                if cache_failure:
-                    self.failed_connections[conn_key] = cxn_failure_exp
-                raise cxn_failure_exp
-
-        conn = self.connections[conn_key]
+        conn = self.connections[conn_key]['conn']
         cursor = conn.cursor()
         return cursor
 
@@ -244,7 +218,7 @@ class SQLServer(AgentCheck):
         If the sql_type is one that needs a base (PERF_RAW_LARGE_FRACTION and
         PERF_AVERAGE_BULK), the name of the base counter will also be returned
         '''
-        cursor = self.get_cursor(instance, cache_failure=True)
+        cursor = self.get_cursor(instance)
         cursor.execute(COUNTER_TYPE_QUERY, (counter_name,))
         (sql_type,) = cursor.fetchone()
         if sql_type == PERF_LARGE_RAW_BASE:
@@ -275,6 +249,7 @@ class SQLServer(AgentCheck):
         """
         Fetch the metrics from the sys.dm_os_performance_counters table
         """
+        self.open_db_connections(instance)
         cursor = self.get_cursor(instance)
 
         custom_tags = instance.get('tags', [])
@@ -288,6 +263,7 @@ class SQLServer(AgentCheck):
                 self.log.warning("Could not fetch metric %s: %s" % (metric.datadog_name, e))
 
         self.close_cursor(cursor)
+        self.close_db_connections(instance)
 
     def close_cursor(self, cursor):
         """
@@ -299,6 +275,71 @@ class SQLServer(AgentCheck):
             cursor.close()
         except Exception as e:
             self.log.warning("Could not close adodbapi cursor\n{0}".format(e))
+
+    def close_db_connections(self, instance):
+        """
+        We close the db connections explicitly b/c when we don't they keep
+        locks on the db. This presents as issues such as the SQL Server Agent
+        being unable to stop.
+        """
+        conn_key = self._conn_key(instance)
+        if conn_key not in self.connections:
+            return
+
+        try:
+            self.connections[conn_key]['conn'].close()
+            del self.connections[conn_key]
+        except Exception as e:
+            self.log.warning("Could not close adodbapi db connection\n{0}".format(e))
+
+    def open_db_connections(self, instance):
+        """
+        We open the db connections explicitly, so we can ensure they are open
+        before we use them, and are closable, once we are finished. Open db
+        connections keep locks on the db, presenting issues such as the SQL
+        Server Agent being unable to stop.
+        """
+
+        conn_key = self._conn_key(instance)
+        timeout = int(instance.get('command_timeout',
+                                   self.DEFAULT_COMMAND_TIMEOUT))
+
+        host = instance.get('host')
+        database = instance.get('database', self.DEFAULT_DATABASE)
+        service_check_tags = [
+            'host:%s' % host,
+            'db:%s' % database
+        ]
+
+        try:
+            rawconn = adodbapi.connect(self._conn_string(instance=instance),
+                                       timeout=timeout)
+            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK,
+                               tags=service_check_tags)
+            if conn_key not in self.connections:
+                self.connections[conn_key] = {'conn': rawconn, 'timeout': timeout}
+            else:
+                try:
+                    # explicitly trying to avoid leaks...
+                    self.connections[conn_key]['conn'].close()
+                except Exception as e:
+                    self.log.info("Could not close adodbapi db connection\n{0}".format(e))
+
+                self.connections[conn_key]['conn'] = rawconn
+        except Exception as e:
+            cx = "%s - %s" % (host, database)
+            message = "Unable to connect to SQL Server for instance %s." % cx
+            self.log.warning("%s Exception: %s", message, e)
+            self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.CRITICAL,
+                               tags=service_check_tags, message=message)
+
+            password = instance.get('password')
+            tracebk = traceback.format_exc()
+            if password is not None:
+                tracebk = tracebk.replace(password, "*" * 6)
+
+            cxn_failure_exp = SQLConnectionError("%s \n %s" % (message, tracebk))
+            raise cxn_failure_exp
 
 
 class SqlServerMetric(object):

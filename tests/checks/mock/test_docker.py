@@ -1,77 +1,26 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+# stdlib
+import mock
 import unittest
 
-from mock import patch
+from utils.dockerutil import DockerUtil
 
-from tests.checks.common import get_check_class
 
-def _mocked_find_cgroup(*args, **kwargs):
-    return
+class TestDockerutil(unittest.TestCase):
+    def setUp(self):
+        self.dockerutil = DockerUtil()
 
-class DockerCheckTest(unittest.TestCase):
-    def test_tag_exclude_all(self):
-        """ exclude all, except ubuntu and debian. """
-        instance = {
-            'include': [
-                'docker_image:ubuntu',
-                'docker_image:debian',
-            ],
-            'exclude': ['.*'],
-        }
+    @mock.patch('utils.dockerutil.DockerUtil.client')
+    def test_get_events(self, mocked_client):
+        mocked_client.events.return_value = [
+            {'status': 'stop', 'id': '1234567890', 'from': '1234567890', 'time': 1423247867}
+        ]
+        events_generator, _ = self.dockerutil.get_events()
+        self.assertEqual(len(events_generator), 1)
 
-        klass = get_check_class('docker')
-        # NO-OP but loads the check
-        with patch.object(klass, '_find_cgroup', _mocked_find_cgroup):
-            check = klass('docker', {}, {})
-
-        check._prepare_filters(instance)
-        self.assertEquals(len(instance['exclude_patterns']), 1)
-        self.assertEquals(len(instance['include_patterns']), 2)
-
-        truth_table_exclusion = {
-            'some_tag': True,
-            'debian:ubuntu': True,
-            'docker_image:centos': True,
-            'docker_image:ubuntu': False,
-            'docker_image:debian': False,
-        }
-
-        for tag, val in truth_table_exclusion.iteritems():
-            self.assertEquals(
-                check._is_container_excluded(instance, [tag]),
-                val,
-                "{0} expected {1} but is not".format(tag, val)
-            )
-
-    def test_tag_include_all(self):
-        """ exclude all, except ubuntu and debian. """
-        instance = {
-            'include': [],
-            'exclude': [
-                'docker_image:ubuntu',
-                'docker_image:debian',
-            ],
-        }
-
-        klass = get_check_class('docker')
-        # NO-OP but loads the check
-        with patch.object(klass, '_find_cgroup', _mocked_find_cgroup):
-            check = klass('docker', {}, {})
-
-        check._prepare_filters(instance)
-        self.assertEquals(len(instance['exclude_patterns']), 2)
-        self.assertEquals(len(instance['include_patterns']), 0)
-
-        truth_table_exclusion = {
-            'some_tag': False,
-            'debian:ubuntu': False,
-            'docker_image:centos': False,
-            'docker_image:ubuntu': True,
-            'docker_image:debian': True,
-        }
-
-        for tag, val in truth_table_exclusion.iteritems():
-            self.assertEquals(
-                check._is_container_excluded(instance, [tag]),
-                val,
-                "{0} expected {1} but is not".format(tag, val)
-            )
+        # bug in dockerpy, we should be resilient
+        mocked_client.events.return_value = [u'an error from Docker API here']
+        events_generator, _ = self.dockerutil.get_events()
+        self.assertEqual(len(list(events_generator)), 0)
