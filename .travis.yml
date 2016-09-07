@@ -3,8 +3,8 @@ sudo: false
 branches:
   only:
     - master
-    - /^\d+\.\d+\.x$/ # release forked patches branch
-
+    - /^\d+\.\d+\.x$/  # release forked patches branch.
+    - /^\d+\.\d+\.\d+/ # tags format to we get releases pushed.
 
 language: python
 python:
