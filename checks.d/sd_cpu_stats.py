@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 from checks import AgentCheck
+from utils.subprocess_output import get_subprocess_output
 
 pythonVersion = platform.python_version_tuple()
 python24 = platform.python_version().startswith('2.4')
@@ -31,6 +32,20 @@ class ServerDensityCPUChecks(AgentCheck):
         #self.gauge('serverdensity.disk.free', 2, device_name="/var")
         #self.gauge('serverdensity.disk.free', 3, device_name="/home")
         #self.log.debug('hello2')
+
+        def get_value(legend, data, name, filter_value=None):
+            "Using the legend and a metric name, get the value or None from the data line"
+            if name in legend:
+                value = data[legend.index(name)]
+                if filter_value is not None:
+                    if value > filter_value:
+                        return None
+                return value
+
+            else:
+                # FIXME return a float or False, would trigger type error if not python
+                self.log.debug("Cannot extract cpu value %s from %s (%s)" % (name, data, legend))
+                return 0.0
 
         self.log.debug('getCPUStats: start')
 
@@ -126,6 +141,40 @@ class ServerDensityCPUChecks(AgentCheck):
             except Exception:
                 import traceback
                 self.log.error('getCPUStats: exception = %s', traceback.format_exc())
+                return False
+
+        elif sys.platform.startswith("freebsd"):
+            # generate 3 seconds of data
+            # tty            ada0              cd0            pass0             cpu
+            # tin  tout  KB/t tps  MB/s   KB/t tps  MB/s   KB/t tps  MB/s  us ni sy in id
+            # 0    69 26.71   0  0.01   0.00   0  0.00   0.00   0  0.00   2  0  0  1 97
+            # 0    78  0.00   0  0.00   0.00   0  0.00   0.00   0  0.00   0  0  0  0 100
+            iostats, _, _ = get_subprocess_output(['iostat', '-w', '3', '-c', '2'], self.log)
+            lines = [l for l in iostats.splitlines() if len(l) > 0]
+            legend = [l for l in lines if "us" in l]
+            if len(legend) == 1:
+                headers = legend[0].split()
+                data = lines[-1].split()
+                cpu_user = get_value(headers, data, "us")
+                cpu_nice = get_value(headers, data, "ni")
+                cpu_sys = get_value(headers, data, "sy")
+                cpu_intr = get_value(headers, data, "in")
+                cpu_idle = get_value(headers, data, "id")
+                self.gauge('serverdensity.cpu.usr', float(cpu_user), device_name='ALL')
+                self.gauge('serverdensity.cpu.nice', float(cpu_nice), device_name='ALL')
+                self.gauge('serverdensity.cpu.sys', float(cpu_sys), device_name='ALL')
+                self.gauge('serverdensity.cpu.irq', float(cpu_intr), device_name='ALL')
+                self.gauge('serverdensity.cpu.idle', float(cpu_idle), device_name='ALL')
+                cpu_stats['ALL'] = {
+                    'usr': cpu_user,
+                    'nice': cpu_nice,
+                    'sys': cpu_sys,
+                    'irq': cpu_intr,
+                    'idle': cpu_idle,
+                }
+
+            else:
+                self.logger.warn("Expected to get at least 4 lines of data from iostat instead of just " + str(iostats[:max(80, len(iostats))]))
                 return False
 
         else:
