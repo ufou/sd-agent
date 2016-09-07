@@ -49,9 +49,9 @@ namespace :ci do
       sh %(echo "PWD IS")
       sh %(pwd)
       sh %(flake8)
-      sh %(find . -name '*.py' -not\
-             \\( -path '*.cache*' -or -path '*embedded*' -or -path '*venv*' -or -path '*.git*' \\)\
-             | xargs -n 1 pylint --rcfile=./.pylintrc)
+      #sh %(find . -name '*.py' -not\
+      #       \\( -path '*.cache*' -or -path '*embedded*' -or -path '*venv*' -or -path '*.git*' \\)\
+      #       | xargs -n 1 pylint --rcfile=./.pylintrc)
     end
 
     task script: ['ci:common:script', :coverage, :lint] do
