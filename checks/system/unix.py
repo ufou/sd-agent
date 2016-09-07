@@ -408,6 +408,7 @@ class Memory(Check):
 
         elif sys.platform.startswith("freebsd"):
             try:
+                phys_total, _, _ = get_subprocess_output(['sysctl', '-n', 'hw.physmem'], self.logger)
                 output, _, _ = get_subprocess_output(['sysctl', 'vm.stats.vm'], self.logger)
                 sysctl = output.splitlines()
             except Exception:
@@ -442,19 +443,16 @@ class Memory(Check):
             try:
                 pageSize = int(meminfo.get('v_page_size'))
 
-                memData['physTotal'] = (int(meminfo.get('v_page_count', 0))
-                                        * pageSize) / 1048576
+                memData['physTotal'] = int(phys_total.strip()) / 1048576
                 memData['physFree'] = (int(meminfo.get('v_free_count', 0))
                                        * pageSize) / 1048576
                 memData['physCached'] = (int(meminfo.get('v_cache_count', 0))
                                          * pageSize) / 1048576
-                memData['physUsed'] = ((int(meminfo.get('v_active_count'), 0) +
-                                        int(meminfo.get('v_wire_count', 0)))
-                                       * pageSize) / 1048576
                 memData['physUsable'] = ((int(meminfo.get('v_free_count'), 0) +
                                           int(meminfo.get('v_cache_count', 0)) +
                                           int(meminfo.get('v_inactive_count', 0))) *
                                          pageSize) / 1048576
+                memData['physUsed'] = memData['physTotal'] - memData['physUsable']
 
                 if memData['physTotal'] > 0:
                     memData['physPctUsable'] = float(memData['physUsable']) / float(memData['physTotal'])
