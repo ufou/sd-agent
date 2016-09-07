@@ -133,7 +133,7 @@ This package installs the directory plugin.
 %files directory
 %defattr(-,root,root,-)
 /usr/share/python/sd-agent/checks.d/directory.py
-/usr/share/python/sd-agent/lib/python2.7/site-packages/*scandir*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/*scandir*
 %config /etc/sd-agent/conf.d/directory.yaml.example
 
 %package docker
