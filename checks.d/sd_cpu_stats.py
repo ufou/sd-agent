@@ -159,9 +159,7 @@ class ServerDensityCPUChecks(AgentCheck):
                 cpu_nice = get_value(headers, data, "ni")
                 cpu_sys = get_value(headers, data, "sy")
                 cpu_intr = get_value(headers, data, "in")
-                cpu_wait = 0
                 cpu_idle = get_value(headers, data, "id")
-                cpu_stol = 0
                 self.gauge('serverdensity.cpu.usr', float(cpu_user), device_name='ALL')
                 self.gauge('serverdensity.cpu.nice', float(cpu_nice), device_name='ALL')
                 self.gauge('serverdensity.cpu.sys', float(cpu_sys), device_name='ALL')
