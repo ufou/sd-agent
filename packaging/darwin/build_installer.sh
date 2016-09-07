@@ -76,6 +76,7 @@ cp -a ${BUILD_DIR}/lib/python2.7/site-packages/psutil* ${INSTALL_DIR}/sd-agent/l
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/pycurl* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/PyYAML* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/requests* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/*scandir* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/sd_agent* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/setuptools* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/simplejson* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages

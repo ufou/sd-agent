@@ -125,7 +125,6 @@ This package installs the CouchDB plugin.
 Summary: Server Density Monitoring Agent. directory plugin
 Group: System/Monitoring
 Requires: %{name} >= 2.1.0
-BuildArch: noarch
 
 %description directory
 %{longdescription}
@@ -134,6 +133,7 @@ This package installs the directory plugin.
 %files directory
 %defattr(-,root,root,-)
 /usr/share/python/sd-agent/checks.d/directory.py
+/usr/share/python/sd-agent/lib/python2.7/site-packages/*scandir*
 %config /etc/sd-agent/conf.d/directory.yaml.example
 
 %package docker

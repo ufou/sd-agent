@@ -42,7 +42,7 @@ for plugin in apache mongo mysql nginx rabbitmq btrfs consul couch directory doc
     cp -a conf.d/${plugin}.yaml.example %{buildroot}/etc/sd-agent/conf.d
 done
 
-for i in %{__venv}/lib/python%{__sd_python_version}/site-packages/{bson,kafka*,kazoo*,pymongo,pymysql,PyMySQL*,memcache.py,pg8000,redis,zope,zope.interface*}; do
+for i in %{__venv}/lib/python%{__sd_python_version}/site-packages/{bson,kafka*,kazoo*,pymongo,pymysql,PyMySQL*,memcache.py,pg8000,redis,*scandir*,zope,zope.interface*}; do
     cp -a $i %{buildroot}/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages
 done
 

@@ -65,14 +65,23 @@ chmod 0660 /etc/sd-agent/plugins.cfg
 /sbin/chkconfig --add sd-agent
 /etc/init.d/sd-agent restart
 
+%pre
+case "$1" in
+  2)
+    /sbin/service sd-agent stop >/dev/null 2>&1
+  ;;
+esac
+
 %preun
-if [ $1 = 0 ] ; then
+case "$1" in
+  0)
     /sbin/service sd-agent stop >/dev/null 2>&1
     /sbin/chkconfig --del /etc/init.d/sd-agent
     rm /etc/init.d/sd-agent
     rm -rf /var/log/sd-agent/
     rm -rf /var/run/sd-agent/
-fi
+  ;;
+esac
 
 %include %{_topdir}/inc/files.el5
 %include %{_topdir}/inc/subpackages

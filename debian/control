@@ -155,7 +155,7 @@ Description: The Server Density monitoring agent - NTP plugin
  See https://www.serverdensity.com/ for more information.
 
 Package: sd-agent-directory
-Architecture: all
+Architecture: any
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.0)
 Description: The Server Density monitoring agent - directory plugin
