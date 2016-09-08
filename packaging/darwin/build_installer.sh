@@ -66,7 +66,12 @@ cp -a ${BUILD_DIR}/lib/python2.7/no-global-site-packages.txt ${INSTALL_DIR}/sd-a
 cp -a ${BUILD_DIR}/lib/python2.7/orig-prefix.txt ${INSTALL_DIR}/sd-agent/lib/python2.7
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/backports* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/boto* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/*consul* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/dns* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/docker* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/easy-install* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/*etcd* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/ipaddress.py* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/_markerlib ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/meld3* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/ntplib* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
@@ -83,6 +88,9 @@ cp -a ${BUILD_DIR}/lib/python2.7/site-packages/simplejson* ${INSTALL_DIR}/sd-age
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/six.py ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/six-*-info ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/tornado* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/uptime* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/urllib3* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
+cp -a ${BUILD_DIR}/lib/python2.7/site-packages/websocket* ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 cp -a ${BUILD_DIR}/lib/python2.7/site-packages/yaml ${INSTALL_DIR}/sd-agent/lib/python2.7/site-packages
 
 # Copy default plugins.
