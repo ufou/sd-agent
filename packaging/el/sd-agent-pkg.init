@@ -88,6 +88,9 @@ check_status() {
 # Action to take
 case "$1" in
     start)
+        # Could be removed during boot
+        test -e /var/run/sd-agent || install -m 755 -o sd-agent -g sd-agent -d /var/run/sd-agent
+
         if [ ! -f $AGENTCONF ]; then
             echo "$AGENTCONF not found. Exiting."
             exit 3
