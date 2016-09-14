@@ -135,6 +135,10 @@ cp conf.d/directory.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 cp checks.d/docker.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/docker.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 
+# HAProxy
+cp checks.d/haproxy.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/haproxy.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
 # Memcache
 cp checks.d/mcache.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/mcache.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d

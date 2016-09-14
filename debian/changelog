@@ -1,3 +1,9 @@
+sd-agent (2.1.2-1) precise; urgency=medium
+
+  * Added support for haproxy plugin.
+
+ -- Server Density <hello@serverdensity.com>  Wed, 14 Sep 2016 11:35:38 +0200
+
 sd-agent (2.1.1-1) precise; urgency=medium
 
   * Be sure that /var/run/sd-agent exists before starting the service.
