@@ -102,6 +102,19 @@ Description: The Server Density monitoring agent - Docker plugin
  .
  See https://www.serverdensity.com/ for more information.
 
+Package: sd-agent-haproxy
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.2)
+Description: The Server Density monitoring agent - HAProxy plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the HAProxy plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
 Package: sd-agent-kafka-consumer
 Architecture: any
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
