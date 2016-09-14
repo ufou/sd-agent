@@ -37,6 +37,97 @@ Description: The Server Density monitoring agent - Apache plugin
  .
  See https://www.serverdensity.com/ for more information.
 
+Package: sd-agent-btrfs
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - btrfs plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the btrfs plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-consul
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - Consul plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the Consul plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-couchdb
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - CouchDB plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the CouchDB plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-directory
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - directory plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the directory plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-docker
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - Docker plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the Docker plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-kafka-consumer
+Architecture: any
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - Kafka Consumer plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the Kafka Consumer plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-memcache
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
+Description: The Server Density monitoring agent - Memcached plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the Memcached plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
 Package: sd-agent-mongo
 Architecture: any
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
@@ -76,55 +167,16 @@ Description: The Server Density monitoring agent - Nginx plugin
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-rabbitmq
+Package: sd-agent-ntp
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - RabbitMQ plugin
+Description: The Server Density monitoring agent - NTP plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the RabbitMQ plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-postgresql
-Architecture: all
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - PostgreSQL plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the PostgreSQL plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-redis
-Architecture: all
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Redis plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the Redis plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-memcache
-Architecture: all
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Memcached plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the Memcached plugin.
+ This package installs the NTP plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
@@ -141,81 +193,55 @@ Description: The Server Density monitoring agent - PHP-FPM plugin
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-ntp
+Package: sd-agent-postfix
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - NTP plugin
+Description: The Server Density monitoring agent - Postfix plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the NTP plugin.
+ This package installs the Postfix plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-directory
-Architecture: any
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - directory plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the directory plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-docker
+Package: sd-agent-postgresql
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Docker plugin
+Description: The Server Density monitoring agent - PostgreSQL plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the Docker plugin.
+ This package installs the PostgreSQL plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-varnish
+Package: sd-agent-rabbitmq
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Varnish plugin
+Description: The Server Density monitoring agent - RabbitMQ plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the Varnish plugin.
+ This package installs the RabbitMQ plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-supervisord
+Package: sd-agent-redis
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Supervisord plugin
+Description: The Server Density monitoring agent - Redis plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the Supervisord plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-couchdb
-Architecture: all
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - CouchDB plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the CouchDB plugin.
+ This package installs the Redis plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
@@ -232,55 +258,29 @@ Description: The Server Density monitoring agent - Riak plugin
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-postfix
+Package: sd-agent-supervisord
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Postfix plugin
+Description: The Server Density monitoring agent - Supervisord plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the Postfix plugin.
+ This package installs the Supervisord plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
-Package: sd-agent-btrfs
+Package: sd-agent-varnish
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - btrfs plugin
+Description: The Server Density monitoring agent - Varnish plugin
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
  Density account.
  .
- This package installs the btrfs plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-consul
-Architecture: all
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Consul plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the Consul plugin.
- .
- See https://www.serverdensity.com/ for more information.
-
-Package: sd-agent-kafka-consumer
-Architecture: any
-Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.1)
-Description: The Server Density monitoring agent - Kafka Consumer plugin
- The Server Density monitoring agent is a lightweight process that monitors
- system processes and services, and sends information back to your Server
- Density account.
- .
- This package installs the Kafka Consumer plugin.
+ This package installs the Varnish plugin.
  .
  See https://www.serverdensity.com/ for more information.
 
