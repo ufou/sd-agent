@@ -151,6 +151,21 @@ This package installs the Docker plugin.
 /usr/share/python/sd-agent/checks.d/docker.py
 %config /etc/sd-agent/conf.d/docker.yaml.example
 
+%package haproxy
+Summary: Server Density Monitoring Agent. HAProxy plugin
+Group: System/Monitoring
+Requires: %{name} >= 2.1.2
+BuildArch: noarch
+
+%description haproxy
+%{longdescription}
+This package installs the HAProxy plugin.
+
+%files haproxy
+%defattr(-,root,root,-)
+/usr/share/python/sd-agent/checks.d/postgres.py
+%config /etc/sd-agent/conf.d/postgres.yaml.example
+
 %package memcache
 Summary: Server Density Monitoring Agent. Memcached plugin
 Group: System/Monitoring
