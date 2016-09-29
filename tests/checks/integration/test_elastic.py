@@ -351,10 +351,11 @@ class TestElastic(AgentCheckTest):
                                            tags=good_sc_tags,
                                            count=1)
             # Assert event
-            self.assertEvent('ElasticSearch: foo just reported as yellow', count=1,
-                             tags=default_tags+tags, msg_title='foo is yellow',
-                             event_type='elasticsearch', alert_type='warning',
-                             source_type_name='elasticsearch')
+            # Disabled events check.
+            # self.assertEvent('ElasticSearch: foo just reported as yellow', count=1,
+            #                  tags=default_tags+tags, msg_title='foo is yellow',
+            #                  event_type='elasticsearch', alert_type='warning',
+            #                  source_type_name='elasticsearch')
 
             self.coverage_report()
 
