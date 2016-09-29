@@ -135,6 +135,10 @@ cp conf.d/directory.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 cp checks.d/docker.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/docker.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 
+# Elastic Search
+cp checks.d/elastic.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/elastic.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
 # HAProxy
 cp checks.d/haproxy.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/haproxy.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d

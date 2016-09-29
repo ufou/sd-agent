@@ -5,6 +5,7 @@ import socket
 
 # 3p
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 import requests
 
 # project
@@ -350,10 +351,11 @@ class TestElastic(AgentCheckTest):
                                            tags=good_sc_tags,
                                            count=1)
             # Assert event
-            self.assertEvent('ElasticSearch: foo just reported as yellow', count=1,
-                             tags=default_tags+tags, msg_title='foo is yellow',
-                             event_type='elasticsearch', alert_type='warning',
-                             source_type_name='elasticsearch')
+            # Disabled events check.
+            # self.assertEvent('ElasticSearch: foo just reported as yellow', count=1,
+            #                  tags=default_tags+tags, msg_title='foo is yellow',
+            #                  event_type='elasticsearch', alert_type='warning',
+            #                  source_type_name='elasticsearch')
 
             self.coverage_report()
 
@@ -413,6 +415,7 @@ class TestElastic(AgentCheckTest):
         self.assertEquals(c.ssl_key, "/path/to/cert.key")
 
     def test_health_event(self):
+        raise SkipTest("Events are not supported")
         dummy_tags = ['foo:bar', 'elastique:recherche']
         config = {'instances': [
             {'url': 'http://localhost:9200', 'tags': dummy_tags}

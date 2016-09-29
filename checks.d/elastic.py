@@ -513,7 +513,7 @@ class ESCheck(AgentCheck):
             node_name = node_data.get('name')
             if node_name:
                 metrics_tags.append(
-                    u"node_name:{}".format(node_name)
+                    u"node_name:{0}".format(node_name)
                 )
 
             # Resolve the node's hostname
