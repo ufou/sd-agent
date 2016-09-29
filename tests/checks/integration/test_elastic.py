@@ -5,6 +5,7 @@ import socket
 
 # 3p
 from nose.plugins.attrib import attr
+from nose.plugins.skip import SkipTest
 import requests
 
 # project
@@ -413,6 +414,7 @@ class TestElastic(AgentCheckTest):
         self.assertEquals(c.ssl_key, "/path/to/cert.key")
 
     def test_health_event(self):
+        raise SkipTest("Events are not supported")
         dummy_tags = ['foo:bar', 'elastique:recherche']
         config = {'instances': [
             {'url': 'http://localhost:9200', 'tags': dummy_tags}
