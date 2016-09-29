@@ -103,7 +103,7 @@ Description: The Server Density monitoring agent - Docker plugin
  See https://www.serverdensity.com/ for more information.
 
 Package: sd-agent-elastic
-Architecture: any
+Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.3)
 Description: The Server Density monitoring agent - Elastic Search plugin
@@ -116,7 +116,7 @@ Description: The Server Density monitoring agent - Elastic Search plugin
  See https://www.serverdensity.com/ for more information.
 
 Package: sd-agent-haproxy
-Architecture: any
+Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
 Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.2)
 Description: The Server Density monitoring agent - HAProxy plugin
