@@ -106,7 +106,7 @@ install: echo "OVERRIDING TRAVIS STEPS"
 before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
-  - ./.travis/build_installer.sh
+  - travis_retry ./.travis/build_installer.sh
 
 after_failure:
   - echo "Logs from installation process come here / DEBUG LOGS"
