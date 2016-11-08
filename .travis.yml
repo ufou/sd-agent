@@ -34,7 +34,7 @@ env:
     - SKIP_CLEANUP=true
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.1.3
+    - AGENT_VERSION=2.1.4
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=core_integration

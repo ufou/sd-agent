@@ -35,7 +35,7 @@ from utils.subprocess_output import (
 )
 
 # CONSTANTS
-AGENT_VERSION = "2.1.3"
+AGENT_VERSION = "2.1.4"
 SD_CONF = "config.cfg"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
 MAC_CONFIG_PATH = '/usr/local/etc/sd-agent/'
