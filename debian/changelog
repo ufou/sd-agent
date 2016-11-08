@@ -1,6 +1,7 @@
 sd-agent (2.1.4-1) precise; urgency=medium
 
   * Added support for HDFS plugin.
+  * Fixed pycurl SSL support.
 
  -- Server Density <hello@serverdensity.com>  Tue, 8 Nov 2016 14:21:58 +0100
 
