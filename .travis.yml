@@ -119,7 +119,7 @@ notifications:
 deploy:
   - provider: releases
     api_key:
-      secure: Z5+eBL1ptbRkmRAv3wdIomULJhtWvunbQv5SpI/38sCYIHLLgnaXh8mzIiaRFBMH/o8bWGuMjjO5tEaKsK964k7e9eTWlM3g0Dc3lqxkBdALJkNnWo8shZJS0DSZwiIN5h5DdhAnvgvU4BJ8r53CO6YknuSvSgvdFSy/O1JitRQ=
+      secure: "Z36hDHOTIfCHG3q6KTKsSA9V3S8QyRqgpZirR2RlWQinJx1xt9K3V8zIG4DheRNYxwB2z8K4tuyEX3JXLovKXfGSDsT7Tq2nfH7YRQlMP3jqNB8H7CzsTQlFdXM8lBXyalSamNVa/UdZZHHBDCQjk8ZKm/TlsBY626d6NdgXwWM="
     skip_cleanup: true
     file: sd-agent-$AGENT_VERSION.dmg
     on:
