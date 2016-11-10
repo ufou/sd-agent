@@ -149,7 +149,9 @@ This package installs the Docker plugin.
 %files docker
 %defattr(-,root,root,-)
 /usr/share/python/sd-agent/checks.d/docker.py
+/usr/share/python/sd-agent/checks.d/docker_daemon.py
 %config /etc/sd-agent/conf.d/docker.yaml.example
+%config /etc/sd-agent/conf.d/docker_daemon.yaml.example
 
 %package elastic
 Summary: Server Density Monitoring Agent. Elastic Search plugin
@@ -180,6 +182,23 @@ This package installs the HAProxy plugin.
 %defattr(-,root,root,-)
 /usr/share/python/sd-agent/checks.d/haproxy.py
 %config /etc/sd-agent/conf.d/haproxy.yaml.example
+
+%package hdfs
+Summary: Server Density Monitoring Agent. HDFS plugin
+Group: System/Monitoring
+Requires: %{name} >= 2.1.4
+BuildArch: noarch
+
+%description hdfs
+%{longdescription}
+This package installs the HDFS plugin.
+
+%files hdfs
+%defattr(-,root,root,-)
+/usr/share/python/sd-agent/checks.d/hdfs_datanode.py
+/usr/share/python/sd-agent/checks.d/hdfs_namenode.py
+%config /etc/sd-agent/conf.d/hdfs_datanode.yaml.example
+%config /etc/sd-agent/conf.d/hdfs_namenode.yaml.example
 
 %package memcache
 Summary: Server Density Monitoring Agent. Memcached plugin

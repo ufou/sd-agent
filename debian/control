@@ -13,7 +13,7 @@ Homepage: http://www.serverdensity.com/
 Package: sd-agent
 Architecture: any
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, adduser, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, sysstat
+Depends: ${python:Depends}, ${misc:Depends}, sysstat, libcurl3-gnutls
 Description: The Server Density monitoring agent
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
@@ -125,6 +125,19 @@ Description: The Server Density monitoring agent - HAProxy plugin
  Density account.
  .
  This package installs the HAProxy plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
+Package: sd-agent-hdfs
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.4)
+Description: The Server Density monitoring agent - HDFS plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the HDFS plugin.
  .
  See https://www.serverdensity.com/ for more information.
 

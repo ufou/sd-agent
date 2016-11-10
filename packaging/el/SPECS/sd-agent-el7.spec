@@ -36,7 +36,7 @@ python virtualenv-13.1.2/virtualenv.py %{__venv}
 
 %setup -qn sd-agent
 %{__venv}/bin/python %{__venv}/bin/pip install -r requirements.txt
-%{__venv}/bin/python %{__venv}/bin/pip install -r requirements-opt.txt
+PYCURL_SSL_LIBRARY=nss %{__venv}/bin/python %{__venv}/bin/pip install -r requirements-opt.txt
 
 %build
 %{__venv}/bin/python setup.py build

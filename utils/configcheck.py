@@ -29,7 +29,7 @@ def configcheck():
         else:
             print "%s is valid" % basename
     if all_valid:
-        print "All yaml files passed. You can now run the Datadog agent."
+        print "All yaml files passed. You can now run the ServerDensity agent."
         return 0
     else:
         print("Fix the invalid yaml files above in order to start the Datadog agent. "

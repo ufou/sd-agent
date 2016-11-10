@@ -139,6 +139,12 @@ cp conf.d/docker.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 cp checks.d/elastic.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/elastic.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 
+# HDFS
+cp checks.d/hdfs_datanode.py ${INSTALL_DIR}/sd-agent/checks.d
+cp checks.d/hdfs_namenode.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/hdfs_datanode.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+cp conf.d/hdfs_namenode.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
 # HAProxy
 cp checks.d/haproxy.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/haproxy.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
