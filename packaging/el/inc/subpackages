@@ -106,6 +106,21 @@ This package installs the Consul plugin.
 /usr/share/python/sd-agent/checks.d/consul.py
 %config /etc/sd-agent/conf.d/consul.yaml.example
 
+%package couchbase
+Summary: Server Density Monitoring Agent. Couchbase plugin
+Group: System/Monitoring
+Requires: %{name} >= 2.1.5
+BuildArch: noarch
+
+%description couchbase
+%{longdescription}
+This package installs the Couchbase plugin.
+
+%files couchbase
+%defattr(-,root,root,-)
+/usr/share/python/sd-agent/checks.d/couchbase.py
+%config /etc/sd-agent/conf.d/couchbase.yaml.example
+
 %package couchdb
 Summary: Server Density Monitoring Agent. CouchDB plugin
 Group: System/Monitoring

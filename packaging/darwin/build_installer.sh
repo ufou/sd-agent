@@ -123,6 +123,10 @@ cp conf.d/apache.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 cp checks.d/consul.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/consul.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
 
+# CouchBase
+cp checks.d/couchbase.py ${INSTALL_DIR}/sd-agent/checks.d
+cp conf.d/couchbase.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d
+
 # CouchDB
 cp checks.d/couch.py ${INSTALL_DIR}/sd-agent/checks.d
 cp conf.d/couch.yaml.example ${INSTALL_DIR}/etc/sd-agent/conf.d

@@ -63,6 +63,19 @@ Description: The Server Density monitoring agent - Consul plugin
  .
  See https://www.serverdensity.com/ for more information.
 
+Package: sd-agent-couchbase
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
+Depends: ${python:Depends}, ${misc:Depends}, sd-agent (>= 2.1.5)
+Description: The Server Density monitoring agent - Couchbase plugin
+ The Server Density monitoring agent is a lightweight process that monitors
+ system processes and services, and sends information back to your Server
+ Density account.
+ .
+ This package installs the Couchbase plugin.
+ .
+ See https://www.serverdensity.com/ for more information.
+
 Package: sd-agent-couchdb
 Architecture: all
 Pre-Depends: dpkg (>= 1.15.12), python2.7 | python2.6, ${misc:Pre-Depends}
