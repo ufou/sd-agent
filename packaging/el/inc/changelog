@@ -1,4 +1,6 @@
 %changelog
+* Wed Jan 04 2017 Server Density <hello@serverdensity.com> 2.1.5-1
+- Added support for Couchbase plugin.
 * Tue Nov 08 2016 Server Density <hello@serverdensity.com> 2.1.4-1
 - Added support for HDFS plugin.
 - Fixed docker_daemon plugin installation.
