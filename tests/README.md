@@ -104,11 +104,7 @@ Its configuration is stored in [.travis.yml](../.travis.yml).
 
 It's running the exact same command described above (`rake ci:run[flavor]`), with the restriction of one flavor + version per build. (we use the [build matrix](http://docs.travis-ci.com/user/customizing-the-build/#Build-Matrix) to split flavors)
 
-Travis is configured to cache python libs and ruby gems between runs. We use a custom cache for third party software dependencies (PostgreSQL, Apache, ...), which are built from source.
-
 We use the newly released [docker-based infrastructure](http://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/).
-
-To add a new flavour, append your `TRAVIS_FLAVOR` to [.travis.yml](../.travis.yml).
 
 
 # Add an integration test

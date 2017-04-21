@@ -16,7 +16,7 @@ from nose.plugins.attrib import attr
 # needed because of the subprocess calls
 sys.path.append(os.getcwd())
 from sdagent import Application
-from util import Watchdog
+from utils.watchdog import WatchdogPosix as Watchdog
 
 
 class WatchdogKill(Exception):
@@ -26,6 +26,7 @@ class WatchdogKill(Exception):
     pass
 
 
+@attr('unix')
 @attr(requires='core_integration')
 class TestWatchdog(unittest.TestCase):
     """
@@ -140,6 +141,14 @@ class MemoryHogTxManager(object):
 
 class PseudoAgent(object):
     """Same logic as the agent, simplified"""
+    AGENT_CONFIG = {
+        "bind_host": "localhost",
+        'endpoints': {
+            'https://app.datadoghq.com': ['api_key']
+        },
+        'forwarder_timeout': 5
+    }
+
     def busy_run(self):
         w = Watchdog(5)
         w.reset()
@@ -161,13 +170,13 @@ class PseudoAgent(object):
             w.reset()
 
     def slow_tornado(self):
-        a = Application(12345, {"bind_host": "localhost"})
+        a = Application(12345, self.AGENT_CONFIG)
         a._watchdog = Watchdog(4)
         a._tr_manager = MockTxManager()
         a.run()
 
     def fast_tornado(self):
-        a = Application(12345, {"bind_host": "localhost"})
+        a = Application(12345, self.AGENT_CONFIG)
         a._watchdog = Watchdog(6)
         a._tr_manager = MockTxManager()
         a.run()

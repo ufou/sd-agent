@@ -12,7 +12,7 @@ from config import (
     load_check_directory,
     get_confd_path
 )
-from util import get_hostname
+from utils.hostname import get_hostname
 from utils.dockerutil import DockerUtil
 from utils.service_discovery.config_stores import get_config_store, SD_CONFIG_BACKENDS, TRACE_CONFIG
 
@@ -23,7 +23,7 @@ def configcheck():
         basename = os.path.basename(conf_path)
         try:
             check_yaml(conf_path)
-        except Exception, e:
+        except Exception as e:
             all_valid = False
             print "%s contains errors:\n    %s" % (basename, e)
         else:
@@ -94,10 +94,10 @@ def print_templates(agentConfig):
         except Exception as ex:
             print("Failed to extract configuration templates from the backend:\n%s" % str(ex))
 
-        for img, tpl in templates.iteritems():
+        for ident, tpl in templates.iteritems():
             print(
-                "- Image %s:\n\tcheck names: %s\n\tinit_configs: %s\n\tinstances: %s" % (
-                    img,
+                "- Identifier %s:\n\tcheck names: %s\n\tinit_configs: %s\n\tinstances: %s" % (
+                    ident,
                     tpl.get('check_names'),
                     tpl.get('init_configs'),
                     tpl.get('instances'),

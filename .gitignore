@@ -9,6 +9,7 @@ artifacts/*
 node_modules/*
 .DS_Store
 venv/*
+vendor/
 *.swp
 *.log
 !nagios.log
@@ -35,3 +36,9 @@ embedded/*
 dump.rdb
 tests/core/fixtures/flare/dd*
 .python-version
+.ropeproject
+.bundle
+tags
+
+checks.d
+conf.d

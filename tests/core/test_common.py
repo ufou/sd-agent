@@ -15,8 +15,7 @@ from checks import (
 )
 from checks.collector import Collector
 from tests.checks.common import load_check
-from util import get_hostname
-from utils.ntp import NTPUtil
+from utils.hostname import get_hostname
 from utils.proxy import get_proxy
 
 logger = logging.getLogger()
@@ -240,8 +239,11 @@ class TestCore(unittest.TestCase):
         # Clear the env variables set
         del env["http_proxy"]
         del env["https_proxy"]
-        del env["HTTP_PROXY"]
-        del env["HTTPS_PROXY"]
+        if "HTTP_PROXY" in env:
+            # on some platforms (e.g. Windows) env var names are case-insensitive, so we have to avoid
+            # deleting the same key twice
+            del env["HTTP_PROXY"]
+            del env["HTTPS_PROXY"]
 
     def test_get_proxy(self):
 
@@ -271,6 +273,9 @@ class TestCore(unittest.TestCase):
                 "password": "barenv"
             })
 
+
+class TestCollectionInterval(unittest.TestCase):
+
     def test_min_collection_interval(self):
         config = {'instances': [{}], 'init_config': {}}
 
@@ -281,7 +286,8 @@ class TestCore(unittest.TestCase):
 
         # default min collection interval for that check was 20sec
         check = load_check('disk', config, agentConfig)
-        check.DEFAULT_MIN_COLLECTION_INTERVAL = 20
+        check.min_collection_interval = 20
+        check.aggregator.expiry_seconds = 20 + 300
 
         check.run()
         metrics = check.get_metrics()
@@ -301,7 +307,7 @@ class TestCore(unittest.TestCase):
         check.run()
         metrics = check.get_metrics()
         self.assertEquals(len(metrics), 0, metrics)
-        check.DEFAULT_MIN_COLLECTION_INTERVAL = 0
+        check.min_collection_interval = 0
         check.run()
         metrics = check.get_metrics()
         self.assertTrue(len(metrics) > 0, metrics)
@@ -336,59 +342,62 @@ class TestCore(unittest.TestCase):
         metrics = check.get_metrics()
         self.assertTrue(len(metrics) > 0, metrics)
 
-    def test_ntp_global_settings(self):
-        # Clear any existing ntp config
-        NTPUtil._drop()
-
-        config = {'instances': [{
-            "host": "foo.com",
-            "port": "bar",
-            "version": 42,
-            "timeout": 13.37}],
-            'init_config': {}}
-
+    def test_collector(self):
         agentConfig = {
             'version': '0.1',
             'agent_key': 'toto'
         }
 
-        # load this config in the ntp singleton
-        ntp_util = NTPUtil(config)
+        # Run a single checks.d check as part of the collector.
+        redis_config = {
+            "init_config": {},
+            "instances": [{"host": "localhost", "port": 6379}]
+        }
 
-        # default min collection interval for that check was 20sec
-        check = load_check('ntp', config, agentConfig)
-        check.run()
+        checks = [load_check('redisdb', redis_config, agentConfig)]
 
-        self.assertEqual(ntp_util.args["host"], "foo.com")
-        self.assertEqual(ntp_util.args["port"], "bar")
-        self.assertEqual(ntp_util.args["version"], 42)
-        self.assertEqual(ntp_util.args["timeout"], 13.37)
+        c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
+        payload = c.run({
+            'initialized_checks': checks,
+            'init_failed_checks': {}
+        })
+        metrics = payload['metrics']
 
-        # Clear the singleton to prepare for next config
-        NTPUtil._drop()
+        # Check that we got a timing metric for all checks.
+        timing_metrics = [m for m in metrics
+            if m[0] == 'datadog.agent.check_run_time']
+        all_tags = []
+        for metric in timing_metrics:
+            all_tags.extend(metric[3]['tags'])
+        for check in checks:
+            tag = "check:%s" % check.name
+            assert tag in all_tags, all_tags
 
-        config = {'instances': [{}], 'init_config': {}}
+    def test_apptags(self):
+        '''
+        Tests that the app tags are sent if specified so
+        '''
         agentConfig = {
             'version': '0.1',
             'agent_key': 'toto'
         }
 
-        # load the new config
-        ntp_util = NTPUtil(config)
+        # Run a single checks.d check as part of the collector.
+        redis_config = {
+            "init_config": {},
+            "instances": [{"host": "localhost", "port": 6379}]
+        }
 
-        # default min collection interval for that check was 20sec
-        check = load_check('ntp', config, agentConfig)
-        try:
-            check.run()
-        except Exception:
-            pass
+        checks = [load_check('redisdb', redis_config, agentConfig)]
 
-        self.assertTrue(ntp_util.args["host"].endswith("datadog.pool.ntp.org"))
-        self.assertEqual(ntp_util.args["port"], "ntp")
-        self.assertEqual(ntp_util.args["version"], 3)
-        self.assertEqual(ntp_util.args["timeout"], 1.0)
+        c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
+        payload = c.run({
+            'initialized_checks': checks,
+            'init_failed_checks': {}
+        })
 
-        NTPUtil._drop()
+        # We check that the redis DD_CHECK_TAG is sent in the payload
+        self.assertTrue('dd_check:redisdb' in payload['host-tags']['system'])
 
 
 class TestAggregator(unittest.TestCase):

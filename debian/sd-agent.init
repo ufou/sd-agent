@@ -28,6 +28,7 @@ COLLECTOR_PIDFILE="/var/run/sd-agent/sd-agent.pid"
 SYSTEM_PATH=/usr/share/python/sd-agent/bin:$PATH
 SD_OPT_PROC_REGEX="dogstatsd|jmxfetch|go-metro"
 
+
 if [ ! -x $AGENTPATH ]; then
     echo "$AGENTPATH not found. Exiting."
     exit 0
@@ -74,6 +75,7 @@ check_status() {
         # Number of expected optional supervisord programs (dogstatsd, jmxfetch and go-metro)
         supervisor_config_opt_programs=$(grep -E $SD_OPT_PROC_REGEX $SUPERVISOR_FILE |
                                          grep -c '\[program:')
+
 
         if [ "$sd_supervisor_processes" -ne "$supervisor_config_programs" ]; then
             ESSENTIAL=1
@@ -127,7 +129,7 @@ case "$1" in
             $0 stop > /dev/null 2>&1
         fi
 
-        su $AGENTUSER -c "$AGENTPATH configcheck" > /dev/null
+        su $AGENTUSER -c "$AGENTPATH configcheck" > /dev/null 2>&1
         if [ $? -ne 0 ]; then
             log_daemon_msg "Invalid check configuration. Please run sudo /etc/init.d/sd-agent configtest for more details."
             log_daemon_msg "Resuming starting process."
@@ -174,7 +176,9 @@ case "$1" in
         COLLECTOR_RETURN=$?
         su $AGENTUSER -c "$FORWARDERPATH info"
         FORWARDER_RETURN=$?
-        exit $(($COLLECTOR_RETURN+$FORWARDER_RETURN))
+        su $AGENTUSER -c "$TRACEAGENTPATH -info"
+        TRACEAGENT_RETURN=$? # not used for now, Trace/APM not a core feature yet
+        exit $(($COLLECTOR_RETURN+$DOGSTATSD_RETURN+$FORWARDER_RETURN))
         ;;
 
     status)

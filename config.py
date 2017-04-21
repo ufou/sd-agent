@@ -22,10 +22,14 @@ import string
 import sys
 import traceback
 
+# 3p
+import simplejson as json
+
 # project
-from util import check_yaml, get_os
-from utils.platform import Platform
+from util import check_yaml, config_to_yaml
+from utils.platform import Platform, get_os
 from utils.proxy import get_proxy
+from utils.sdk import load_manifest
 from utils.service_discovery.config import extract_agent_config
 from utils.service_discovery.config_stores import CONFIG_FROM_FILE, TRACE_CONFIG
 from utils.service_discovery.sd_backend import get_sd_backend, AUTO_CONFIG_DIR, SD_BACKENDS
@@ -33,15 +37,21 @@ from utils.subprocess_output import (
     get_subprocess_output,
     SubprocessOutputEmptyError,
 )
+from utils.windows_configuration import get_registry_conf, get_windows_sdk_check
+
 
 # CONSTANTS
-AGENT_VERSION = "2.1.5"
+AGENT_VERSION = "2.2.0"
 SD_CONF = "config.cfg"
 UNIX_CONFIG_PATH = '/etc/sd-agent'
 MAC_CONFIG_PATH = '/usr/local/etc/sd-agent/'
 DEFAULT_CHECK_FREQUENCY = 60   # seconds
-LOGGING_MAX_BYTES = 5 * 1024 * 1024
+LOGGING_MAX_BYTES = 10 * 1024 * 1024
 SDK_INTEGRATIONS_DIR = 'integrations'
+SD_PIPE_NAME = "sd-service_discovery"
+SD_PIPE_UNIX_PATH = '/var/run/sd-agent/'
+SD_PIPE_WIN_PATH = "\\\\.\\pipe\\{pipename}"
+
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +78,16 @@ NAGIOS_OLD_CONF_KEYS = [
 ]
 
 
+JMX_SD_CONF_TEMPLATE = '.jmx.{}.yaml'
+
+# These are unlikely to change, but manifests are versioned,
+# so keeping these as a list just in case we change add stuff.
+MANIFEST_VALIDATION = {
+    'max': ['max_agent_version'],
+    'min': ['min_agent_version']
+}
+
+
 class PathNotFound(Exception):
     pass
 
@@ -80,8 +100,6 @@ def get_parsed_args():
                       dest='sd_url')
     parser.add_option('-u', '--use-local-forwarder', action='store_true',
                       default=False, dest='use_forwarder')
-    parser.add_option('-n', '--disable-sd', action='store_true', default=False,
-                      dest="disable_sd")
     parser.add_option('-v', '--verbose', action='store_true', default=False,
                       dest='verbose',
                       help='Print out stacktraces for errors in checks')
@@ -105,9 +123,24 @@ def get_version():
     return AGENT_VERSION
 
 
+def _version_string_to_tuple(version_string):
+    '''Return a (X, Y, Z) version tuple from an 'X.Y.Z' version string'''
+    version_list = []
+    for elem in version_string.split('.'):
+        try:
+            elem_int = int(elem)
+        except ValueError:
+            log.warning("Unable to parse element '%s' of version string '%s'", elem, version_string)
+            raise
+
+        version_list.append(elem_int)
+
+    return tuple(version_list)
+
+
 # Return url endpoint, here because needs access to version number
 def get_url_endpoint(default_url, endpoint_type='app'):
-    return default_url
+    return "https://{0}.agent.serverdensity.io".format(default_url)
 
 
 def skip_leading_wsp(f):
@@ -136,51 +169,19 @@ def _windows_commondata_path():
     return path_buf.value
 
 
-def _windows_config_path():
+def _windows_extra_checksd_path():
     common_data = _windows_commondata_path()
-    return _config_path(os.path.join(common_data, 'ServerDensity'))
-
-
-def _windows_confd_path():
-    common_data = _windows_commondata_path()
-    return _confd_path(os.path.join(common_data, 'ServerDensity'))
+    return os.path.join(common_data, 'Datadog', 'checks.d')
 
 
 def _windows_checksd_path():
     if hasattr(sys, 'frozen'):
         # we're frozen - from py2exe
         prog_path = os.path.dirname(sys.executable)
-        return _checksd_path(os.path.join(prog_path, '..'))
+        return _checksd_path(os.path.normpath(os.path.join(prog_path, '..', 'agent')))
     else:
         cur_path = os.path.dirname(__file__)
         return _checksd_path(cur_path)
-
-
-def _mac_config_path():
-    return _config_path(MAC_CONFIG_PATH)
-
-
-def _mac_confd_path():
-    return _confd_path(MAC_CONFIG_PATH)
-
-
-def _mac_checksd_path():
-    return _unix_checksd_path()
-
-
-def _unix_config_path():
-    return _config_path(UNIX_CONFIG_PATH)
-
-
-def _unix_confd_path():
-    return _confd_path(UNIX_CONFIG_PATH)
-
-
-def _unix_checksd_path():
-    # Unix only will look up based on the current directory
-    # because checks.d will hang with the other python modules
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    return _checksd_path(cur_path)
 
 
 def _config_path(directory):
@@ -198,6 +199,11 @@ def _confd_path(directory):
 
 
 def _checksd_path(directory):
+    path_override = os.environ.get('CHECKSD_OVERRIDE')
+    if path_override and os.path.exists(path_override):
+        return path_override
+
+    # this is deprecated in testing on versions after SDK (5.12.0)
     path = os.path.join(directory, 'checks.d')
     if os.path.exists(path):
         return path
@@ -205,6 +211,8 @@ def _checksd_path(directory):
 
 
 def _is_affirmative(s):
+    if s is None:
+        return False
     # int or real bool
     if isinstance(s, int):
         return bool(s)
@@ -222,22 +230,20 @@ def get_config_path(cfg_path=None, os_name=None):
         path = os.path.realpath(__file__)
         path = os.path.dirname(path)
         return _config_path(path)
-    except PathNotFound, e:
+    except PathNotFound as e:
         pass
-
-    if os_name is None:
-        os_name = get_os()
 
     # Check for an OS-specific path, continue on not-found exceptions
     bad_path = ''
     try:
-        if os_name == 'windows':
-            return _windows_config_path()
-        elif os_name == 'mac':
-            return _mac_config_path()
+        if Platform.is_windows():
+            common_data = _windows_commondata_path()
+            return _config_path(os.path.join(common_data, 'Datadog'))
+        elif Platform.is_mac():
+            return _config_path(MAC_CONFIG_PATH)
         else:
-            return _unix_config_path()
-    except PathNotFound, e:
+            return _config_path(UNIX_CONFIG_PATH)
+    except PathNotFound as e:
         if len(e.args) > 0:
             bad_path = e.args[0]
 
@@ -262,7 +268,7 @@ def get_histogram_aggregates(configstr=None):
 
     try:
         vals = configstr.split(',')
-        valid_values = ['min', 'max', 'median', 'avg', 'count']
+        valid_values = ['min', 'max', 'median', 'avg', 'sum', 'count']
         result = []
 
         for val in vals:
@@ -306,7 +312,18 @@ def get_histogram_percentiles(configstr=None):
     return result
 
 
-def get_config(parse_args=True, cfg_path=None, options=None):
+def clean_dd_url(url):
+    url = url.strip()
+    if not url.startswith('http'):
+        url = 'https://' + url
+    return url[:-1] if url.endswith('/') else url
+
+
+def remove_empty(string_array):
+    return filter(lambda x: x, string_array)
+
+
+def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=True):
     if parse_args:
         options, _ = get_parsed_args()
 
@@ -330,6 +347,8 @@ def get_config(parse_args=True, cfg_path=None, options=None):
 
     if Platform.is_mac():
         agentConfig['additional_checksd'] = '/usr/local/etc/sd-agent/checks.d/'
+    elif Platform.is_windows():
+        agentConfig['additional_checksd'] = _windows_extra_checksd_path()
 
     # Config handling
     try:
@@ -353,10 +372,45 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if options is not None and options.profile:
             agentConfig['developer_mode'] = True
 
-        #
         # Core config
-        #
+        #ap
+        if not config.has_option('Main', 'agent_key'):
+            log.warning(u"No agent key was found. Aborting.")
+            sys.exit(2)
 
+        if not config.has_option('Main', 'sd_account'):
+            log.warning(u"No sd_account was found. Aborting.")
+            sys.exit(2)
+
+        """
+        # Endpoints
+        dd_urls = map(clean_dd_url, config.get('Main', 'dd_url').split(','))
+        api_keys = map(lambda el: el.strip(), config.get('Main', 'api_key').split(','))
+
+        # For collector and dogstatsd
+        agentConfig['dd_url'] = dd_urls[0]
+        agentConfig['api_key'] = api_keys[0]
+
+        # Forwarder endpoints logic
+        # endpoints is:
+        # {
+        #    'https://app.datadoghq.com': ['api_key_abc', 'api_key_def'],
+        #    'https://app.example.com': ['api_key_xyz']
+        # }
+
+        dd_urls = remove_empty(dd_urls)
+        api_keys = remove_empty(api_keys)
+        if len(dd_urls) == 1:
+            if len(api_keys) > 0:
+                endpoints[dd_urls[0]] = api_keys
+        else:
+            assert len(dd_urls) == len(api_keys), 'Please provide one api_key for each url'
+            for i, dd_url in enumerate(dd_urls):
+                endpoints[dd_url] = endpoints.get(dd_url, []) + [api_keys[i]]
+        """
+        endpoints = {}
+        agentConfig['endpoints'] = endpoints
+        """
         # FIXME unnecessarily complex
         if config.has_option('Main', 'sd_account'):
             agentConfig['sd_account'] = config.get('Main', 'sd_account')
@@ -376,15 +430,34 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
         if agentConfig['sd_url'].endswith('/'):
             agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
+        """
+
+        # Forwarder or not forwarder
+        agentConfig['use_forwarder'] = options is not None and options.use_forwarder
+        if agentConfig['use_forwarder']:
+            listen_port = 17124
+            if config.has_option('Main', 'listen_port'):
+                listen_port = int(config.get('Main', 'listen_port'))
+            agentConfig['sd_url'] = "http://{}:{}".format(agentConfig['bind_host'], listen_port)
+        # FIXME: Legacy sd_url command line switch
+        elif options is not None and options.sd_url is not None:
+            agentConfig['sd_url'] = options.sd_url
+        else:
+            # Default agent URL
+            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
+        if agentConfig['sd_url'].endswith('/'):
+            agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
+
+        # Forwarder timeout
+        agentConfig['forwarder_timeout'] = 20
+        if config.has_option('Main', 'forwarder_timeout'):
+            agentConfig['forwarder_timeout'] = int(config.get('Main', 'forwarder_timeout'))
+
 
         # Extra checks.d path
         # the linux directory is set by default
         if config.has_option('Main', 'additional_checksd'):
             agentConfig['additional_checksd'] = config.get('Main', 'additional_checksd')
-        elif get_os() == 'windows':
-            # default windows location
-            common_path = _windows_commondata_path()
-            agentConfig['additional_checksd'] = os.path.join(common_path, 'ServerDensity', 'checks.d')
 
         if config.has_option('Main', 'use_dogstatsd'):
             agentConfig['use_dogstatsd'] = config.get('Main', 'use_dogstatsd').lower() in ("yes", "true")
@@ -466,11 +539,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             if config.has_option('Main', 'statsd_forward_port'):
                 agentConfig['statsd_forward_port'] = int(config.get('Main', 'statsd_forward_port'))
 
-        # optionally send dogstatsd data directly to the agent.
-        if config.has_option('Main', 'dogstatsd_use_ddurl'):
-            if _is_affirmative(config.get('Main', 'dogstatsd_use_ddurl')):
-                agentConfig['dogstatsd_target'] = agentConfig['sd_url']
-
         # Optional config
         # FIXME not the prettiest code ever...
         if config.has_option('Main', 'use_mount'):
@@ -493,6 +561,18 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         except ConfigParser.NoOptionError:
             pass
 
+        # Dogstream config
+        if config.has_option("Main", "dogstream_log"):
+            # Older version, single log support
+            log_path = config.get("Main", "dogstream_log")
+            if config.has_option("Main", "dogstream_line_parser"):
+                agentConfig["dogstreams"] = ':'.join([log_path, config.get("Main", "dogstream_line_parser")])
+            else:
+                agentConfig["dogstreams"] = log_path
+
+        elif config.has_option("Main", "dogstreams"):
+            agentConfig["dogstreams"] = config.get("Main", "dogstreams")
+
         if config.has_option("Main", "nagios_perf_cfg"):
             agentConfig["nagios_perf_cfg"] = config.get("Main", "nagios_perf_cfg")
 
@@ -506,12 +586,6 @@ def get_config(parse_args=True, cfg_path=None, options=None):
             agentConfig['WMI'] = {}
             for key, value in config.items('WMI'):
                 agentConfig['WMI'][key] = value
-
-        if (config.has_option("Main", "limit_memory_consumption") and
-                config.get("Main", "limit_memory_consumption") is not None):
-            agentConfig["limit_memory_consumption"] = int(config.get("Main", "limit_memory_consumption"))
-        else:
-            agentConfig["limit_memory_consumption"] = None
 
         if config.has_option("Main", "skip_ssl_validation"):
             agentConfig["skip_ssl_validation"] = _is_affirmative(config.get("Main", "skip_ssl_validation"))
@@ -536,15 +610,15 @@ def get_config(parse_args=True, cfg_path=None, options=None):
         if config.has_option("Main", "gce_updated_hostname"):
             agentConfig["gce_updated_hostname"] = _is_affirmative(config.get("Main", "gce_updated_hostname"))
 
-    except ConfigParser.NoSectionError, e:
+    except ConfigParser.NoSectionError as e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
 
-    except ConfigParser.ParsingError, e:
+    except ConfigParser.ParsingError as e:
         sys.stderr.write('Config file not found or incorrectly formatted.\n')
         sys.exit(2)
 
-    except ConfigParser.NoOptionError, e:
+    except ConfigParser.NoOptionError as e:
         sys.stderr.write('There are some items missing from your config file, but nothing fatal [%s]' % e)
 
     # Storing proxy settings in the agentConfig
@@ -554,10 +628,16 @@ def get_config(parse_args=True, cfg_path=None, options=None):
     else:
         agentConfig['ssl_certificate'] = agentConfig['ca_certs']
 
+    # On Windows, check for api key in registry if default api key
+    # this code should never be used and is only a failsafe
+    if Platform.is_windows() and agentConfig['api_key'] == 'APIKEYHERE' and can_query_registry:
+        registry_conf = get_registry_conf(config)
+        agentConfig.update(registry_conf)
+
     return agentConfig
 
 
-def get_system_stats():
+def get_system_stats(proc_path=None):
     systemStats = {
         'machine': platform.machine(),
         'platform': sys.platform,
@@ -569,7 +649,10 @@ def get_system_stats():
 
     try:
         if Platform.is_linux(platf):
-            output, _, _ = get_subprocess_output(['grep', 'model name', '/proc/cpuinfo'], log)
+            if not proc_path:
+                proc_path = "/proc"
+            proc_cpuinfo = os.path.join(proc_path,'cpuinfo')
+            output, _, _ = get_subprocess_output(['grep', 'model name', proc_cpuinfo], log)
             systemStats['cpuCores'] = len(output.splitlines())
 
         if Platform.is_darwin(platf) or Platform.is_freebsd(platf):
@@ -639,20 +722,19 @@ def get_confd_path(osname=None):
     try:
         cur_path = os.path.dirname(os.path.realpath(__file__))
         return _confd_path(cur_path)
-    except PathNotFound, e:
+    except PathNotFound as e:
         pass
 
-    if not osname:
-        osname = get_os()
     bad_path = ''
     try:
-        if osname == 'windows':
-            return _windows_confd_path()
-        elif osname == 'mac':
-            return _mac_confd_path()
+        if Platform.is_windows():
+            common_data = _windows_commondata_path()
+            return _confd_path(os.path.join(common_data, 'Datadog'))
+        elif Platform.is_mac():
+            return _confd_path(MAC_CONFIG_PATH)
         else:
-            return _unix_confd_path()
-    except PathNotFound, e:
+            return _confd_path(UNIX_CONFIG_PATH)
+    except PathNotFound as e:
         if len(e.args) > 0:
             bad_path = e.args[0]
 
@@ -660,27 +742,50 @@ def get_confd_path(osname=None):
 
 
 def get_checksd_path(osname=None):
-    if not osname:
-        osname = get_os()
-    if osname == 'windows':
+    if Platform.is_windows():
         return _windows_checksd_path()
-    elif osname == 'mac':
-        return _mac_checksd_path()
+    # Mac & Linux
     else:
-        return _unix_checksd_path()
+        # Unix only will look up based on the current directory
+        # because checks.d will hang with the other python modules
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        return _checksd_path(cur_path)
 
 
 def get_sdk_integrations_path(osname=None):
     if not osname:
         osname = get_os()
-    if osname in ['windows', 'mac']:
-        raise PathNotFound()
 
-    cur_path = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(cur_path, '..', SDK_INTEGRATIONS_DIR)
+    if os.environ.get('INTEGRATIONS_DIR'):
+        if os.environ.get('TRAVIS'):
+            path = os.environ['TRAVIS_BUILD_DIR']
+        elif os.environ.get('CIRCLECI'):
+            path = os.path.join(
+                os.environ['HOME'],
+                os.environ['CIRCLE_PROJECT_REPONAME']
+            )
+        elif os.environ.get('APPVEYOR'):
+            path = os.environ['APPVEYOR_BUILD_FOLDER']
+        else:
+            cur_path = os.environ['INTEGRATIONS_DIR']
+            path = os.path.join(cur_path, '..') # might need tweaking in the future.
+    else:
+        cur_path = os.path.dirname(os.path.realpath(__file__))
+        path = os.path.join(cur_path, '..', SDK_INTEGRATIONS_DIR)
+
     if os.path.exists(path):
         return path
     raise PathNotFound(path)
+
+def get_jmx_pipe_path():
+    if Platform.is_windows():
+        pipe_path = SD_PIPE_WIN_PATH
+    else:
+        pipe_path = SD_PIPE_UNIX_PATH
+        if not os.path.isdir(pipe_path):
+            pipe_path = '/tmp'
+
+    return pipe_path
 
 
 def get_auto_confd_path(osname=None):
@@ -713,6 +818,7 @@ def get_win32service_file(osname, filename):
 
 def get_ssl_certificate(osname, filename):
     # The SSL certificate is needed by tornado in case of connection through a proxy
+    # Also used by flare's requests on Windows
     if osname == 'windows':
         if hasattr(sys, 'frozen'):
             # we're frozen - from py2exe
@@ -740,7 +846,7 @@ def _get_check_class(check_name, check_path):
     check_class = None
     try:
         check_module = imp.load_source('checksd_%s' % check_name, check_path)
-    except Exception, e:
+    except Exception as e:
         traceback_message = traceback.format_exc()
         # There is a configuration file for that check but the module can't be imported
         log.exception('Unable to import check module %s.py from checks.d' % check_name)
@@ -780,7 +886,7 @@ def _file_configs_paths(osname, agentConfig):
         confd_path = get_confd_path(osname)
         all_file_configs = glob.glob(os.path.join(confd_path, '*.yaml'))
         all_default_configs = glob.glob(os.path.join(confd_path, '*.yaml.default'))
-    except PathNotFound, e:
+    except PathNotFound as e:
         log.error("No conf.d folder found at '%s' or in the directory where the Agent is currently deployed.\n" % e.args[0])
         sys.exit(3)
 
@@ -811,6 +917,7 @@ def _service_disco_configs(agentConfig):
             service_disco_configs = sd_backend.get_configs()
         except Exception:
             log.exception("Loading service discovery configurations failed.")
+            return {}
     else:
         service_disco_configs = {}
 
@@ -829,19 +936,23 @@ def get_checks_places(osname, agentConfig):
     """
     try:
         checksd_path = get_checksd_path(osname)
-    except PathNotFound, e:
+    except PathNotFound as e:
         log.error(e.args[0])
         sys.exit(3)
 
-    places = [lambda name: os.path.join(agentConfig['additional_checksd'], '%s.py' % name)]
+    places = [lambda name: (os.path.join(agentConfig['additional_checksd'], '%s.py' % name), None)]
 
     try:
-        sdk_integrations = get_sdk_integrations_path(osname)
-        places.append(lambda name: os.path.join(sdk_integrations, name, 'check.py'))
+        if Platform.is_windows():
+            places.append(get_windows_sdk_check)
+        else:
+            sdk_integrations = get_sdk_integrations_path(osname)
+            places.append(lambda name: (os.path.join(sdk_integrations, name, 'check.py'),
+                                        os.path.join(sdk_integrations, name, 'manifest.json')))
     except PathNotFound:
         log.debug('No sdk integrations path found')
 
-    places.append(lambda name: os.path.join(checksd_path, '%s.py' % name))
+    places.append(lambda name: (os.path.join(checksd_path, '%s.py' % name), None))
     return places
 
 
@@ -855,10 +966,10 @@ def _load_file_config(config_path, check_name, agentConfig):
 
     try:
         check_config = check_yaml(config_path)
-    except Exception, e:
+    except Exception as e:
         log.exception("Unable to parse yaml config in %s" % config_path)
         traceback_message = traceback.format_exc()
-        return False, None, {check_name: {'error': str(e), 'traceback': traceback_message}}
+        return False, None, {check_name: {'error': str(e), 'traceback': traceback_message, 'version': 'unknown'}}
     return True, check_config, {}
 
 
@@ -875,23 +986,34 @@ def get_valid_check_class(check_name, check_path):
     return True, check_class, {}
 
 
-def _initialize_check(check_config, check_name, check_class, agentConfig):
+def _initialize_check(check_config, check_name, check_class, agentConfig, manifest_path):
     init_config = check_config.get('init_config') or {}
     instances = check_config['instances']
     try:
         try:
             check = check_class(check_name, init_config=init_config,
                                 agentConfig=agentConfig, instances=instances)
-        except TypeError, e:
+        except TypeError as e:
             # Backwards compatibility for checks which don't support the
             # instances argument in the constructor.
             check = check_class(check_name, init_config=init_config,
                                 agentConfig=agentConfig)
             check.instances = instances
-    except Exception, e:
+
+        if manifest_path:
+            check.set_manifest_path(manifest_path)
+        check.set_check_version(load_manifest(manifest_path))
+    except Exception as e:
         log.exception('Unable to initialize check %s' % check_name)
         traceback_message = traceback.format_exc()
-        return {}, {check_name: {'error': e, 'traceback': traceback_message}}
+        manifest = load_manifest(manifest_path)
+        if manifest is not None:
+            check_version = '{core}:{vers}'.format(core=AGENT_VERSION,
+                                                   vers=manifest.get('version', 'unknown'))
+        else:
+            check_version = AGENT_VERSION
+
+        return {}, {check_name: {'error': e, 'traceback': traceback_message, 'version': check_version}}
     else:
         return {check_name: check}, {}
 
@@ -905,21 +1027,60 @@ def _update_python_path(check_config):
         sys.path.extend(pythonpath)
 
 
+def validate_sdk_check(manifest_path):
+    max_validated = min_validated = False
+    try:
+        with open(manifest_path, 'r') as fp:
+            manifest = json.load(fp)
+            current_version = _version_string_to_tuple(get_version())
+            for maxfield in MANIFEST_VALIDATION['max']:
+                max_version = manifest.get(maxfield)
+                if not max_version:
+                    continue
+
+                max_validated = _version_string_to_tuple(max_version) >= current_version
+                break
+
+            for minfield in MANIFEST_VALIDATION['min']:
+                min_version = manifest.get(minfield)
+                if not min_version:
+                    continue
+
+                min_validated = _version_string_to_tuple(min_version) <= current_version
+                break
+    except IOError:
+        log.debug("Manifest file (%s) not present." % manifest_path)
+    except json.JSONDecodeError:
+        log.debug("Manifest file (%s) has badly formatted json." % manifest_path)
+    except ValueError:
+        log.debug("Versions in manifest file (%s) can't be validated.", manifest_path)
+
+    return (min_validated and max_validated)
+
+
 def load_check_from_places(check_config, check_name, checks_places, agentConfig):
     '''Find a check named check_name in the given checks_places and try to initialize it with the given check_config.
     A failure (`load_failure`) can happen when the check class can't be validated or when the check can't be initialized. '''
     load_success, load_failure = {}, {}
     for check_path_builder in checks_places:
-        check_path = check_path_builder(check_name)
-        if not os.path.exists(check_path):
+        check_path, manifest_path = check_path_builder(check_name)
+        # The windows SDK function will return None,
+        # so the loop should also continue if there is no path.
+        if not (check_path and os.path.exists(check_path)):
             continue
 
         check_is_valid, check_class, load_failure = get_valid_check_class(check_name, check_path)
         if not check_is_valid:
             continue
 
+        if manifest_path:
+            validated = validate_sdk_check(manifest_path)
+            if not validated:
+                log.warn("The SDK check (%s) was designed for a different agent core "
+                         "or couldnt be validated - behavior is undefined" % check_name)
+
         load_success, load_failure = _initialize_check(
-            check_config, check_name, check_class, agentConfig
+            check_config, check_name, check_class, agentConfig, manifest_path
         )
 
         _update_python_path(check_config)
@@ -935,6 +1096,7 @@ def load_check_directory(agentConfig, hostname):
     initialize. Only checks that have a configuration
     file in conf.d will be returned. '''
     from checks import AGENT_METRICS_CHECK_NAME
+    from jmxfetch import JMX_CHECKS
 
     initialized_checks = {}
     init_failed_checks = {}
@@ -973,19 +1135,16 @@ def load_check_directory(agentConfig, hostname):
 
     for check_name, service_disco_check_config in _service_disco_configs(agentConfig).iteritems():
         # ignore this config from service disco if the check has been loaded through a file config
-        if check_name in initialized_checks or check_name in init_failed_checks:
+        if check_name in initialized_checks or \
+                check_name in init_failed_checks or \
+                check_name in JMX_CHECKS:
             continue
 
-        # if TRACE_CONFIG is set, service_disco_check_config looks like:
-        # (config_src, (sd_init_config, sd_instances)) instead of
-        # (sd_init_config, sd_instances)
+        sd_init_config, sd_instances = service_disco_check_config[1]
         if agentConfig.get(TRACE_CONFIG):
-            sd_init_config, sd_instances = service_disco_check_config[1]
             configs_and_sources[check_name] = (
                 service_disco_check_config[0],
                 {'init_config': sd_init_config, 'instances': sd_instances})
-        else:
-            sd_init_config, sd_instances = service_disco_check_config
 
         check_config = {'init_config': sd_init_config, 'instances': sd_instances}
 
@@ -1003,12 +1162,70 @@ def load_check_directory(agentConfig, hostname):
         return configs_and_sources
 
     return {'initialized_checks': initialized_checks.values(),
-            'init_failed_checks': init_failed_checks,
-            }
+            'init_failed_checks': init_failed_checks}
 
-#
+
+def load_check(agentConfig, hostname, checkname):
+    """Same logic as load_check_directory except it loads one specific check"""
+    from jmxfetch import JMX_CHECKS
+
+    agentConfig['checksd_hostname'] = hostname
+    osname = get_os()
+    checks_places = get_checks_places(osname, agentConfig)
+    for config_path in _file_configs_paths(osname, agentConfig):
+        check_name = _conf_path_to_check_name(config_path)
+        if check_name == checkname and check_name not in JMX_CHECKS:
+            conf_is_valid, check_config, invalid_check = _load_file_config(config_path, check_name, agentConfig)
+
+            if invalid_check and not conf_is_valid:
+                return invalid_check
+
+            # try to load the check and return the result
+            load_success, load_failure = load_check_from_places(check_config, check_name, checks_places, agentConfig)
+            return load_success.values()[0] or load_failure
+
+    # the check was not found, try with service discovery
+    for check_name, service_disco_check_config in _service_disco_configs(agentConfig).iteritems():
+        if check_name == checkname:
+            sd_init_config, sd_instances = service_disco_check_config[1]
+            check_config = {'init_config': sd_init_config, 'instances': sd_instances}
+
+            # try to load the check and return the result
+            load_success, load_failure = load_check_from_places(check_config, check_name, checks_places, agentConfig)
+            return load_success.values()[0] if load_success else load_failure
+
+    return None
+
+def generate_jmx_configs(agentConfig, hostname, checknames=None):
+    """Similar logic to load_check_directory for JMX checks"""
+    from jmxfetch import get_jmx_checks
+
+    jmx_checks = get_jmx_checks(auto_conf=True)
+
+    if not checknames:
+        checknames = jmx_checks
+    agentConfig['checksd_hostname'] = hostname
+
+    # the check was not found, try with service discovery
+    generated = {}
+    for check_name, service_disco_check_config in _service_disco_configs(agentConfig).iteritems():
+        if check_name in checknames and check_name in jmx_checks:
+            log.debug('Generating JMX config for: %s' % check_name)
+
+            _, (sd_init_config, sd_instances) = service_disco_check_config
+
+            check_config = {'init_config': sd_init_config,
+                            'instances': sd_instances}
+
+            try:
+                yaml = config_to_yaml(check_config)
+                generated["{}_{}".format(check_name, 0)] = yaml
+            except Exception:
+                log.exception("Unable to generate YAML config for %s", check_name)
+
+    return generated
+
 # logging
-
 
 def get_log_date_format():
     return "%Y-%m-%d %H:%M:%S %Z"
@@ -1147,7 +1364,7 @@ def initialize_logging(logger_name):
                 handler.setFormatter(logging.Formatter(get_syslog_format(logger_name), get_log_date_format()))
                 root_log = logging.getLogger()
                 root_log.addHandler(handler)
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write("Error setting up syslog: '%s'\n" % str(e))
                 traceback.print_exc()
 
@@ -1160,11 +1377,11 @@ def initialize_logging(logger_name):
                 nt_event_handler.setLevel(logging.ERROR)
                 app_log = logging.getLogger(logger_name)
                 app_log.addHandler(nt_event_handler)
-            except Exception, e:
+            except Exception as e:
                 sys.stderr.write("Error setting up Event viewer logging: '%s'\n" % str(e))
                 traceback.print_exc()
 
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("Couldn't initialize logging: %s\n" % str(e))
         traceback.print_exc()
 
