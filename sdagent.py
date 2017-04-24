@@ -204,7 +204,7 @@ class AgentTransaction(Transaction):
         #for endpoint in self._endpoints:
         #    for api_key in self._endpoints[endpoint]:
         transaction = copy.copy(self)
-        transaction._endpoint = self._endpoints[0]
+        transaction._endpoint = self._endpoints
         transaction._agent_key = self._agent_key
         self._trManager.append(transaction)
         log.debug("Created transaction %d" % transaction.get_id())
