@@ -71,7 +71,7 @@ zk_max_file_descriptor_count    4096
 '''
 # stdlib
 from collections import defaultdict
-from distutils.version import LooseVersion # pylint: disable=E0611
+from distutils.version import LooseVersion # pylint: disable=E0611,E0401
 from StringIO import StringIO
 import re
 import socket
@@ -102,7 +102,9 @@ class ZookeeperCheck(AgentCheck):
 
     Parse content from `stat` and `mntr`(if available) commmands to retrieve health cluster metrics.
     """
-    version_pattern = re.compile(r'Zookeeper version: ([^.]+)\.([^.]+)\.([^-]+)', flags=re.I)
+    # example match:
+    # "Zookeeper version: 3.4.10-39d3a4f269333c922ed3db283be479f9deacaa0f, built on 03/23/2017 10:13 GMT"
+    version_pattern = re.compile(r'(\d+\.\d+\.\d+)')
 
     SOURCE_TYPE_NAME = 'zookeeper'
 
@@ -130,7 +132,7 @@ class ZookeeperCheck(AgentCheck):
         expected_mode = (instance.get('expected_mode') or '').strip()
         tags = instance.get('tags', [])
         cx_args = (host, port, timeout)
-        sc_tags = ["host:{0}".format(host), "port:{0}".format(port)]
+        sc_tags = ["host:{0}".format(host), "port:{0}".format(port)] + list(set(tags))
         hostname = get_hostname(self.agentConfig)
         report_instance_mode = instance.get("report_instance_mode", True)
 
@@ -281,14 +283,13 @@ class ZookeeperCheck(AgentCheck):
         # body correctly. Particularly, the Connections val was added in
         # >= 3.4.4.
         start_line = buf.readline()
-        match = self.version_pattern.match(start_line)
+        match = self.version_pattern.search(start_line)
         if match is None:
             return (None, None, "inactive", None)
             raise Exception("Could not parse version from stat command output: %s" % start_line)
         else:
-            version_tuple = match.groups()
-        has_connections_val = version_tuple >= ('3', '4', '4')
-        version = "%s.%s.%s" % version_tuple
+            version = match.group()
+        has_connections_val = LooseVersion(version) > LooseVersion("3.4.4")
 
         # Clients:
         buf.readline()  # skip the Clients: header
