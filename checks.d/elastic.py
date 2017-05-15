@@ -409,7 +409,7 @@ class ESCheck(AgentCheck):
         if stats_data['cluster_name']:
             # retreive the cluster name from the data, and append it to the
             # master tag list.
-            config.tags.append("cluster_name:{}".format(stats_data['cluster_name']))
+            config.tags.append("cluster_name:{0}".format(stats_data['cluster_name']))
         self._process_stats_data(stats_data, stats_metrics, config)
 
         # Load clusterwise data
@@ -617,7 +617,7 @@ class ESCheck(AgentCheck):
             node_name = node_data.get('name')
             if node_name:
                 metrics_tags.append(
-                    u"node_name:{}".format(node_name)
+                    u"node_name:{0}".format(node_name)
                 )
 
             # Resolve the node's hostname

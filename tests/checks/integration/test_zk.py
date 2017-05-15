@@ -1,6 +1,10 @@
+# (C) Datadog, Inc. 2010-2016
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 # stdlib
 import os
-from distutils.version import LooseVersion # pylint: disable=E0611
+from distutils.version import LooseVersion # pylint: disable=E0611,E0401
 from nose.plugins.attrib import attr
 
 # project
@@ -28,7 +32,7 @@ class ZooKeeperTestCase(AgentCheckTest):
 
     CONNECTION_FAILURE_CONFIG = {
         'host': "127.0.0.1",
-        'port': 2182,
+        'port': 12182,
         'expected_mode': "down",
         'tags': []
     }
@@ -88,7 +92,7 @@ class ZooKeeperTestCase(AgentCheckTest):
         for mname in self.STAT_METRICS:
             self.assertMetric(mname, tags=["mode:standalone", "mytag"], count=1)
 
-        zk_version = os.environ.get("FLAVOR_VERSION")
+        zk_version = os.environ.get("FLAVOR_VERSION") or "3.4.10"
 
         if zk_version and LooseVersion(zk_version) > LooseVersion("3.4.0"):
             for mname in self.MNTR_METRICS:
