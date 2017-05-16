@@ -1,0 +1,9 @@
+Origin: Server Density Ltd.
+Label: Server Density
+Suite: stable
+Codename: all
+Version: 5.0
+Architectures: i386 amd64 armel armhf
+Components: main
+Description: Server Density packages
+SignWith: 131EFC09

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ev
 
+REPOSITORY_DIR="/archive"
 # Build requisites
 PATH=~/Library/Python/2.7/bin:$PATH
 
@@ -248,7 +249,11 @@ fi
 
 # Add the icon
 ${DARWIN_SCRIPTS}/scripts/setIcon.py ${DARWIN_SCRIPTS}/Resources/sd-agent-installer.icns diskimage/"${PKG_NAME}"
-
+if [ ! -d "$REPOSITORY_DIR" ]; then
+    sudo mkdir -p "$REPOSITORY_DIR"/macOS
+fi
 # Package the disk image
 # This may fail sometimes due to a "Resource busy" error, in that case re-running the job usually fixes it
 hdiutil create -srcfolder diskimage -volname "Agent Installer" "sd-agent-${AGENT_VERSION}.dmg"
+
+sudo cp sd-agent-${AGENT_VERSION}.dmg "$CACHE_FILE_PACKAGES_MAC"

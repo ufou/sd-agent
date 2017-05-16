@@ -1,11 +1,4 @@
-sudo: false
-
-branches:
-  only:
-    - master
-    - /^\d+\.\d+\.x$/  # release forked patches branch.
-    - /^\d+\.\d+\.\d+/ # tags format to we get releases pushed.
-
+sudo: required
 language: python
 python:
   - 2.7
@@ -14,6 +7,7 @@ cache:
   directories:
     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
     - vendor/cache
+    - $CACHE_DIR
 
 matrix:
   fast_finish: true
@@ -22,6 +16,9 @@ matrix:
       language: generic
       python:
       env: TRAVIS_FLAVOR=default
+
+services:
+  - docker
 
 env:
   global:
@@ -32,7 +29,14 @@ env:
     - PIP_CACHE=$HOME/.cache/pip
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.2.1
+    - AGENT_VERSION=2.2.0
+    - CACHE_DIR=$HOME/.cache
+    - CACHE_FILE_el6=$CACHE_DIR/el6.tar.gz
+    - CACHE_FILE_el6_i386=$CACHE_DIR/el6_i386.tar.gz
+    - CACHE_FILE_el7=$CACHE_DIR/el7.tar.gz
+    - CACHE_FILE_precise=$CACHE_DIR/precise.tar.gz
+    - CACHE_FILE_PACKAGES_LINUX=$CACHE_DIR/packages_linux.tar.gz
+    - CACHE_FILE_PACKAGES_MAC=/tmp/sd-agent-latest.dmg
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=checks_mock
@@ -54,7 +58,12 @@ before_script: echo "OVERRIDING TRAVIS STEPS"
 script:
   - ./.travis/build_installer.sh
 
-
+before_install: echo "OVERRIDING TRAVIS STEPS"
+install:  pip install softlayer-object-storage==0.5.4
+before_script:
+  - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then sudo apt-get --yes --no-install-recommends install binfmt-support qemu-user-static createrepo reprepro; fi
+  - if [ "${TRAVIS_OS_NAME}" != "osx" ]; then echo ':arm:M::\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-arm-static:' | sudo tee -a /proc/sys/fs/binfmt_misc/register; fi
+script: travis_retry ./.travis/build_installer.sh
 after_failure:
   - echo "Logs from installation process come here / DEBUG LOGS"
   - cat /tmp/ci.log
@@ -62,7 +71,7 @@ after_failure:
 notifications:
   slack:
     secure: EIK5M4WH0/ZnwgCyd6T4801Ll9g9pQuxmkL5PVCCzUHeT2ouwxFepEA/2olb74DYUc1DiDbhlKyevxZVw9l6G2vwZY670N9ZAhbivyDjK6hOduIt8+YicJNtFs3PzilRpu9yPrpDFlrOeuT8MT1TMP8xTCfvDa6WDic2Nfen4L0=
-    
+
 deploy:
   - provider: releases
     api_key:
@@ -73,3 +82,18 @@ deploy:
       tags: true
       condition: $TRAVIS_OS_NAME == osx
       repo: serverdensity/sd-agent
+jobs:
+  include:
+    - stage: build containers
+      script: travis_retry ./.travis/build_containers.sh
+      python: 2.7
+    - stage: build packages
+      script: if [ "${TRAVIS_OS_NAME}" != "osx" ]; then travis_retry ./.travis/build_packages.sh; elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then ./packaging/darwin/build_installer.sh; fi
+      python: 2.7
+    - os: osx
+      language: generic
+      python:
+      env: TRAVIS_FLAVOR=default
+    - stage: upload packages
+      script: travis_retry ./.travis/upload_packages.sh
+      python: 2.7
