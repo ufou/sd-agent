@@ -378,9 +378,6 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
             log.warning(u"No agent key was found. Aborting.")
             sys.exit(2)
 
-        if not config.has_option('Main', 'sd_account'):
-            log.warning(u"No sd_account was found. Aborting.")
-            sys.exit(2)
 
         """
         # Endpoints
@@ -440,11 +437,11 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
                 listen_port = int(config.get('Main', 'listen_port'))
             agentConfig['sd_url'] = "http://{}:{}".format(agentConfig['bind_host'], listen_port)
         # FIXME: Legacy sd_url command line switch
-        elif options is not None and options.sd_url is not None:
-            agentConfig['sd_url'] = options.sd_url
+        if config.has_option('Main', 'sd_url'):
+            agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
             # Default agent URL
-            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
+            agentConfig['sd_url'] = "https://" + config.get('Main', 'sd_account') + ".agent.serverdensity.io"
         if agentConfig['sd_url'].endswith('/'):
             agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
 
