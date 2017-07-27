@@ -265,7 +265,7 @@ SCHEMA_VARS = {
 
 REPLICA_VARS = {
     'Seconds_Behind_Master': ('mysql.replication.seconds_behind_master', GAUGE),
-    'Slaves_connected': ('mysql.replication.slaves_connected', COUNT),
+    'Slaves_connected': ('mysql.replication.slaves_connected', GAUGE),
 }
 
 SYNTHETIC_VARS = {
@@ -288,7 +288,7 @@ class MySql(AgentCheck):
         return {"pymysql": pymysql.__version__}
 
     def check(self, instance):
-        host, port, user, password, mysql_sock, defaults_file, tags, options, queries, ssl = \
+        host, port, user, password, mysql_sock, defaults_file, tags, options, queries, ssl, connect_timeout = \
             self._get_config(instance)
 
         self._set_qcache_stats()
@@ -297,7 +297,7 @@ class MySql(AgentCheck):
             raise Exception("Mysql host and user are needed.")
 
         with self._connect(host, port, mysql_sock, user,
-                           password, defaults_file, ssl) as db:
+                           password, defaults_file, ssl, connect_timeout) as db:
             try:
                 # Metadata collection
                 self._collect_metadata(db, host)
@@ -319,14 +319,15 @@ class MySql(AgentCheck):
         self.mysql_sock = instance.get('sock', '')
         self.defaults_file = instance.get('defaults_file', '')
         user = instance.get('user', '')
-        password = instance.get('pass', '')
+        password = str(instance.get('pass', ''))
         tags = instance.get('tags', [])
         options = instance.get('options', {})
         queries = instance.get('queries', [])
         ssl = instance.get('ssl', {})
+        connect_timeout = instance.get('connect_timeout', None)
 
         return (self.host, self.port, user, password, self.mysql_sock,
-                self.defaults_file, tags, options, queries, ssl)
+                self.defaults_file, tags, options, queries, ssl, connect_timeout)
 
     def _set_qcache_stats(self):
         host_key = self._get_host_key()
@@ -357,7 +358,7 @@ class MySql(AgentCheck):
         return hostkey
 
     @contextmanager
-    def _connect(self, host, port, mysql_sock, user, password, defaults_file, ssl):
+    def _connect(self, host, port, mysql_sock, user, password, defaults_file, ssl, connect_timeout):
         self.service_check_tags = [
             'server:%s' % (mysql_sock if mysql_sock != '' else host),
             'port:%s' % ('unix_socket' if port == 0 else port)
@@ -368,7 +369,11 @@ class MySql(AgentCheck):
             ssl = dict(ssl) if ssl else None
 
             if defaults_file != '':
-                db = pymysql.connect(read_default_file=defaults_file, ssl=ssl)
+                db = pymysql.connect(
+                    read_default_file=defaults_file,
+                    ssl=ssl,
+                    connect_timeout=connect_timeout
+                )
             elif mysql_sock != '':
                 self.service_check_tags = [
                     'server:{0}'.format(mysql_sock),
@@ -377,7 +382,8 @@ class MySql(AgentCheck):
                 db = pymysql.connect(
                     unix_socket=mysql_sock,
                     user=user,
-                    passwd=password
+                    passwd=password,
+                    connect_timeout=connect_timeout
                 )
             elif port:
                 db = pymysql.connect(
@@ -385,14 +391,16 @@ class MySql(AgentCheck):
                     port=port,
                     user=user,
                     passwd=password,
-                    ssl=ssl
+                    ssl=ssl,
+                    connect_timeout=connect_timeout
                 )
             else:
                 db = pymysql.connect(
                     host=host,
                     user=user,
                     passwd=password,
-                    ssl=ssl
+                    ssl=ssl,
+                    connect_timeout=connect_timeout
                 )
             self.log.debug("Connected to MySQL")
             self.service_check(self.SERVICE_CHECK_NAME, AgentCheck.OK,
@@ -476,13 +484,15 @@ class MySql(AgentCheck):
         results['Key_buffer_size'] = key_buffer_size
 
         try:
-            key_cache_utilization = 1 - ((key_blocks_unused * key_cache_block_size) / key_buffer_size)
+            # can be null if the unit is missing in the user config (4 instead of 4G for eg.)
+            if key_buffer_size != 0:
+                key_cache_utilization = 1 - ((key_blocks_unused * key_cache_block_size) / key_buffer_size)
+                results['Key_cache_utilization'] = key_cache_utilization
 
             results['Key_buffer_bytes_used'] = self._collect_scalar(
                 'Key_blocks_used', results) * key_cache_block_size
             results['Key_buffer_bytes_unflushed'] = self._collect_scalar(
                 'Key_blocks_not_flushed', results) * key_cache_block_size
-            results['Key_cache_utilization'] = key_cache_utilization
         except TypeError as e:
             self.log.error("Not all Key metrics are available, unable to compute: {0}".format(e))
 
@@ -494,7 +504,7 @@ class MySql(AgentCheck):
             self.log.debug("Collecting Extra Status Metrics")
             metrics.update(OPTIONAL_STATUS_VARS)
 
-            if self._version_compatible(db, host, "5.6.6"):
+            if self._version_compatible(db, host, (5, 6, 6)):
                 metrics.update(OPTIONAL_STATUS_VARS_5_6_6)
 
         if _is_affirmative(options.get('galera_cluster', False)):
@@ -503,8 +513,8 @@ class MySql(AgentCheck):
             metrics.update(GALERA_VARS)
 
         performance_schema_enabled = self._get_variable_enabled(results, 'performance_schema')
-        if _is_affirmative(options.get('extra_performance_metrics', False)) and \
-                self._version_compatible(db, host, "5.6.0") and \
+        above_560 = self._version_compatible(db, host, (5, 6, 0))
+        if _is_affirmative(options.get('extra_performance_metrics', False)) and above_560 and \
                 performance_schema_enabled:
             # report avg query response time per schema to Datadog
             results['perf_digest_95th_percentile_avg_us'] = self._get_query_exec_time_95th_us(db)
@@ -519,7 +529,8 @@ class MySql(AgentCheck):
         if _is_affirmative(options.get('replication', False)):
             # Get replica stats
             results.update(self._get_replica_stats(db))
-            results.update(self._get_slave_status(db))
+            nonblocking = _is_affirmative(options.get('replication_non_blocking_status', False))
+            results.update(self._get_slave_status(db, above_560, nonblocking))
             metrics.update(REPLICA_VARS)
 
             # get slave running form global status page
@@ -531,7 +542,7 @@ class MySql(AgentCheck):
 
             # MySQL 5.7.x might not have 'Slave_running'. See: https://bugs.mysql.com/bug.php?id=78544
             # look at replica vars collected at the top of if-block
-            if self._version_compatible(db, host, "5.7.0"):
+            if self._version_compatible(db, host, (5, 7, 0)):
                 slave_io_running = self._collect_string('Slave_IO_Running', results)
                 slave_sql_running = self._collect_string('Slave_SQL_Running', results)
                 if slave_io_running:
@@ -550,7 +561,7 @@ class MySql(AgentCheck):
 
             # if we don't yet have a status - inspect
             if slave_running_status == AgentCheck.UNKNOWN:
-                if self._is_master(slaves, binlog_running):  # master
+                if self._is_master(slaves, results):  # master
                     if slaves > 0 and binlog_running:
                         slave_running_status = AgentCheck.OK
                     else:
@@ -595,8 +606,10 @@ class MySql(AgentCheck):
                              % self.MAX_CUSTOM_QUERIES)
 
 
-    def _is_master(self, slaves, binlog):
-        if slaves > 0 or binlog:
+    def _is_master(self, slaves, results):
+        # master uuid only collected in slaves
+        master_host = self._collect_string('Master_Host', results)
+        if slaves > 0 or not master_host:
             return True
 
         return False
@@ -629,7 +642,7 @@ class MySql(AgentCheck):
 
         try:
             mysql_version = self._get_version(db, host)
-        except Exception, e:
+        except Exception as e:
             self.warning("Cannot compute mysql version, assuming it's older.: %s"
                          % str(e))
             return False
@@ -638,7 +651,7 @@ class MySql(AgentCheck):
         patchlevel = int(re.match(r"([0-9]+)", mysql_version[2]).group(1))
         version = (int(mysql_version[0]), int(mysql_version[1]), patchlevel)
 
-        return version > compat_version
+        return version >= compat_version
 
     def _get_version(self, db, host):
         hostkey = self._get_host_key()
@@ -853,12 +866,17 @@ class MySql(AgentCheck):
             self.warning("Privileges error getting replication status (must grant REPLICATION CLIENT): %s" % str(e))
             return {}
 
-    def _get_slave_status(self, db, nonblocking=True):
+    def _get_slave_status(self, db, above_560, nonblocking):
+        """
+        Retrieve the slaves' statuses using:
+        1. The `performance_schema.threads` table. Non-blocking, requires version > 5.6.0
+        2. The `information_schema.processlist` table. Blocking
+        """
         try:
             with closing(db.cursor()) as cursor:
-                # querying threads instead of PROCESSLIST to avoid mutex impact on
-                # performance.
-                if nonblocking:
+                if above_560 and nonblocking:
+                    # Query `performance_schema.threads` instead of `
+                    # information_schema.processlist` to avoid mutex impact on performance.
                     cursor.execute("SELECT THREAD_ID, NAME FROM performance_schema.threads WHERE NAME LIKE '%worker'")
                 else:
                     cursor.execute("SELECT * FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND LIKE '%Binlog dump%'")
@@ -882,13 +900,20 @@ class MySql(AgentCheck):
         try:
             with closing(db.cursor()) as cursor:
                 cursor.execute("SHOW /*!50000 ENGINE*/ INNODB STATUS")
-                innodb_status = cursor.fetchone()
-                innodb_status_text = innodb_status[2]
         except (pymysql.err.InternalError, pymysql.err.OperationalError, pymysql.err.NotSupportedError) as e:
             self.warning("Privilege error or engine unavailable accessing the INNODB status \
                          tables (must grant PROCESS): %s" % str(e))
             return {}
 
+        if cursor.rowcount < 1:
+            # No data from SHOW ENGINE STATUS, even though the engine is enabled.
+            # EG: This could be an Aurora Read Instance
+            self.warning("""'SHOW ENGINE INNODB STATUS' returned no data.
+                If you are running an Aurora Read Instace, this is expected and you should disable the innodb metrics collection""")
+            return {}
+
+        innodb_status = cursor.fetchone()
+        innodb_status_text = innodb_status[2]
         results = defaultdict(int)
 
         # Here we now parse InnoDB STATUS one line at a time
@@ -984,9 +1009,13 @@ class MySql(AgentCheck):
                 results['Innodb_os_file_fsyncs'] = long(row[8])
             elif line.find('Pending normal aio reads:') == 0:
                 # Pending normal aio reads: 0, aio writes: 0,
+                # or Pending normal aio reads: 0 [0, 0] , aio writes: 0 [0, 0] ,
                 # or Pending normal aio reads: [0, 0, 0, 0] , aio writes: [0, 0, 0, 0] ,
                 # or Pending normal aio reads: 0 [0, 0, 0, 0] , aio writes: 0 [0, 0, 0, 0] ,
-                if len(row) == 16:
+                if len(row) == 14:
+                    results['Innodb_pending_normal_aio_reads'] = long(row[4])
+                    results['Innodb_pending_normal_aio_writes'] = long(row[10])
+                elif len(row) == 16:
                     results['Innodb_pending_normal_aio_reads'] = (long(row[4]) + long(row[5]) +
                                                                   long(row[6]) + long(row[7]))
                     results['Innodb_pending_normal_aio_writes'] = (long(row[11]) + long(row[12]) +

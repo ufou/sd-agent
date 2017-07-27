@@ -302,9 +302,11 @@ WARNINGS
 
         if not os.getenv('NO_COVERAGE'):
             self.assertEquals(coverage_metrics, 100.0)
-            self.assertEquals(coverage_events, 100.0)
-            self.assertEquals(coverage_sc, 100.0)
-            self.assertEquals(coverage_sm, 100.0)
+            #self.assertEquals(coverage_events, 100.0)
+            #self.assertEquals(coverage_sc, 100.0)
+            #self.assertEquals(coverage_sm, 100.0)
+            # Currently disabled as we do not support events, service checks or service meta at the moment.
+            # May impact tests.
 
     def _candidates_size_assert(self, candidates, count=None, at_least=1):
         try:

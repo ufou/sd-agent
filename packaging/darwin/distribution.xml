@@ -18,5 +18,5 @@
     <choice id="com.serverdensity.agent-service" visible="false">
         <pkg-ref id="com.serverdensity.agent-service"/>
     </choice>
-    <pkg-ref id="com.serverdensity.agent-service" version="2.1.5" onConclusion="none">Server%20Density%20Agent%20Service.pkg</pkg-ref>
+    <pkg-ref id="com.serverdensity.agent-service" version="2.1.6" onConclusion="none">Server%20Density%20Agent%20Service.pkg</pkg-ref>
 </installer-gui-script>

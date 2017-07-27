@@ -19,10 +19,10 @@ matrix:
       python:
       env: TRAVIS_FLAVOR=default
 
-cache:
-  directories:
-    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
-    - vendor/cache
+#cache:
+#  directories:
+#    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
+#    - vendor/cache
 
 
 env:
@@ -34,7 +34,7 @@ env:
     - SKIP_CLEANUP=true
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.1.5
+    - AGENT_VERSION=2.1.6
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=core_integration
