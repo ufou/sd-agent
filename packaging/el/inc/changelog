@@ -1,4 +1,6 @@
 %changelog
+* Mon May 15 2017 Server Density <hello@serverdensity.com> 2.1.6-1
+- Updates for ElasticSearch, MySQL and Zookeeper plugins.
 * Wed Jan 04 2017 Server Density <hello@serverdensity.com> 2.1.5-1
 - Added support for Couchbase plugin.
 * Tue Nov 08 2016 Server Density <hello@serverdensity.com> 2.1.4-1
@@ -23,7 +25,7 @@
 - Fixed pip command to install third party modules inside the virtual-env.
 * Thu May 05 2016 Server Density <hello@serverdensity.com> 2.0.4-1
 - Added default plugins.cfg file.
-- Fixed pycurl module installation to fix proxy support, except for el5 which 
+- Fixed pycurl module installation to fix proxy support, except for el5 which
 has a too old version of libcurl.
 - Include 32-bit support on RedHat / CentOS.
 - Renamed postgres package as postgresql to match Debian packages.

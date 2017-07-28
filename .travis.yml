@@ -19,12 +19,11 @@ matrix:
       python:
       env: TRAVIS_FLAVOR=default
 
-cache:
-  directories:
-    - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
-    - vendor/cache
-    - $HOME/embedded
-
+# cache:
+#   directories:
+#     - $HOME/virtualenv/python$TRAVIS_PYTHON_VERSION.9
+#     - vendor/cache
+#     - $HOME/embedded
 
 env:
   global:
@@ -35,7 +34,7 @@ env:
     - PIP_CACHE=$HOME/.cache/pip
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.1.5
+    - AGENT_VERSION=2.1.6
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=checks_mock
