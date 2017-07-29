@@ -49,7 +49,7 @@ log = logging.getLogger(__name__)
 
 FLUSH_LOGGING_PERIOD = 10
 FLUSH_LOGGING_INITIAL = 5
-DD_CHECK_TAG = 'dd_check:{0}'
+SD_CHECK_TAG = 'sd_check:{0}'
 
 
 class AgentPayload(collections.MutableMapping):
@@ -467,7 +467,7 @@ class Collector(object):
                 status = AgentCheck.OK
             elif check_status.status == STATUS_ERROR:
                 status = AgentCheck.CRITICAL
-            check.service_check('sd.agent.check_status', status, tags=service_check_tags)
+            check.service_check('serverdensity.agent.check_status', status, tags=service_check_tags)
 
             # Collect the service checks and save them in the payload
             current_check_service_checks = check.get_service_checks()
@@ -485,7 +485,7 @@ class Collector(object):
 
             # Intrument check run timings if enabled.
             if self.check_timings:
-                metric = 'sd.agent.check_run_time'
+                metric = 'serverdensity.agent.check_run_time'
                 meta = {'tags': ["check:%s" % check.name]}
                 metrics.append((metric, time.time(), check_run_time, meta))
 
@@ -499,7 +499,7 @@ class Collector(object):
             check_statuses.append(check_status)
 
         # Add a service check for the agent
-        service_checks.append(create_service_check('sd.agent.up', AgentCheck.OK,
+        service_checks.append(create_service_check('serverdensity.agent.up', AgentCheck.OK,
                               hostname=self.hostname))
 
         # Store the metrics and events in the payload.
@@ -682,10 +682,10 @@ class Collector(object):
             if host_tags:
                 payload['host-tags']['system'] = host_tags
 
-            # If required by the user, let's create the dd_check:xxx host tags
-            if self.agentConfig['create_dd_check_tags']:
-                app_tags_list = [DD_CHECK_TAG.format(c.name) for c in self.initialized_checks_d]
-                app_tags_list.extend([DD_CHECK_TAG.format(cname) for cname
+            # If required by the user, let's create the sd_check:xxx host tags
+            if self.agentConfig['create_sd_check_tags']:
+                app_tags_list = [SD_CHECK_TAG.format(c.name) for c in self.initialized_checks_d]
+                app_tags_list.extend([SD_CHECK_TAG.format(cname) for cname
                                       in JMXFiles.get_jmx_appnames()])
 
                 if 'system' not in payload['host-tags']:

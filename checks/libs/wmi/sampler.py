@@ -1,3 +1,4 @@
+# pylint: disable=E0401
 """
 A lightweight Python WMI module wrapper built on top of `pywin32` and `win32com` extensions.
 

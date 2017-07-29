@@ -8,9 +8,6 @@ from collections import defaultdict
 # 3p
 from nose.plugins.attrib import attr
 
-# 3p
-from nose.plugins.attrib import attr
-
 # project
 from config import generate_jmx_configs
 from utils.service_discovery.config_stores import get_config_store

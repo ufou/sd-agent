@@ -16,8 +16,6 @@ from utils.platform import Platform
 from utils.service_discovery.abstract_sd_backend import AbstractSDBackend
 from utils.service_discovery.config_stores import get_config_store
 
-DATADOG_ID = 'com.datadoghq.sd.check.id'
-
 DATADOG_ID = 'com.serverdensity.sd.check.id'
 log = logging.getLogger(__name__)
 

@@ -568,10 +568,6 @@ class AgentCheck(object):
             {
                 "timestamp": int, the epoch timestamp for the event,
                 "event_type": string, the event time name,
-<<<<<<< HEAD
-                "agent_key": string, the api key of the account to associate the event with,
-=======
->>>>>>> upstream/5.12.x
                 "msg_title": string, the title of the event,
                 "msg_text": string, the text body of the event,
                 "alert_type": (optional) string, one of ('error', 'warning', 'success', 'info').
@@ -584,8 +580,7 @@ class AgentCheck(object):
         # Events are disabled.
         return
 
-        if event.get('agent_key') is None:
-            event['agent_key'] = self.agentConfig['agent_key']
+        self.events.append(event)
 
     def service_check(self, check_name, status, tags=None, timestamp=None,
                       hostname=None, check_run_id=None, message=None):
@@ -749,7 +744,7 @@ class AgentCheck(object):
                         log.warn("Could not serialize output of {0} to dict".format(method))
 
             except psutil.AccessDenied:
-                log.warn("Cannot call psutil method {0} : Access Denied".format(method))
+                log.warn("Cannot call psutil method {} : Access Denied".format(method))
 
         return stats
 

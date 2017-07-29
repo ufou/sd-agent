@@ -320,6 +320,7 @@ class APIServiceCheckTransaction(AgentTransaction):
             endpoint_base_url = self._application.get_from_dns_cache(endpoint_base_url)
         return "{0}/api/v1/check_run/?api_key={1}".format(endpoint_base_url, api_key)
 
+
 class StatusHandler(tornado.web.RequestHandler):
 
     def get(self):

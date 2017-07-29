@@ -1,12 +1,12 @@
 #!/usr/share/python/sd-agent/bin/python
-'''
+"""
     Server Density
     www.serverdensity.com
     ----
     Licensed under Simplified BSD License (see LICENSE)
-    (C) Server Density 2009-2015 all rights reserved
+    (C) Server Density 2009-2017 all rights reserved
     (C) Datadog, Inc. 2010-2016 all rights reserved
-'''
+"""
 # set up logging before importing any other components
 from config import get_version, initialize_logging  # noqa
 initialize_logging('collector')

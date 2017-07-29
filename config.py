@@ -1,4 +1,4 @@
-# (C) Server Density 2009-2016
+# (C) Server Density 2009-2017
 # (C) Datadog, Inc. 2010-2016
 # All rights reserved
 # Licensed under Simplified BSD License (see LICENSE)
@@ -51,7 +51,6 @@ SDK_INTEGRATIONS_DIR = 'integrations'
 SD_PIPE_NAME = "sd-service_discovery"
 SD_PIPE_UNIX_PATH = '/var/run/sd-agent/'
 SD_PIPE_WIN_PATH = "\\\\.\\pipe\\{pipename}"
-
 
 log = logging.getLogger(__name__)
 
@@ -112,7 +111,6 @@ def get_parsed_args():
         # Ignore parse errors
         options, args = Values({'autorestart': False,
                                 'sd_url': None,
-                                'disable_sd': False,
                                 'use_forwarder': False,
                                 'verbose': False,
                                 'profile': False}), []
@@ -378,6 +376,9 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
             log.warning(u"No agent key was found. Aborting.")
             sys.exit(2)
 
+        if not config.has_option('Main', 'sd_url') or not config.has_option('Main', 'sd_account'):
+            log.warning(u"No sd_account or sd_url was found. Aborting.")
+            sys.exit(2)
 
         """
         # Endpoints
@@ -394,6 +395,7 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
         #    'https://app.datadoghq.com': ['api_key_abc', 'api_key_def'],
         #    'https://app.example.com': ['api_key_xyz']
         # }
+        endpoints = {}
 
         dd_urls = remove_empty(dd_urls)
         api_keys = remove_empty(api_keys)
@@ -407,27 +409,6 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
         """
         endpoints = {}
         agentConfig['endpoints'] = endpoints
-        """
-        # FIXME unnecessarily complex
-        if config.has_option('Main', 'sd_account'):
-            agentConfig['sd_account'] = config.get('Main', 'sd_account')
-        agentConfig['use_forwarder'] = False
-        if options is not None and options.use_forwarder:
-            listen_port = 17124
-            if config.has_option('Main', 'listen_port'):
-                listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['sd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
-            agentConfig['use_forwarder'] = True
-        elif options is not None and not options.disable_sd and options.sd_url:
-            agentConfig['sd_url'] = options.sd_url
-        elif config.has_option('Main', 'sd_url'):
-            agentConfig['sd_url'] = config.get('Main', 'sd_url')
-        else:
-            # Default agent URL
-            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
-        if agentConfig['sd_url'].endswith('/'):
-            agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
-        """
 
         # Forwarder or not forwarder
         agentConfig['use_forwarder'] = options is not None and options.use_forwarder
@@ -437,7 +418,9 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
                 listen_port = int(config.get('Main', 'listen_port'))
             agentConfig['sd_url'] = "http://{}:{}".format(agentConfig['bind_host'], listen_port)
         # FIXME: Legacy sd_url command line switch
-        if config.has_option('Main', 'sd_url'):
+        elif options is not None and options.sd_url is not None:
+            agentConfig['sd_url'] = options.sd_url
+        elif config.has_option('Main', 'sd_url'):
             agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
             # Default agent URL
@@ -527,8 +510,8 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
                 agentConfig[key] = value
 
         # Create app:xxx tags based on monitored apps
-        agentConfig['create_dd_check_tags'] = config.has_option('Main', 'create_dd_check_tags') and \
-            _is_affirmative(config.get('Main', 'create_dd_check_tags'))
+        agentConfig['create_sd_check_tags'] = config.has_option('Main', 'create_sd_check_tags') and \
+            _is_affirmative(config.get('Main', 'create_sd_check_tags'))
 
         # Forwarding to external statsd server
         if config.has_option('Main', 'statsd_forward_host'):
@@ -1248,16 +1231,20 @@ def get_logging_config(cfg_path=None):
         'syslog_port': None,
     }
     if system_os == 'windows':
-        logging_config['windows_collector_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'collector.log')
-        logging_config['windows_forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'forwarder.log')
-        logging_config['windows_dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'dogstatsd.log')
+        logging_config['collector_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'collector.log')
+        logging_config['forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'forwarder.log')
+        logging_config['dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'dogstatsd.log')
         logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'jmxfetch.log')
+        logging_config['service_log_file'] = os.path.join(_windows_commondata_path(),
+'ServerDensity', 'logs', 'service.log')
+        logging_config['log_to_syslog'] = False
     else:
         logging_config['collector_log_file'] = '/var/log/sd-agent/collector.log'
         logging_config['forwarder_log_file'] = '/var/log/sd-agent/forwarder.log'
         logging_config['dogstatsd_log_file'] = '/var/log/sd-agent/dogstatsd.log'
         logging_config['jmxfetch_log_file'] = '/var/log/sd-agent/jmxfetch.log'
         logging_config['go-metro_log_file'] = '/var/log/sd-agent/go-metro.log'
+        logging_config['trace-agent_log_file'] = '/var/log/sd-agent/trace-agent.log'
         logging_config['log_to_syslog'] = True
 
     config_path = get_config_path(cfg_path, os_name=system_os)

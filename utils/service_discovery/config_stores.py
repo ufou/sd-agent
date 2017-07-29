@@ -10,7 +10,6 @@ from utils.service_discovery.etcd_config_store import EtcdStore
 from utils.service_discovery.consul_config_store import ConsulStore
 from utils.service_discovery.zookeeper_config_store import ZookeeperStore
 
-
 SD_CONFIG_BACKENDS = ['etcd', 'consul', 'zk']  # noqa: used somewhere else
 SD_TEMPLATE_DIR = '/serverdensity/check_configs'
 

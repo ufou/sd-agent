@@ -138,6 +138,7 @@ def config_to_yaml(config):
 
     return yaml_output
 
+
 class Timer(object):
     """ Helper class """
 

@@ -143,70 +143,6 @@ class TestCore(unittest.TestCase):
         }], val)
         self.assertEquals(len(check.service_checks), 0, check.service_checks)
 
-    def test_collector(self):
-        agentConfig = {
-            'agent_key': 'test_agentkey',
-            'check_timings': True,
-            'collect_ec2_tags': True,
-            'collect_instance_metadata': False,
-            'create_dd_check_tags': False,
-            'version': 'test',
-            'tags': '',
-        }
-
-        # Run a single checks.d check as part of the collector.
-        redis_config = {
-            "init_config": {},
-            "instances": [{"host": "localhost", "port": 6379}]
-        }
-        checks = [load_check('redisdb', redis_config, agentConfig)]
-
-        c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
-        payload = c.run({
-            'initialized_checks': checks,
-            'init_failed_checks': {}
-        })
-        metrics = payload['metrics']
-
-        # Check that we got a timing metric for all checks.
-        timing_metrics = [m for m in metrics
-            if m[0] == 'sd.agent.check_run_time']
-        all_tags = []
-        for metric in timing_metrics:
-            all_tags.extend(metric[3]['tags'])
-        for check in checks:
-            tag = "check:%s" % check.name
-            assert tag in all_tags, all_tags
-
-    def test_apptags(self):
-        '''
-        Tests that the app tags are sent if specified so
-        '''
-        agentConfig = {
-            'agent_key': 'test_agentkey',
-            'collect_ec2_tags': False,
-            'collect_instance_metadata': False,
-            'create_dd_check_tags': True,
-            'version': 'test',
-            'tags': '',
-        }
-
-        # Run a single checks.d check as part of the collector.
-        redis_config = {
-            "init_config": {},
-            "instances": [{"host": "localhost", "port": 6379}]
-        }
-        checks = [load_check('redisdb', redis_config, agentConfig)]
-
-        c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
-        payload = c.run({
-            'initialized_checks': checks,
-            'init_failed_checks': {}
-        })
-
-        # We check that the redis DD_CHECK_TAG is sent in the payload
-        self.assertTrue('dd_check:redisdb' in payload['host-tags']['system'])
-
     def test_no_proxy(self):
         """ Starting with Agent 5.0.0, there should always be a local forwarder
         running and all payloads should go through it. So we should make sure
@@ -344,8 +280,13 @@ class TestCollectionInterval(unittest.TestCase):
 
     def test_collector(self):
         agentConfig = {
-            'version': '0.1',
-            'agent_key': 'toto'
+            'agent_key': 'test_agentkey',
+            'check_timings': True,
+            'collect_ec2_tags': True,
+            'collect_instance_metadata': False,
+            'create_sd_check_tags': False,
+            'version': 'test',
+            'tags': '',
         }
 
         # Run a single checks.d check as part of the collector.
@@ -378,8 +319,12 @@ class TestCollectionInterval(unittest.TestCase):
         Tests that the app tags are sent if specified so
         '''
         agentConfig = {
-            'version': '0.1',
-            'agent_key': 'toto'
+            'agent_key': 'test_agentkey',
+            'collect_ec2_tags': False,
+            'collect_instance_metadata': False,
+            'create_sd_check_tags': True,
+            'version': 'test',
+            'tags': '',
         }
 
         # Run a single checks.d check as part of the collector.
@@ -396,8 +341,8 @@ class TestCollectionInterval(unittest.TestCase):
             'init_failed_checks': {}
         })
 
-        # We check that the redis DD_CHECK_TAG is sent in the payload
-        self.assertTrue('dd_check:redisdb' in payload['host-tags']['system'])
+        # We check that the redis SD_CHECK_TAG is sent in the payload
+        self.assertTrue('sd_check:redisdb' in payload['host-tags']['system'])
 
 
 class TestAggregator(unittest.TestCase):

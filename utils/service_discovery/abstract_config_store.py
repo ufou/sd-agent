@@ -348,27 +348,6 @@ class AbstractConfigStore(object):
         else:
             return ident.split(':')[0].split('/')[-1]
 
-    def _get_image_ident(self, ident):
-        """Extract an identifier from the image"""
-        # if a custom image store is used there can be a port which adds a colon
-        if ident.count(':') > 1:
-            return ident.split(':')[1].split('/')[-1]
-        # otherwise we just strip the tag and keep the image name
-        else:
-            return ident.split(':')[0].split('/')[-1]
-
-    def _issue_read(self, identifier):
-        try:
-            check_names = json.loads(
-                self.client_read(path.join(self.sd_template_dir, identifier, CHECK_NAMES).lstrip('/')))
-            init_config_tpls = json.loads(
-                self.client_read(path.join(self.sd_template_dir, identifier, INIT_CONFIGS).lstrip('/')))
-            instance_tpls = json.loads(
-                self.client_read(path.join(self.sd_template_dir, identifier, INSTANCES).lstrip('/')))
-            return [check_names, init_config_tpls, instance_tpls]
-        except KeyError:
-            return None
-
     def crawl_config_template(self):
         """Return whether or not configuration templates have changed since the previous crawl"""
         try:

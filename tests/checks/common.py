@@ -50,9 +50,6 @@ def remove_checks():
     os.remove(os.path.join(AUTO_CONFD_PATH, 'consul.yaml'))
     os.remove(os.path.join(AUTO_CONFD_PATH, 'redisdb.yaml'))
 
-def _is_sdk():
-    return "SDK_TESTING" in os.environ
-
 def _load_sdk_module(name):
     sdk_path = get_sdk_integrations_path(get_os())
     module_path = os.path.join(sdk_path, name)

@@ -10,7 +10,7 @@ from nose.plugins.attrib import attr
 # project
 import modules
 
-log = logging.getLogger('sd.test')
+log = logging.getLogger('serverdensity.test')
 
 TARGET_MODULE = 'tests.core.fixtures.target_module'
 default_target = 'DEFAULT'
