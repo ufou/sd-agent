@@ -15,6 +15,7 @@ PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 
 AGENTPATH="/usr/share/python/sd-agent/agent.py"
 AGENTCONF="/etc/sd-agent/config.cfg"
+DOGSTATSDPATH="/usr/share/python/sd-agent/dogstatsd.py"
 AGENTUSER="sd-agent"
 FORWARDERPATH="/usr/share/python/sd-agent/sdagent.py"
 NAME="sd-agent"
@@ -27,7 +28,6 @@ SUPERVISORD_PATH="/usr/share/python/sd-agent/bin/supervisord"
 COLLECTOR_PIDFILE="/var/run/sd-agent/sd-agent.pid"
 SYSTEM_PATH=/usr/share/python/sd-agent/bin:$PATH
 SD_OPT_PROC_REGEX="dogstatsd|jmxfetch|go-metro"
-
 
 if [ ! -x $AGENTPATH ]; then
     echo "$AGENTPATH not found. Exiting."

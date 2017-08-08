@@ -47,12 +47,13 @@ matrix:
       env: TRAVIS_FLAVOR=core_integration
 
 # Override travis defaults with empty jobs
-before_install: echo "OVERRIDING TRAVIS STEPS"
+before_install:
+- rvm install 2.1.5
+# before_install: echo "OVERRIDING TRAVIS STEPS"
 install: echo "OVERRIDING TRAVIS STEPS"
 before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
-
   - travis_retry ./.travis/build_installer.sh
 
 

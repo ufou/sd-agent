@@ -283,6 +283,7 @@ class TestCollectionInterval(unittest.TestCase):
             'agent_key': 'test_agentkey',
             'check_timings': True,
             'collect_ec2_tags': True,
+            'collect_orchestrator_tags': False,
             'collect_instance_metadata': False,
             'create_sd_check_tags': False,
             'version': 'test',
@@ -290,12 +291,12 @@ class TestCollectionInterval(unittest.TestCase):
         }
 
         # Run a single checks.d check as part of the collector.
-        redis_config = {
+        disk_config = {
             "init_config": {},
-            "instances": [{"host": "localhost", "port": 6379}]
+            "instances": [{}]
         }
 
-        checks = [load_check('redisdb', redis_config, agentConfig)]
+        checks = [load_check('disk', disk_config, agentConfig)]
 
         c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
         payload = c.run({
@@ -321,6 +322,7 @@ class TestCollectionInterval(unittest.TestCase):
         agentConfig = {
             'agent_key': 'test_agentkey',
             'collect_ec2_tags': False,
+            'collect_orchestrator_tags': False,
             'collect_instance_metadata': False,
             'create_sd_check_tags': True,
             'version': 'test',
@@ -328,12 +330,12 @@ class TestCollectionInterval(unittest.TestCase):
         }
 
         # Run a single checks.d check as part of the collector.
-        redis_config = {
+        disk_config = {
             "init_config": {},
-            "instances": [{"host": "localhost", "port": 6379}]
+            "instances": [{}]
         }
 
-        checks = [load_check('redisdb', redis_config, agentConfig)]
+        checks = [load_check('disk', disk_config, agentConfig)]
 
         c = Collector(agentConfig, [], {}, get_hostname(agentConfig))
         payload = c.run({
@@ -342,7 +344,8 @@ class TestCollectionInterval(unittest.TestCase):
         })
 
         # We check that the redis SD_CHECK_TAG is sent in the payload
-        self.assertTrue('sd_check:redisdb' in payload['host-tags']['system'])
+        self.assertTrue('sd_check:disk' in payload['host-tags']['system'])
+
 
 
 class TestAggregator(unittest.TestCase):

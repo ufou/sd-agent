@@ -6,10 +6,6 @@
 pycurl==7.19.5.1
 
 # core-ish/system -> system check on windows
-# checks.d/process.py
-# checks.d/gunicorn.py
-# checks.d/btrfs.py
-# checks.d/system_core.py
 psutil==4.4.1
 
 # checks.d/kubernetes_state.py -> used in utils/prometheus/*
