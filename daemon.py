@@ -159,7 +159,7 @@ class Daemon(object):
 
         if pid:
             # Check if the pid in the pidfile corresponds to a running process
-            # and if psutil is installed, check if it's a datadog-agent one
+            # and if psutil is installed, check if it's a sd-agent one
             if is_my_process(pid):
                 log.error("Not starting, another instance is already running"
                           " (using pidfile {0})".format(self.pidfile))

@@ -127,7 +127,6 @@ def post_payload(url, message, agentConfig, log):
 def split_payload(legacy_payload):
     metrics_payload = {"series": []}
 
-    # See https://github.com/DataDog/dd-agent/blob/5.11.1/checks/__init__.py#L905-L926 for format
     for ts in legacy_payload['metrics']:
         sample = {
             "metric": ts[0],

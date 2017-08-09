@@ -13,7 +13,7 @@ from utils.dockerutil import DockerUtil
 from tornado.web import Application
 from tornado.testing import AsyncTestCase
 
-from ddagent import (
+from sdagent import (
     MAX_QUEUE_SIZE,
     MAX_WAIT_FOR_REPLAY,
     THROTTLING_DELAY,
@@ -32,7 +32,7 @@ class TestNoProxy(TestCase):
     @attr(requires="core_integration")
     def test_no_proxy(self):
         """
-        Starting with Agent 5.0.0, there should always be a local forwarder
+        Starting with Agent 2.0.0, there should always be a local forwarder
         running and all payloads should go through it. So we should make sure
         that we pass the no_proxy environment variable that will be used by requests
         (See: https://github.com/kennethreitz/requests/pull/945 )

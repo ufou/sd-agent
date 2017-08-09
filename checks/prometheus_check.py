@@ -46,7 +46,7 @@ class PrometheusCheck(AgentCheck):
         self.NAMESPACE = ''
 
         # `metrics_mapper` is a dictionnary where the keys are the metrics to capture
-        # and the values are the corresponding metrics names to have in datadog.
+        # and the values are the corresponding metrics names to have in Server Density.
         # Note: it is empty in the mother class but will need to be
         # overloaded/hardcoded in the final check not to be counted as custom metric.
         self.metrics_mapper = {}
@@ -244,7 +244,7 @@ class PrometheusCheck(AgentCheck):
     def process_metric(self, message, send_histograms_buckets=True, custom_tags=None, **kwargs):
         """
         Handle a prometheus metric message according to the following flow:
-            - search self.metrics_mapper for a prometheus.metric <--> datadog.metric mapping
+            - search self.metrics_mapper for a prometheus.metric <--> serverdensity.metric mapping
             - call check method with the same name as the metric
             - log some info if none of the above worked
 
@@ -289,7 +289,7 @@ class PrometheusCheck(AgentCheck):
             send the buckets as tagged values when dealing with histograms.
 
         `custom_tags` is an array of 'tag:value' that will be added to the
-        metric when sending the gauge to Datadog.
+        metric when sending the gauge to Server Density.
         """
         if message.type < len(self.METRIC_TYPES):
             for metric in message.metric:
@@ -310,7 +310,7 @@ class PrometheusCheck(AgentCheck):
         the ones from the label provided via the metrics object.
 
         `custom_tags` is an array of 'tag:value' that will be added to the
-        metric when sending the gauge to Datadog.
+        metric when sending the gauge to Server Density.
         """
         _tags = []
         if custom_tags is not None:

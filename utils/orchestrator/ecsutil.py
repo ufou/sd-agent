@@ -56,7 +56,7 @@ class ECSUtil(BaseUtil):
         if gw:
             urls.append("http://%s:%d/" % (gw, ECS_AGENT_DEFAULT_PORT))
 
-        # Try localhost (both ecs-agent and dd-agent in host networking)
+        # Try localhost
         urls.append("http://localhost:%d/" % ECS_AGENT_DEFAULT_PORT)
 
         url = self._try_urls(urls, validation_lambda=ECSUtil.ecs_agent_validation)

@@ -4,13 +4,9 @@ Unix system checks.
 # stdlib
 import platform
 import re
-import string
-import sys
-import time
 
 # project
 from checks import Check
-from utils.subprocess_output import subprocess
 
 # locale-resilient float converter
 to_float = lambda s: float(s.replace(",", "."))

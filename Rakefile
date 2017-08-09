@@ -61,9 +61,9 @@ task 'setup_libs' do
 end
 
 namespace :test do
-  desc 'Run dogstatsd tests'
-  task 'dogstatsd' do
-    sh 'nosetests tests/core/test_dogstatsd.py'
+  desc 'Run sdstatsd tests'
+  task 'sdstatsd' do
+    sh 'nosetests tests/core/test_sdstatsd.py'
   end
 
   desc 'Run performance tests'

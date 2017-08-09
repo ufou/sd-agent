@@ -26,29 +26,8 @@ from utils.platform import get_os
 
 log = logging.getLogger('tests')
 
-CHECKS_FIXTURE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fixtures', 'checks')
-AUTO_CONF_FIXTURE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'core', 'fixtures', 'auto_conf')
-CHECKSD_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'checks.d')
-AUTO_CONFD_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'conf.d', 'auto_conf')
-
-def copy_checks():
-    if not os.path.exists(CHECKSD_PATH):
-        os.mkdir(CHECKSD_PATH)
-    if not os.path.exists(AUTO_CONFD_PATH):
-        os.mkdir(AUTO_CONFD_PATH)
-    copyfile(os.path.join(CHECKS_FIXTURE_PATH, 'disk.py'), os.path.join(CHECKSD_PATH, 'disk.py'))
-    copyfile(os.path.join(CHECKS_FIXTURE_PATH, 'consul.py'), os.path.join(CHECKSD_PATH, 'consul.py'))
-    copyfile(os.path.join(CHECKS_FIXTURE_PATH, 'redisdb.py'), os.path.join(CHECKSD_PATH, 'redisdb.py'))
-    copyfile(os.path.join(AUTO_CONF_FIXTURE_PATH, 'consul.yaml'), os.path.join(AUTO_CONFD_PATH, 'consul.yaml'))
-    copyfile(os.path.join(AUTO_CONF_FIXTURE_PATH, 'redisdb.yaml'), os.path.join(AUTO_CONFD_PATH, 'redisdb.yaml'))
-
-def remove_checks():
-    os.remove(os.path.join(CHECKSD_PATH, 'disk.py'))
-    os.remove(os.path.join(CHECKSD_PATH, 'consul.py'))
-    os.remove(os.path.join(CHECKSD_PATH, 'redisdb.py'))
-    os.remove(os.path.join(AUTO_CONFD_PATH, 'consul.yaml'))
-    os.remove(os.path.join(AUTO_CONFD_PATH, 'redisdb.yaml'))
-
+def _is_sdk():
+    return "SDK_TESTING" in os.environ
 
 def _load_sdk_module(name):
     sdk_path = get_sdk_integrations_path(get_os())
@@ -69,9 +48,6 @@ def _load_sdk_module(name):
     # module = __import__(module_name, fromlist=['check'])
 
     return module
-
-def _is_sdk():
-    return "SDK_TESTING" in os.environ
 
 def get_check_class(name):
     if not _is_sdk():

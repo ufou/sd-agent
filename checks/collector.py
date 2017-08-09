@@ -226,7 +226,6 @@ class Collector(object):
 
         # Old-style metric checks
         self._ganglia = Ganglia(log) if self.agentConfig.get('ganglia_host', '') != '' else None
-        self._dogstream = None if self.agentConfig.get('dogstreams') is None else Dogstreams.init(log, self.agentConfig)
 
         # Agent performance metrics check
         self._agent_metrics = None
@@ -370,17 +369,6 @@ class Collector(object):
         # Run old-style checks
         if self._ganglia is not None:
             payload['ganglia'] = self._ganglia.check(self.agentConfig)
-        if self._dogstream is not None:
-            dogstreamData = self._dogstream.check(self.agentConfig)
-            dogstreamEvents = dogstreamData.get('dogstreamEvents', None)
-            if dogstreamEvents:
-                if 'dogstream' in payload['events']:
-                    events['dogstream'].extend(dogstreamEvents)
-                else:
-                    events['dogstream'] = dogstreamEvents
-                del dogstreamData['dogstreamEvents']
-
-            payload.update(dogstreamData)
 
         # process collector of gohai (compliant with payload of legacy "resources checks")
         if not Platform.is_windows() and self._should_send_additional_data('processes'):

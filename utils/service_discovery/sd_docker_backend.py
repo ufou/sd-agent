@@ -24,7 +24,7 @@ from utils.service_discovery.abstract_sd_backend import AbstractSDBackend
 from utils.service_discovery.config_stores import get_config_store
 from utils.orchestrator import MetadataCollector
 
-DATADOG_ID = 'com.serverdensity.sd.check.id'
+SD_ID = 'com.serverdensity.sd.check.id'
 log = logging.getLogger(__name__)
 
 
@@ -135,7 +135,7 @@ class SDDockerBackend(AbstractSDBackend):
 
     def _get_checks_to_refresh(self, state, c_id):
         """Get the list of checks applied to a container from the identifier_to_checks cache in the config store.
-        Use the DATADOG_ID label or the image."""
+        Use the SD_ID label or the image."""
         inspect = state.inspect_container(c_id)
 
         # If the container was removed we can't tell which check is concerned
@@ -148,7 +148,7 @@ class SDDockerBackend(AbstractSDBackend):
             self.reload_check_configs = True
             return
 
-        identifier = inspect.get('Config', {}).get('Labels', {}).get(DATADOG_ID) or \
+        identifier = inspect.get('Config', {}).get('Labels', {}).get(SD_ID) or \
             self.dockerutil.image_name_extractor(inspect)
 
         platform_kwargs = {}
@@ -371,7 +371,7 @@ class SDDockerBackend(AbstractSDBackend):
 
         for image, cid, labels in containers:
             try:
-                # value of the DATADOG_ID tag or the image name if the label is missing
+                # value of the SD_ID tag or the image name if the label is missing
                 identifier = self.get_config_id(image, labels)
                 check_configs = self._get_check_configs(state, cid, identifier) or []
                 for conf in check_configs:
@@ -399,8 +399,8 @@ class SDDockerBackend(AbstractSDBackend):
         return configs
 
     def get_config_id(self, image, labels):
-        """Look for a DATADOG_ID label, return its value or the image name if missing"""
-        return labels.get(DATADOG_ID) or image
+        """Look for a SD_ID label, return its value or the image name if missing"""
+        return labels.get(SD_ID) or image
 
     def _get_check_configs(self, state, c_id, identifier):
         """Retrieve configuration templates and fill them with data pulled from docker and tags."""

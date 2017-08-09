@@ -5,17 +5,18 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 """
-A Python Statsd implementation with some datadog special sauce.
+A Python Statsd implementation.
 """
 # set up logging before importing any other components
 from config import initialize_logging  # noqa
-initialize_logging('dogstatsd')
+initialize_logging('sdstatsd')
 
 
 from utils.proxy import set_no_proxy_settings  # noqa
 set_no_proxy_settings()
 
 # stdlib
+from hashlib import md5
 import os
 import logging
 import optparse
@@ -26,7 +27,7 @@ import sys
 import threading
 from time import sleep, time
 from urllib import urlencode
-import zlib
+#import zlib
 
 # For pickle & PID files, see issue 293
 os.umask(022)
@@ -37,7 +38,7 @@ import simplejson as json
 
 # project
 from aggregator import get_formatter, MetricsBucketAggregator
-from checks.check_status import DogstatsdStatus
+from checks.check_status import SdstatsdStatus
 from checks.metric_types import MetricTypes
 from config import get_config, get_version
 from daemon import AgentSupervisor, Daemon
@@ -53,14 +54,14 @@ requests_log = logging.getLogger("requests.packages.urllib3")
 requests_log.setLevel(logging.WARN)
 requests_log.propagate = True
 
-log = logging.getLogger('dogstatsd')
+log = logging.getLogger('sdstatsd')
 
-PID_NAME = "dogstatsd"
+PID_NAME = "sdstatsd"
 PID_DIR = None
 
-# Dogstatsd constants in seconds
-DOGSTATSD_FLUSH_INTERVAL = 10
-DOGSTATSD_AGGREGATOR_BUCKET_SIZE = 10
+# Sdstatsd constants in seconds
+SDSTATSD_FLUSH_INTERVAL = 10
+SDSTATSD_AGGREGATOR_BUCKET_SIZE = 10
 
 
 WATCHDOG_TIMEOUT = 120
@@ -81,16 +82,17 @@ def add_serialization_status_metric(status, hostname):
     """
     interval = 10.0
     value = 1
-    return {
-        'tags': ["status:{0}".format(status)],
-        'metric': 'datadog.dogstatsd.serialization_status',
-        'interval': interval,
-        'device_name': None,
-        'host': hostname,
-        'points': [(time(), value / interval)],
-        'type': MetricTypes.RATE,
-    }
-
+    return (
+        'serverdensity.sdstatsd.serialization_status',
+        time(),
+        value / interval,
+        {
+            'hostname': hostname,
+            'type': MetricTypes.RATE,
+            'device_name': None,
+            'tags': ["status:{0}".format(status)],
+        }
+    )
 
 def unicode_metrics(metrics):
     for i, metric in enumerate(metrics):
@@ -107,24 +109,46 @@ def unicode_metrics(metrics):
     return metrics
 
 
-def serialize_metrics(metrics, hostname):
+def serialize_metrics(metrics, hostname, agent_key):
     try:
         metrics.append(add_serialization_status_metric("success", hostname))
-        serialized = json.dumps({"series": metrics})
+        serialized = json.dumps(
+            {
+                "metrics": metrics,
+                "agentKey": agent_key,
+                "sdAgentVersion": 2.0,
+                "collection_timestamp": time(),
+                "agentVersion": get_version()
+            })
     except UnicodeDecodeError as e:
         log.exception("Unable to serialize payload. Trying to replace bad characters. %s", e)
         metrics.append(add_serialization_status_metric("failure", hostname))
         try:
             log.error(metrics)
-            serialized = json.dumps({"series": unicode_metrics(metrics)})
+            serialized = json.dumps(
+                {
+                    "metrics": unicode_metrics(metrics),
+                    "agentKey": agent_key,
+                    "sdAgentVersion": 2.0,
+                    "collection_timestamp": time(),
+                    "agentVersion": get_version()
+                })
         except Exception as e:
             log.exception("Unable to serialize payload. Giving up. %s", e)
-            serialized = json.dumps({"series": [add_serialization_status_metric("permanent_failure", hostname)]})
+            serialized = json.dumps(
+                {
+                    "metrics": [add_serialization_status_metric("permanent_failure", hostname)],
+                    "agentKey": agent_key,
+                    "sdAgentVersion": 2.0,
+                    "collection_timestamp": time(),
+                    "agentVersion": get_version()
+                })
 
     if len(serialized) > COMPRESS_THRESHOLD:
         headers = {'Content-Type': 'application/json',
-                   'Content-Encoding': 'deflate'}
-        serialized = zlib.compress(serialized)
+                   #'Content-Encoding': 'deflate'
+                   }
+        #serialized = zlib.compress(serialized)
     else:
         headers = {'Content-Type': 'application/json'}
     return serialized, headers
@@ -189,7 +213,7 @@ class Reporter(threading.Thread):
     server.
     """
 
-    def __init__(self, interval, metrics_aggregator, api_host, api_key=None,
+    def __init__(self, interval, metrics_aggregator, sd_url, agent_key=None,
                  use_watchdog=False, event_chunk_size=None):
         threading.Thread.__init__(self)
         self.interval = int(interval)
@@ -203,8 +227,8 @@ class Reporter(threading.Thread):
         if use_watchdog:
             self.watchdog = Watchdog.create(WATCHDOG_TIMEOUT)
 
-        self.api_key = api_key
-        self.api_host = api_host
+        self.agent_key = agent_key
+        self.sd_url = sd_url
         self.event_chunk_size = event_chunk_size or EVENT_CHUNK_SIZE
 
     def stop(self):
@@ -213,22 +237,22 @@ class Reporter(threading.Thread):
 
     def run(self):
 
-        log.info("Reporting to %s every %ss" % (self.api_host, self.interval))
+        log.info("Reporting to %s every %ss" % (self.sd_url, self.interval))
         log.debug("Watchdog enabled: %s" % bool(self.watchdog))
 
         # Persist a start-up message.
-        DogstatsdStatus().persist()
+        SdstatsdStatus().persist()
 
         while not self.finished.isSet():  # Use camel case isSet for 2.4 support.
             self.finished.wait(self.interval)
-            self.metrics_aggregator.send_packet_count('datadog.dogstatsd.packet.count')
+            self.metrics_aggregator.send_packet_count('serverdensity.sdstatsd.packet.count')
             self.flush()
             if self.watchdog:
                 self.watchdog.reset()
 
         # Clean up the status messages.
         log.debug("Stopped reporter")
-        DogstatsdStatus.remove_latest_status()
+        SdstatsdStatus.remove_latest_status()
 
     def flush(self):
         try:
@@ -264,7 +288,7 @@ class Reporter(threading.Thread):
 
             # Persist a status message.
             packet_count = self.metrics_aggregator.total_count
-            DogstatsdStatus(
+            SdstatsdStatus(
                 flush_count=self.flush_count,
                 packet_count=packet_count,
                 packets_per_second=packets_per_second,
@@ -280,11 +304,11 @@ class Reporter(threading.Thread):
                 log.exception("Error flushing metrics")
 
     def submit(self, metrics):
-        body, headers = serialize_metrics(metrics, self.hostname)
+        body, headers = serialize_metrics(metrics, self.hostname, self.agent_key)
         params = {}
-        if self.api_key:
-            params['api_key'] = self.api_key
-        url = '%s/api/v1/series?%s' % (self.api_host, urlencode(params))
+        if self.agent_key:
+            params['agent_key'] = self.agent_key
+        url = "{0}/intake/{1}?agent_key={2}".format(self.sd_url, "", params['agent_key'])
         self.submit_http(url, body, headers)
 
     def submit_events(self, events):
@@ -293,7 +317,7 @@ class Reporter(threading.Thread):
 
         for chunk in chunks(events, event_chunk_size):
             payload = {
-                'apiKey': self.api_key,
+                'agentKey': self.agent_key,
                 'events': {
                     'api': chunk
                 },
@@ -301,14 +325,15 @@ class Reporter(threading.Thread):
                 'internalHostname': get_hostname()
             }
             params = {}
-            if self.api_key:
-                params['api_key'] = self.api_key
-            url = '%s/intake?%s' % (self.api_host, urlencode(params))
+            if self.agent_key:
+                params['agent_key'] = self.agent_key
+            url = '%s/intake?%s' % (self.sd_url, urlencode(params))
 
             self.submit_http(url, json.dumps(payload), headers)
 
     def submit_http(self, url, data, headers):
-        headers["DD-Dogstatsd-Version"] = get_version()
+        headers["SD-Sdstatsd-Version"] = get_version()
+        headers["Content-MD5"] = str(md5(data).hexdigest())
         log.debug("Posting payload to %s" % url)
         try:
             start_time = time()
@@ -329,13 +354,14 @@ class Reporter(threading.Thread):
                 pass
 
     def submit_service_checks(self, service_checks):
+        return
         headers = {'Content-Type':'application/json'}
 
         params = {}
-        if self.api_key:
-            params['api_key'] = self.api_key
+        if self.agent_key:
+            params['agent_key'] = self.agent_key
 
-        url = '{0}/api/v1/check_run?{1}'.format(self.api_host, urlencode(params))
+        url = '{0}/api/v1/check_run?{1}'.format(self.sd_url, urlencode(params))
         self.submit_http(url, json.dumps(service_checks), headers)
 
 
@@ -392,7 +418,7 @@ class Server(object):
         try:
             self.socket.bind(self.sockaddr)
         except TypeError:
-            log.error('Unable to start Dogstatsd server loop, exiting...')
+            log.error('Unable to start Sdstatsd server loop, exiting...')
             return
 
         log.info('Listening on socket address: %s', str(self.sockaddr))
@@ -434,8 +460,8 @@ class Server(object):
         self.running = False
 
 
-class Dogstatsd(Daemon):
-    """ This class is the dogstatsd daemon. """
+class Sdstatsd(Daemon):
+    """ This class is the sdstatsd daemon. """
 
     def __init__(self, pid_file, server, reporter, autorestart):
         Daemon.__init__(self, pid_file, autorestart=autorestart)
@@ -461,14 +487,14 @@ class Dogstatsd(Daemon):
                 self.server.start()
             except Exception as e:
                 log.exception(
-                    'Error starting dogstatsd server on %s', self.server.sockaddr)
+                    'Error starting sdstatsd server on %s', self.server.sockaddr)
                 raise e
         finally:
             # The server will block until it's done. Once we're here, shutdown
             # the reporting thread.
             self.reporter.stop()
             self.reporter.join()
-            log.info("Dogstatsd is stopped")
+            log.info("Sdstatsd is stopped")
             # Restart if asked to restart
             if self.autorestart:
                 sys.exit(AgentSupervisor.RESTART_EXIT_STATUS)
@@ -476,7 +502,7 @@ class Dogstatsd(Daemon):
     @classmethod
     def info(self):
         logging.getLogger().setLevel(logging.ERROR)
-        return DogstatsdStatus.print_latest_status()
+        return SdstatsdStatus.print_latest_status()
 
 
 def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
@@ -484,19 +510,19 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
     """
     c = get_config(parse_args=False, cfg_path=config_path)
 
-    if (not c['use_dogstatsd'] and
+    if (not c['use_sdstatsd'] and
             (args and args[0] in ['start', 'restart'] or not args)):
-        log.info("Dogstatsd is disabled. Exiting")
+        log.info("Sdstatsd is disabled. Exiting")
         # We're exiting purposefully, so exit with zero (supervisor's expected
         # code). HACK: Sleep a little bit so supervisor thinks we've started cleanly
         # and thus can exit cleanly.
         sleep(4)
         sys.exit(0)
 
-    port = c['dogstatsd_port']
-    interval = DOGSTATSD_FLUSH_INTERVAL
-    api_key = c['api_key']
-    aggregator_interval = DOGSTATSD_AGGREGATOR_BUCKET_SIZE
+    port = c['sdstatsd_port']
+    interval = SDSTATSD_FLUSH_INTERVAL
+    agent_key = c['agent_key']
+    aggregator_interval = SDSTATSD_AGGREGATOR_BUCKET_SIZE
     non_local_traffic = c['non_local_traffic']
     forward_to_host = c.get('statsd_forward_host')
     forward_to_port = c.get('statsd_forward_port')
@@ -506,7 +532,7 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
 
     target = c['sd_url']
     if use_forwarder:
-        target = c['dogstatsd_target']
+        target = c['sdstatsd_target']
 
     hostname = get_hostname(c)
     log.debug("Using hostname \"%s\"", hostname)
@@ -526,13 +552,13 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
     )
 
     # Start the reporting thread.
-    reporter = Reporter(interval, aggregator, target, api_key, use_watchdog, event_chunk_size)
+    reporter = Reporter(interval, aggregator, target, agent_key, use_watchdog, event_chunk_size)
 
     # NOTICE: when `non_local_traffic` is passed we need to bind to any interface on the box. The forwarder uses
     # Tornado which takes care of sockets creation (more than one socket can be used at once depending on the
     # network settings), so it's enough to just pass an empty string '' to the library.
-    # In Dogstatsd we use a single, fullstack socket, so passing '' as the address doesn't work and we default to
-    # '0.0.0.0'. If someone needs to bind Dogstatsd to the IPv6 '::', they need to turn off `non_local_traffic` and
+    # In Sdstatsd we use a single, fullstack socket, so passing '' as the address doesn't work and we default to
+    # '0.0.0.0'. If someone needs to bind Sdstatsd to the IPv6 '::', they need to turn off `non_local_traffic` and
     # use the '::' meta address as `bind_host`.
     if non_local_traffic:
         server_host = '0.0.0.0'
@@ -543,8 +569,8 @@ def init(config_path=None, use_watchdog=False, use_forwarder=False, args=None):
 
 
 def main(config_path=None):
-    """ The main entry point for the unix version of dogstatsd. """
-    COMMANDS_START_DOGSTATSD = [
+    """ The main entry point for the unix version of sdstatsd. """
+    COMMANDS_START_SDSTATSD = [
         'start',
         'stop',
         'restart',
@@ -557,10 +583,10 @@ def main(config_path=None):
     opts, args = parser.parse_args()
 
     in_developer_mode = False
-    if not args or args[0] in COMMANDS_START_DOGSTATSD:
+    if not args or args[0] in COMMANDS_START_SDSTATSD:
         reporter, server, cnf = init(config_path, use_watchdog=True, use_forwarder=opts.use_forwarder, args=args)
-        daemon = Dogstatsd(PidFile(PID_NAME, PID_DIR).get_path(), server, reporter,
-                           cnf.get('autorestart', False))
+        daemon = Sdstatsd(PidFile(PID_NAME, PID_DIR).get_path(), server, reporter,
+                          cnf.get('autorestart', False))
         in_developer_mode = cnf.get('developer_mode')
 
     # If no args were passed in, run the server in the foreground.
@@ -586,12 +612,13 @@ def main(config_path=None):
         elif command == 'status':
             daemon.status()
         elif command == 'info':
-            return Dogstatsd.info()
+            return Sdstatsd.info()
         else:
             sys.stderr.write("Unknown command: %s\n\n" % command)
             parser.print_help()
             return 1
         return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

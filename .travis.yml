@@ -54,7 +54,7 @@ install: echo "OVERRIDING TRAVIS STEPS"
 before_script: echo "OVERRIDING TRAVIS STEPS"
 
 script:
-  - travis_retry ./.travis/build_installer.sh
+  - ./.travis/build_installer.sh
 
 
 after_failure:

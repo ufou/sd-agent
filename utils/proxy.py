@@ -15,7 +15,7 @@ def get_no_proxy_from_env():
 
 def set_no_proxy_settings():
     """
-    Starting with Agent 5.0.0, there should always be a local forwarder
+    Starting with Agent 2.0.0, there should always be a local forwarder
     running and all payloads should go through it. So we should make sure
     that we pass the no_proxy environment variable that will be used by requests
     See: https://github.com/kennethreitz/requests/pull/945

@@ -18,7 +18,7 @@ class TestMetricsAggregator(unittest.TestCase):
     @staticmethod
     def sort_metrics(metrics):
         def sort_by(m):
-            return (m['metric'], m['host'], m['device_name'], ','.join(m['tags'] or []))
+            return (m[0], m[3]['hostname'], m[3]['device_name'], ','.join(m[3]['tags'] or []))
         return sorted(metrics, key=sort_by)
 
     @staticmethod
@@ -44,21 +44,21 @@ class TestMetricsAggregator(unittest.TestCase):
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "datadog.gauge")
+        self.assertTrue(metrics[0][0] == "datadog.gauge")
 
         stats = MetricsAggregator('myhost', interval=10,
             formatter = get_formatter({"statsd_metric_namespace": "datadoge."}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "datadoge.gauge")
+        self.assertTrue(metrics[0][0] == "datadoge.gauge")
 
         stats = MetricsAggregator('myhost', interval=10,
         formatter = get_formatter({"statsd_metric_namespace": None}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "gauge")
+        self.assertTrue(metrics[0][0] == "gauge")
 
     def test_counter_normalization(self):
         stats = MetricsAggregator('myhost', interval=10)
@@ -76,13 +76,13 @@ class TestMetricsAggregator(unittest.TestCase):
 
         floatc, intc = metrics
 
-        nt.assert_equal(floatc['metric'], 'float')
-        nt.assert_equal(floatc['points'][0][1], 0.5)
-        nt.assert_equal(floatc['host'], 'myhost')
+        nt.assert_equal(floatc[0], 'float')
+        nt.assert_equal(floatc[2], 0.5)
+        nt.assert_equal(floatc[3]['hostname'], 'myhost')
 
-        nt.assert_equal(intc['metric'], 'int')
-        nt.assert_equal(intc['points'][0][1], 2)
-        nt.assert_equal(intc['host'], 'myhost')
+        nt.assert_equal(intc[0], 'int')
+        nt.assert_equal(intc[2], 2)
+        nt.assert_equal(intc[3]['hostname'], 'myhost')
 
     def test_histogram_normalization(self):
         # The min is not enabled by default
@@ -99,8 +99,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = self.sort_metrics(stats.flush())
         _, _, h1count, _, _, _, _, _, h2count, _, _, _ = metrics
 
-        nt.assert_equal(h1count['points'][0][1], 0.5)
-        nt.assert_equal(h2count['points'][0][1], 2)
+        nt.assert_equal(h1count[2], 0.5)
+        nt.assert_equal(h2count[2], 2)
 
     def test_tags(self):
         stats = MetricsAggregator('myhost')
@@ -115,20 +115,20 @@ class TestMetricsAggregator(unittest.TestCase):
         assert len(metrics) == 3
         first, second, third = metrics
 
-        nt.assert_equal(first['metric'], 'gauge')
-        nt.assert_equal(first['tags'], None)
-        nt.assert_equal(first['points'][0][1], 3)
-        nt.assert_equal(first['host'], 'myhost')
+        nt.assert_equal(first[0], 'gauge')
+        nt.assert_equal(first[3]['tags'], None)
+        nt.assert_equal(first[2], 3)
+        nt.assert_equal(first[3]['hostname'], 'myhost')
 
-        nt.assert_equal(second['metric'], 'gauge')
-        nt.assert_equal(second['tags'], ('tag1', 'tag2'))
-        nt.assert_equal(second['points'][0][1], 12)
-        nt.assert_equal(second['host'], 'myhost')
+        nt.assert_equal(second[0], 'gauge')
+        nt.assert_equal(second[3]['tags'], ('tag1', 'tag2'))
+        nt.assert_equal(second[2], 12)
+        nt.assert_equal(second[3]['hostname'], 'myhost')
 
-        nt.assert_equal(third['metric'], 'gauge')
-        nt.assert_equal(third['tags'], ('tag3', 'tag4'))
-        nt.assert_equal(third['points'][0][1], 16)
-        nt.assert_equal(third['host'], 'myhost')
+        nt.assert_equal(third[0], 'gauge')
+        nt.assert_equal(third[3]['tags'], ('tag3', 'tag4'))
+        nt.assert_equal(third[2], 16)
+        nt.assert_equal(third[3]['hostname'], 'myhost')
 
     def test_magic_tags(self):
         stats = MetricsAggregator('myhost')
@@ -143,31 +143,31 @@ class TestMetricsAggregator(unittest.TestCase):
         nt.assert_equal(len(metrics), 4)
         first, second, third, fourth = metrics
 
-        nt.assert_equal(first['metric'], 'my.gauge.a')
-        nt.assert_equal(first['tags'], None)
-        nt.assert_equal(first['points'][0][1], 1)
-        nt.assert_equal(first['host'], 'test-a')
+        nt.assert_equal(first[0], 'my.gauge.a')
+        nt.assert_equal(first[3]['tags'], None)
+        nt.assert_equal(first[2], 1)
+        nt.assert_equal(first[3]['hostname'], 'test-a')
 
-        nt.assert_equal(second['metric'], 'my.gauge.b')
-        nt.assert_equal(second['tags'], ('tag1', 'tag2'))
-        nt.assert_equal(second['points'][0][1], 12)
-        nt.assert_equal(second['host'], 'test-b')
+        nt.assert_equal(second[0], 'my.gauge.b')
+        nt.assert_equal(second[3]['tags'], ('tag1', 'tag2'))
+        nt.assert_equal(second[2], 12)
+        nt.assert_equal(second[3]['hostname'], 'test-b')
 
-        nt.assert_equal(third['metric'], 'my.gauge.c')
-        nt.assert_equal(third['tags'], ('tag3', ))
-        nt.assert_equal(third['points'][0][1], 10)
-        nt.assert_equal(third['device_name'], None)
+        nt.assert_equal(third[0], 'my.gauge.c')
+        nt.assert_equal(third[3]['tags'], ('tag3', ))
+        nt.assert_equal(third[2], 10)
+        nt.assert_equal(third[3]['device_name'], None)
 
-        nt.assert_equal(fourth['metric'], 'my.gauge.c')
-        nt.assert_equal(fourth['tags'], ('tag3', ))
-        nt.assert_equal(fourth['points'][0][1], 16)
-        nt.assert_equal(fourth['device_name'], 'floppy')
+        nt.assert_equal(fourth[0], 'my.gauge.c')
+        nt.assert_equal(fourth[3]['tags'], ('tag3', ))
+        nt.assert_equal(fourth[2], 16)
+        nt.assert_equal(fourth[3]['device_name'], 'floppy')
 
     def test_tags_gh442(self):
-        import dogstatsd
+        import sdstatsd
         from aggregator import api_formatter
 
-        serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host")
+        serialized = sdstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host", "1234567890")
         assert '"tags": ["tag"]' in serialized[0]
 
     def test_counter(self):
@@ -184,25 +184,25 @@ class TestMetricsAggregator(unittest.TestCase):
         assert len(metrics) == 3
 
         first, second, third = metrics
-        nt.assert_equals(first['metric'], 'my.first.counter')
-        nt.assert_equals(first['points'][0][1], 6)
-        nt.assert_equals(first['host'], 'myhost')
+        nt.assert_equals(first[0], 'my.first.counter')
+        nt.assert_equals(first[2], 6)
+        nt.assert_equals(first[3]['hostname'], 'myhost')
 
-        nt.assert_equals(second['metric'], 'my.second.counter')
-        nt.assert_equals(second['points'][0][1], 1)
+        nt.assert_equals(second[0], 'my.second.counter')
+        nt.assert_equals(second[2], 1)
 
-        nt.assert_equals(third['metric'], 'my.third.counter')
-        nt.assert_equals(third['points'][0][1], 3)
+        nt.assert_equals(third[0], 'my.third.counter')
+        nt.assert_equals(third[2], 3)
 
         # Ensure that counters reset to zero.
         metrics = self.sort_metrics(stats.flush())
         first, second, third = metrics
-        nt.assert_equals(first['metric'], 'my.first.counter')
-        nt.assert_equals(first['points'][0][1], 0)
-        nt.assert_equals(second['metric'], 'my.second.counter')
-        nt.assert_equals(second['points'][0][1], 0)
-        nt.assert_equals(third['metric'], 'my.third.counter')
-        nt.assert_equals(third['points'][0][1], 0)
+        nt.assert_equals(first[0], 'my.first.counter')
+        nt.assert_equals(first[2], 0)
+        nt.assert_equals(second[0], 'my.second.counter')
+        nt.assert_equals(second[2], 0)
+        nt.assert_equals(third[0], 'my.third.counter')
+        nt.assert_equals(third[2], 0)
 
     def test_sampled_counter(self):
 
@@ -212,8 +212,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
-        assert m['metric'] == 'sampled.counter'
-        nt.assert_equal(m['points'][0][1], 2)
+        assert m[0] == 'sampled.counter'
+        nt.assert_equal(m[2], 2)
 
     def test_gauge(self):
         stats = MetricsAggregator('myhost')
@@ -229,12 +229,12 @@ class TestMetricsAggregator(unittest.TestCase):
 
         first, second = metrics
 
-        nt.assert_equals(first['metric'], 'my.first.gauge')
-        nt.assert_equals(first['points'][0][1], 5)
-        nt.assert_equals(first['host'], 'myhost')
+        nt.assert_equals(first[0], 'my.first.gauge')
+        nt.assert_equals(first[2], 5)
+        nt.assert_equals(first[3]['hostname'], 'myhost')
 
-        nt.assert_equals(second['metric'], 'my.second.gauge')
-        nt.assert_equals(second['points'][0][1], 1.5)
+        nt.assert_equals(second[0], 'my.second.gauge')
+        nt.assert_equals(second[2], 1.5)
 
         # Ensure that old gauges get dropped due to old timestamps
         stats.gauge('my.first.gauge', 5)
@@ -246,9 +246,9 @@ class TestMetricsAggregator(unittest.TestCase):
 
         first = metrics[0]
 
-        nt.assert_equals(first['metric'], 'my.first.gauge')
-        nt.assert_equals(first['points'][0][1], 5)
-        nt.assert_equals(first['host'], 'myhost')
+        nt.assert_equals(first[0], 'my.first.gauge')
+        nt.assert_equals(first[2], 5)
+        nt.assert_equals(first[3]['hostname'], 'myhost')
 
     def test_sets(self):
         stats = MetricsAggregator('myhost')
@@ -263,8 +263,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = stats.flush()
         nt.assert_equal(len(metrics), 1)
         m = metrics[0]
-        nt.assert_equal(m['metric'], 'my.set')
-        nt.assert_equal(m['points'][0][1], 3)
+        nt.assert_equal(m[0], 'my.set')
+        nt.assert_equal(m[2], 3)
 
         # Assert there are no more sets
         assert not stats.flush()
@@ -282,8 +282,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = stats.flush()
         nt.assert_equal(len(metrics), 1)
         m = metrics[0]
-        nt.assert_equal(m['metric'], 'my.set')
-        nt.assert_equal(m['points'][0][1], 3)
+        nt.assert_equal(m[0], 'my.set')
+        nt.assert_equal(m[2], 3)
 
         # Assert there are no more sets
         assert not stats.flush()
@@ -300,8 +300,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = stats.flush()
         nt.assert_equal(len(metrics), 1)
         m = metrics[0]
-        nt.assert_equals(m['metric'], 'my.rate')
-        nt.assert_equals(m['points'][0][1], 30)
+        nt.assert_equals(m[0], 'my.rate')
+        nt.assert_equals(m[2], 30)
 
         # Assert that no more rates are given
         assert not stats.flush()
@@ -335,8 +335,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = stats.flush()
         nt.assert_equal(len(metrics), 1)
         m = metrics[0]
-        nt.assert_equal(m['metric'], 'sampled.gauge')
-        nt.assert_equal(m['points'][0][1], 10)
+        nt.assert_equal(m[0], 'sampled.gauge')
+        nt.assert_equal(m[2], 10)
 
     def test_histogram(self):
         # The min is not enabled by default
@@ -359,14 +359,14 @@ class TestMetricsAggregator(unittest.TestCase):
 
         nt.assert_equal(len(metrics), 6)
         p95, pavg, pcount, pmax, pmed, pmin = self.sort_metrics(metrics)
-        nt.assert_equal(p95['metric'], 'my.p.95percentile')
-        self.assert_almost_equal(p95['points'][0][1], 95, 10)
-        self.assert_almost_equal(pmax['points'][0][1], 99, 1)
-        self.assert_almost_equal(pmed['points'][0][1], 50, 2)
-        self.assert_almost_equal(pavg['points'][0][1], 50, 2)
-        self.assert_almost_equal(pmin['points'][0][1], 1, 1)
-        self.assert_almost_equal(pcount['points'][0][1], 4000, 0)  # 100 * 20 * 2
-        nt.assert_equals(p95['host'], 'myhost')
+        nt.assert_equal(p95[0], 'my.p.95percentile')
+        self.assert_almost_equal(p95[2], 95, 10)
+        self.assert_almost_equal(pmax[2], 99, 1)
+        self.assert_almost_equal(pmed[2], 50, 2)
+        self.assert_almost_equal(pavg[2], 50, 2)
+        self.assert_almost_equal(pmin[2], 1, 1)
+        self.assert_almost_equal(pcount[2], 4000, 0)  # 100 * 20 * 2
+        nt.assert_equals(p95[3]['hostname'], 'myhost')
 
         # Ensure that histograms are reset.
         metrics = self.sort_metrics(stats.flush())
@@ -385,9 +385,9 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = self.sort_metrics(stats.flush())
         p95, pavg, pcount, pmax, pmed, pmin = self.sort_metrics(metrics)
 
-        nt.assert_equal(pcount['points'][0][1], 2)
+        nt.assert_equal(pcount[2], 2)
         for p in [p95, pavg, pmed, pmax, pmin]:
-            nt.assert_equal(p['points'][0][1], 5)
+            nt.assert_equal(p[2], 5)
 
     def test_batch_submission(self):
         # Submit a sampled histogram.
@@ -403,8 +403,8 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = self.sort_metrics(stats.flush())
         nt.assert_equal(2, len(metrics))
         counter, gauge = metrics
-        assert counter['points'][0][1] == 2
-        assert gauge['points'][0][1] == 1
+        assert counter[2] == 2
+        assert gauge[2] == 1
 
     def test_monokey_batching_notags(self):
         # The min is not enabled by default
@@ -431,7 +431,7 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertTrue(len(metrics) == len(metrics_ref) == 6, (metrics, metrics_ref))
 
         for i in range(len(metrics)):
-            nt.assert_equal(metrics[i]['points'][0][1], metrics_ref[i]['points'][0][1])
+            nt.assert_equal(metrics[i][2], metrics_ref[i][2])
 
     def test_monokey_batching_withtags(self):
         stats = MetricsAggregator('host')
@@ -451,8 +451,8 @@ class TestMetricsAggregator(unittest.TestCase):
         self.assertTrue(len(metrics) == len(metrics_ref) == 3, (metrics, metrics_ref))
 
         for i in range(len(metrics)):
-            nt.assert_equal(metrics[i]['points'][0][1], metrics_ref[i]['points'][0][1])
-            nt.assert_equal(metrics[i]['tags'], metrics_ref[i]['tags'])
+            nt.assert_equal(metrics[i][2], metrics_ref[i][2])
+            nt.assert_equal(metrics[i][3]['tags'], metrics_ref[i][3]['tags'])
 
     def test_monokey_batching_withtags_with_sampling(self):
         # The min is not enabled by default
@@ -479,8 +479,8 @@ class TestMetricsAggregator(unittest.TestCase):
 
         self.assertTrue(len(metrics) == len(metrics_ref) == 9, (metrics, metrics_ref))
         for i in range(len(metrics)):
-            nt.assert_equal(metrics[i]['points'][0][1], metrics_ref[i]['points'][0][1])
-            nt.assert_equal(metrics[i]['tags'], metrics_ref[i]['tags'])
+            nt.assert_equal(metrics[i][2], metrics_ref[i][2])
+            nt.assert_equal(metrics[i][3]['tags'], metrics_ref[i][3]['tags'])
 
     def test_bad_packets_throw_errors(self):
         packets = [
@@ -528,20 +528,20 @@ class TestMetricsAggregator(unittest.TestCase):
         time.sleep(ag_interval)
         metrics = self.sort_metrics(stats.flush())
         nt.assert_equal(len(metrics), 9)
-        nt.assert_equal(metrics[0]['metric'], 'test.counter')
-        nt.assert_equal(metrics[0]['points'][0][1], 123)
+        nt.assert_equal(metrics[0][0], 'test.counter')
+        nt.assert_equal(metrics[0][2], 123)
         time.sleep(ag_interval)
         metrics = self.sort_metrics(stats.flush())
         nt.assert_equal(len(metrics), 1)
-        nt.assert_equal(metrics[0]['metric'], 'test.counter')
-        nt.assert_equal(metrics[0]['points'][0][1], 0)
+        nt.assert_equal(metrics[0][0], 'test.counter')
+        nt.assert_equal(metrics[0][2], 0)
 
         time.sleep(ag_interval)
         time.sleep(0.5)
         metrics = self.sort_metrics(stats.flush())
         nt.assert_equal(len(metrics), 1)
-        nt.assert_equal(metrics[0]['metric'], 'test.counter')
-        nt.assert_equal(metrics[0]['points'][0][1], 0)
+        nt.assert_equal(metrics[0][0], 'test.counter')
+        nt.assert_equal(metrics[0][2], 0)
 
         # Now sleep for longer than the expiry window and ensure
         # no points are submitted
@@ -558,8 +558,8 @@ class TestMetricsAggregator(unittest.TestCase):
 
         metrics = self.sort_metrics(stats.flush())
         nt.assert_equal(len(metrics), 9)
-        nt.assert_equal(metrics[0]['metric'], 'test.counter')
-        nt.assert_equal(metrics[0]['points'][0][1], 123)
+        nt.assert_equal(metrics[0][0], 'test.counter')
+        nt.assert_equal(metrics[0][2], 123)
 
     def test_diagnostic_stats(self):
         stats = MetricsAggregator('myhost')
@@ -570,8 +570,8 @@ class TestMetricsAggregator(unittest.TestCase):
         nt.assert_equals(2, len(metrics))
         first, second = metrics
 
-        nt.assert_equal(first['metric'], 'datadog.dogstatsd.packet.count')
-        nt.assert_equal(first['points'][0][1], 10)
+        nt.assert_equal(first[0], 'datadog.dogstatsd.packet.count')
+        nt.assert_equal(first[2], 10)
 
     @attr(requires='core_integration')
     def test_histogram_counter(self):
@@ -590,8 +590,8 @@ class TestMetricsAggregator(unittest.TestCase):
             metrics = self.sort_metrics(stats.flush())
             assert len(metrics) > 0
 
-            nt.assert_equal([m['points'][0][1] for m in metrics if m['metric'] == 'test.counter'], [cnt * run])
-            nt.assert_equal([m['points'][0][1] for m in metrics if m['metric'] == 'test.hist.count'], [cnt * run])
+            nt.assert_equal([m[2] for m in metrics if m[0] == 'test.counter'], [cnt * run])
+            nt.assert_equal([m[2] for m in metrics if m[0] == 'test.hist.count'], [cnt * run])
 
     def test_scientific_notation(self):
         stats = MetricsAggregator('myhost', interval=10)
@@ -600,7 +600,7 @@ class TestMetricsAggregator(unittest.TestCase):
         metrics = self.sort_metrics(stats.flush())
 
         assert len(metrics) == 1
-        ts, val = metrics[0].get('points')[0]
+        val = metrics[0][2]
         nt.assert_almost_equal(val, 9.512901e-05)
 
     def test_event_tags(self):
@@ -616,11 +616,11 @@ class TestMetricsAggregator(unittest.TestCase):
         first, second, third, fourth = events
 
         try:
-            first['tags']
+            first[3]['tags']
         except Exception:
                 assert True
         else:
-            assert False, "event['tags'] shouldn't be defined when no tags aren't explicited in the packet"
+            assert False, "event[3]['tags'] shouldn't be defined when no tags aren't explicited in the packet"
         nt.assert_equal(first['msg_title'], 'title1')
         nt.assert_equal(first['msg_text'], 'text')
 
@@ -738,7 +738,7 @@ class TestMetricsAggregator(unittest.TestCase):
         first, second, third, fourth = service_checks
 
         nt.assert_equal(first['check'], 'check.1')
-        assert first.get('tags') is None, "service_check['tags'] shouldn't be" + \
+        assert first.get('tags') is None, "service_check[3]['tags'] shouldn't be" + \
             "defined when no tags aren't explicited in the packet"
 
         nt.assert_equal(second['check'], 'check.2')
@@ -793,9 +793,9 @@ class TestMetricsAggregator(unittest.TestCase):
         assert len(metrics) == 1
 
         first = metrics[0]
-        nt.assert_equals(first['metric'], 'my.first.gauge')
-        nt.assert_equals(first['points'][0][1], 5)
-        nt.assert_equals(first['host'], 'myhost')
+        nt.assert_equals(first[0], 'my.first.gauge')
+        nt.assert_equals(first[2], 5)
+        nt.assert_equals(first[3]['hostname'], 'myhost')
 
         # Ensure that old gauges get dropped due to old timestamps
         stats.submit_metric('my.1.gauge', 5, 'g')
@@ -809,26 +809,26 @@ class TestMetricsAggregator(unittest.TestCase):
         nt.assert_equal(len(metrics), 9)
 
         first, second, third, h1, h2, h3, h4, h5, h6 = metrics
-        nt.assert_equals(first['metric'], 'my.1.gauge')
-        nt.assert_equals(first['points'][0][1], 1)
-        nt.assert_equals(first['host'], 'myhost')
-        self.assert_almost_equal(first['points'][0][0], timestamp_within_threshold, 0.1)
+        nt.assert_equals(first[0], 'my.1.gauge')
+        nt.assert_equals(first[2], 1)
+        nt.assert_equals(first[3]['hostname'], 'myhost')
+        self.assert_almost_equal(first[1], timestamp_within_threshold, 0.1)
 
-        nt.assert_equals(second['metric'], 'my.2.counter')
-        nt.assert_equals(second['points'][0][1], 20)
-        self.assert_almost_equal(second['points'][0][0], flush_timestamp, 0.1)
+        nt.assert_equals(second[0], 'my.2.counter')
+        nt.assert_equals(second[2], 20)
+        self.assert_almost_equal(second[1], flush_timestamp, 0.1)
 
-        nt.assert_equals(third['metric'], 'my.3.set')
-        nt.assert_equals(third['points'][0][1], 1)
-        self.assert_almost_equal(third['points'][0][0], flush_timestamp, 0.1)
+        nt.assert_equals(third[0], 'my.3.set')
+        nt.assert_equals(third[2], 1)
+        self.assert_almost_equal(third[1], flush_timestamp, 0.1)
 
-        nt.assert_equals(h1['metric'], 'my.4.histogram.95percentile')
-        nt.assert_equals(h1['points'][0][1], 20)
-        self.assert_almost_equal(h1['points'][0][0], flush_timestamp, 0.1)
-        nt.assert_equal(h1['points'][0][0], h2['points'][0][0])
-        nt.assert_equal(h1['points'][0][0], h3['points'][0][0])
-        nt.assert_equal(h1['points'][0][0], h4['points'][0][0])
-        nt.assert_equal(h1['points'][0][0], h5['points'][0][0])
+        nt.assert_equals(h1[0], 'my.4.histogram.95percentile')
+        nt.assert_equals(h1[2], 20)
+        self.assert_almost_equal(h1[1], flush_timestamp, 0.1)
+        nt.assert_equal(h1[1], h2[1])
+        nt.assert_equal(h1[1], h3[1])
+        nt.assert_equal(h1[1], h4[1])
+        nt.assert_equal(h1[1], h5[1])
 
     def test_packet_string_endings(self):
         stats = MetricsAggregator('myhost')
@@ -842,11 +842,11 @@ class TestMetricsAggregator(unittest.TestCase):
         assert len(metrics) == 3
 
         first, second, third = metrics
-        nt.assert_equals(first['metric'], 'line_ending.generic')
-        nt.assert_equals(first['points'][0][1], 500)
+        nt.assert_equals(first[0], 'line_ending.generic')
+        nt.assert_equals(first[2], 500)
 
-        nt.assert_equals(second['metric'], 'line_ending.unix')
-        nt.assert_equals(second['points'][0][1], 400)
+        nt.assert_equals(second[0], 'line_ending.unix')
+        nt.assert_equals(second[2], 400)
 
-        nt.assert_equals(third['metric'], 'line_ending.windows')
-        nt.assert_equals(third['points'][0][1], 300)
+        nt.assert_equals(third[0], 'line_ending.windows')
+        nt.assert_equals(third[2], 300)

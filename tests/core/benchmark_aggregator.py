@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Performance tests for the agent/dogstatsd metrics aggregator.
+Performance tests for the agent/sdstatsd metrics aggregator.
 """
 from aggregator import MetricsAggregator, MetricsBucketAggregator
 
@@ -11,7 +11,7 @@ class TestAggregatorPerf(object):
     LOOPS_PER_FLUSH = 2000
     METRIC_COUNT = 5
 
-    def test_dogstatsd_aggregation_perf(self):
+    def test_sdstatsd_aggregation_perf(self):
         ma = MetricsBucketAggregator('my.host')
 
         for _ in xrange(self.FLUSH_COUNT):
@@ -61,7 +61,7 @@ class TestAggregatorPerf(object):
         return p
 
 
-    def test_dogstatsd_utf8_events(self):
+    def test_sdstatsd_utf8_events(self):
         ma = MetricsBucketAggregator('my.host')
 
         for _ in xrange(self.FLUSH_COUNT):
@@ -84,7 +84,7 @@ class TestAggregatorPerf(object):
 
             ma.flush()
 
-    def test_dogstatsd_ascii_events(self):
+    def test_sdstatsd_ascii_events(self):
         ma = MetricsBucketAggregator('my.host')
 
         for _ in xrange(self.FLUSH_COUNT):
@@ -108,6 +108,6 @@ class TestAggregatorPerf(object):
 
 if __name__ == '__main__':
     t = TestAggregatorPerf()
-    #t.test_dogstatsd_aggregation_perf()
+    #t.test_sdstatsd_aggregation_perf()
     #t.test_checksd_aggregation_perf()
-    t.test_dogstatsd_utf8_events()
+    t.test_sdstatsd_utf8_events()

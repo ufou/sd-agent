@@ -606,9 +606,9 @@ class TestServiceDiscovery(unittest.TestCase):
                     kube_pod_name=image,
                     kube_container_name='foo',
                     kube_annotations=dict(zip(
-                        ['service-discovery.datadoghq.com/foo.check_names',
-                         'service-discovery.datadoghq.com/foo.init_configs',
-                         'service-discovery.datadoghq.com/foo.instances'],
+                        ['service-discovery.serverdensity.com/foo.check_names',
+                         'service-discovery.serverdensity.com/foo.init_configs',
+                         'service-discovery.serverdensity.com/foo.instances'],
                         self.mock_raw_templates[image][0]))))
 
     @mock.patch('config.get_auto_confd_path', return_value=os.path.join(

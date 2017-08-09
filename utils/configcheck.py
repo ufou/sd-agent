@@ -32,7 +32,7 @@ def configcheck():
         print "All yaml files passed. You can now run the ServerDensity agent."
         return 0
     else:
-        print("Fix the invalid yaml files above in order to start the Datadog agent. "
+        print("Fix the invalid yaml files above in order to start the sd-agent. "
               "A useful external tool for yaml parsing can be found at "
               "http://yaml-online-parser.appspot.com/")
         return 1

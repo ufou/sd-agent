@@ -7,10 +7,11 @@ from collections import defaultdict
 
 # 3p
 import mock
+from nose.plugins.skip import SkipTest
 
 # project
-from dogstatsd import mapto_v6, get_socket_address
-from dogstatsd import Server, init
+from sdstatsd import mapto_v6, get_socket_address
+from sdstatsd import Server, init
 from utils.net import IPV6_V6ONLY, IPPROTO_IPV6
 
 
@@ -23,19 +24,19 @@ class TestFunctions(TestCase):
         self.assertEqual(mapto_v6('ff00::'), 'ff00::')
 
     def test_get_socket_address(self):
-        with mock.patch('dogstatsd.socket.getaddrinfo') as getaddrinfo:
+        with mock.patch('sdstatsd.socket.getaddrinfo') as getaddrinfo:
             getaddrinfo.return_value = [(2, 2, 17, '', ('192.168.1.1', 80))]
             self.assertEqual(get_socket_address('example.com', 80), ('::ffff:192.168.1.1', 80, 0, 0))
             getaddrinfo.return_value = [(30, 2, 17, '', ('::1', 80, 0, 0))]
             self.assertEqual(get_socket_address('example.com', 80), ('::1', 80, 0, 0))
         self.assertIsNone(get_socket_address('foo', 80))
 
-    @mock.patch('dogstatsd.get_config')
-    @mock.patch('dogstatsd.Server')
+    @mock.patch('sdstatsd.get_config')
+    @mock.patch('sdstatsd.Server')
     def test_init(self, s, gc):
         gc.return_value = defaultdict(str)
         gc.return_value['non_local_traffic'] = True
-        gc.return_value['use_dogstatsd'] = True
+        gc.return_value['use_sdstatsd'] = True
 
         init()
 
@@ -52,12 +53,13 @@ class TestServer(TestCase):
         self.assertIsNone(s.sockaddr)
         self.assertIsNone(s.socket)
 
-    @mock.patch('dogstatsd.select')
+    @mock.patch('sdstatsd.select')
     def test_start(self, select):
         select.select.side_effect = [KeyboardInterrupt, SystemExit]
-        s1 = Server(mock.MagicMock(), '::1', '1234')
-        s1.start()
-        self.assertEqual(s1.socket.family, socket.AF_INET6)
+        # TODO: v6 not supported on Travis
+        # s1 = Server(mock.MagicMock(), '::1', '1234')
+        # s1.start()
+        # self.assertEqual(s1.socket.family, socket.AF_INET6)
 
         s2 = Server(mock.MagicMock(), '127.0.0.1', '2345')
         s2.start()
@@ -93,12 +95,15 @@ class TestServer(TestCase):
         msg = results.get(True, 1)
         self.assertEqual(msg[0], 'msg4')
 
+        # TODO: v6 not supported on Travis
+        return
         # send packets with a v6 client
         client_sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         client_sock.sendto('msg6', ('::1', 12345))
         self.assertRaises(Queue.Empty, results.get, True, 1)
 
     def test_connection_v6(self):
+        raise SkipTest("Travis doesn't support ipv6")
         # start the server with a v6 address
         sock = self._get_socket('::1', 12345)
         results = Queue.Queue()

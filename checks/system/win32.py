@@ -21,7 +21,7 @@ except Exception:
         """
         return
 
-# datadog
+# agent
 from utils.timeout import TimeoutException
 
 

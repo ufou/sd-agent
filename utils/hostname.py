@@ -52,7 +52,7 @@ def get_hostname(config=None):
 
     Tries, in order:
 
-      * agent config (datadog.conf, "hostname:")
+      * agent config (config.cfg, "hostname:")
       * 'hostname -f' (on unix)
       * socket.gethostname()
     """
@@ -116,7 +116,7 @@ def get_hostname(config=None):
             hostname = socket_hostname
 
     if hostname is None:
-        log.critical('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
-        raise Exception('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
+        log.critical('Unable to reliably determine host name. You can define one in config.cfg or in your hosts file')
+        raise Exception('Unable to reliably determine host name. You can define one in config.cfg or in your hosts file')
 
     return hostname

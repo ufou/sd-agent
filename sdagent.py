@@ -173,10 +173,6 @@ class AgentTransaction(Transaction):
 
     @classmethod
     def set_endpoints(cls, endpoints):
-        if not cls._application._agentConfig.get('agent_key'):
-            log.warning(u"No agent key was found. Aborting endpoint setting.")
-            return
-        endpoints = SD_ENDPOINT
         cls._endpoints = endpoints
 
     @classmethod
@@ -201,13 +197,13 @@ class AgentTransaction(Transaction):
             self._emitter_manager.send(data, headers)
 
         # Insert the transaction(s) in the Manager
-        #for endpoint in self._endpoints:
-        #    for api_key in self._endpoints[endpoint]:
-        transaction = copy.copy(self)
-        transaction._endpoint = self._endpoints
-        transaction._agent_key = self._agent_key
-        self._trManager.append(transaction)
-        log.debug("Created transaction %d" % transaction.get_id())
+        for endpoint in self._endpoints:
+            for agent_key in self._endpoints[endpoint]:
+                transaction = copy.copy(self)
+                transaction._endpoint = endpoint
+                transaction._agent_key = agent_key
+                self._trManager.append(transaction)
+                log.debug("Created transaction %d" % transaction.get_id())
         self._trManager.flush()
 
     def __sizeof__(self):
@@ -220,7 +216,9 @@ class AgentTransaction(Transaction):
         if agent_key:
             return "{0}/intake/{1}?agent_key={2}".format(
                 endpoint_base_url, self._msg_type, agent_key)
-        return "{0}/intake/{1}?api_key={2}".format(endpoint_base_url, self._msg_type, agent_key)
+        else:
+            log.error(u"No agent key was found.")
+            return
 
     def flush(self):
         # Getting proxy settings
@@ -274,7 +272,7 @@ class AgentTransaction(Transaction):
             log.debug("Using SimpleHTTPClient")
         http = tornado.httpclient.AsyncHTTPClient()
 
-        url = self.get_url(self._sd_account, self._agent_key)
+        url = self.get_url(self._endpoint, self._agent_key)
         log.debug(
             u"Sending %s to endpoint %s at %s",
             self._type, self._endpoint, url

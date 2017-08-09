@@ -436,7 +436,7 @@ class Aggregator(object):
 
     def parse_metric_packet(self, packet):
         """
-        Schema of a dogstatsd packet:
+        Schema of a sdstatsd packet:
         <name>:<value>|<metric_type>|@<sample_rate>|#<tag1_name>:<tag1_value>,<tag2_name>:<tag2_value>:<value>|<metric_type>...
         """
         parsed_packets = []
@@ -984,12 +984,14 @@ def get_formatter(config):
 
 def api_formatter(metric, value, timestamp, tags, hostname=None, device_name=None,
         metric_type=None, interval=None):
-    return {
-        'metric': metric,
-        'points': [(timestamp, value)],
-        'tags': tags,
-        'host': hostname,
-        'device_name': device_name,
-        'type': metric_type or MetricTypes.GAUGE,
-        'interval':interval,
-    }
+    return (
+        metric,
+        timestamp,
+        value,
+        {
+            'hostname': hostname,
+            'type': metric_type or MetricTypes.GAUGE,
+            'device_name': device_name,
+            'tags': tags,
+        }
+    )

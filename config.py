@@ -138,8 +138,20 @@ def _version_string_to_tuple(version_string):
 
 
 # Return url endpoint, here because needs access to version number
-def get_url_endpoint(default_url, endpoint_type='app'):
-    return "https://{0}.agent.serverdensity.io".format(default_url)
+def get_url_endpoint(default_url, endpoint_type='app', cfg_path=None):
+    config_path = get_config_path(cfg_path, os_name=get_os())
+    config = ConfigParser.ConfigParser()
+    config.readfp(skip_leading_wsp(open(config_path)))
+    if config.has_option('Main', 'sd_url') and config.get('Main', 'sd_url'):
+        url = config.get('Main', 'sd_url')
+    elif config.has_option('Main', 'sd_account') and config.get('Main', 'sd_account'):
+        url = 'https://{}.agent.serverdensity.io'.format(config.get('Main', 'sd_account'))
+    else:
+        # Default agent URL
+        url = default_url
+    if url.endswith('/'):
+        url = url[:-1]
+    return url
 
 
 def skip_leading_wsp(f):
@@ -170,7 +182,7 @@ def _windows_commondata_path():
 
 def _windows_extra_checksd_path():
     common_data = _windows_commondata_path()
-    return os.path.join(common_data, 'Datadog', 'checks.d')
+    return os.path.join(common_data, 'Server Density', 'checks.d')
 
 
 def _windows_checksd_path():
@@ -237,7 +249,7 @@ def get_config_path(cfg_path=None, os_name=None):
     try:
         if Platform.is_windows():
             common_data = _windows_commondata_path()
-            return _config_path(os.path.join(common_data, 'Datadog'))
+            return _config_path(os.path.join(common_data, 'Server Density'))
         elif Platform.is_mac():
             return _config_path(MAC_CONFIG_PATH)
         else:
@@ -330,8 +342,8 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
     agentConfig = {
         'check_freq': DEFAULT_CHECK_FREQUENCY,
         'collect_orchestrator_tags': True,
-        'dogstatsd_port': 8125,
-        'dogstatsd_target': 'http://localhost:17123',
+        'sdstatsd_port': 8125,
+        'sdstatsd_target': 'http://localhost:17124',
         'graphite_listen_port': None,
         'hostname': None,
         'listen_port': None,
@@ -378,39 +390,14 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
             log.warning(u"No agent key was found. Aborting.")
             sys.exit(2)
 
-        if not config.has_option('Main', 'sd_url') or not config.has_option('Main', 'sd_account'):
+        if not (config.has_option('Main', 'sd_url') or config.has_option('Main', 'sd_account')):
             log.warning(u"No sd_account or sd_url was found. Aborting.")
             sys.exit(2)
 
-        """
-        # Endpoints
-        dd_urls = map(clean_dd_url, config.get('Main', 'dd_url').split(','))
-        api_keys = map(lambda el: el.strip(), config.get('Main', 'api_key').split(','))
-
-        # For collector and dogstatsd
-        agentConfig['dd_url'] = dd_urls[0]
-        agentConfig['api_key'] = api_keys[0]
-
-        # Forwarder endpoints logic
-        # endpoints is:
-        # {
-        #    'https://app.datadoghq.com': ['api_key_abc', 'api_key_def'],
-        #    'https://app.example.com': ['api_key_xyz']
-        # }
-        endpoints = {}
-
-        dd_urls = remove_empty(dd_urls)
-        api_keys = remove_empty(api_keys)
-        if len(dd_urls) == 1:
-            if len(api_keys) > 0:
-                endpoints[dd_urls[0]] = api_keys
-        else:
-            assert len(dd_urls) == len(api_keys), 'Please provide one api_key for each url'
-            for i, dd_url in enumerate(dd_urls):
-                endpoints[dd_url] = endpoints.get(dd_url, []) + [api_keys[i]]
-        """
         endpoints = {}
         agentConfig['endpoints'] = endpoints
+        if config.has_option('Main', 'sd_account'):
+            agentConfig['sd_account'] = config.get('Main', 'sd_account')
 
         # Forwarder or not forwarder
         agentConfig['use_forwarder'] = options is not None and options.use_forwarder
@@ -418,15 +405,13 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
             listen_port = 17124
             if config.has_option('Main', 'listen_port'):
                 listen_port = int(config.get('Main', 'listen_port'))
-            agentConfig['sd_url'] = "http://{}:{}".format(agentConfig['bind_host'], listen_port)
-        # FIXME: Legacy sd_url command line switch
-        elif options is not None and options.sd_url is not None:
-            agentConfig['sd_url'] = options.sd_url
+            agentConfig['sd_url'] = "http://" + agentConfig['bind_host'] + ":" + str(listen_port)
         elif config.has_option('Main', 'sd_url'):
             agentConfig['sd_url'] = config.get('Main', 'sd_url')
         else:
             # Default agent URL
-            agentConfig['sd_url'] = "https://" + config.get('Main', 'sd_account') + ".agent.serverdensity.io"
+            agentConfig['sd_url'] = "https://" + agentConfig['sd_account'] + ".agent.serverdensity.io"
+
         if agentConfig['sd_url'].endswith('/'):
             agentConfig['sd_url'] = agentConfig['sd_url'][:-1]
 
@@ -441,10 +426,10 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
         if config.has_option('Main', 'additional_checksd'):
             agentConfig['additional_checksd'] = config.get('Main', 'additional_checksd')
 
-        if config.has_option('Main', 'use_dogstatsd'):
-            agentConfig['use_dogstatsd'] = config.get('Main', 'use_dogstatsd').lower() in ("yes", "true")
+        if config.has_option('Main', 'use_sdstatsd'):
+            agentConfig['use_sdstatsd'] = config.get('Main', 'use_sdstatsd').lower() in ("yes", "true")
         else:
-            agentConfig['use_dogstatsd'] = True
+            agentConfig['use_sdstatsd'] = True
 
         # Service discovery
         if config.has_option('Main', 'service_discovery_backend'):
@@ -463,6 +448,8 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
 
         # Which agent key to use
         agentConfig['agent_key'] = config.get('Main', 'agent_key')
+
+        agentConfig['endpoints'][agentConfig['sd_url']] = [agentConfig['agent_key']]
 
         # local traffic only? Default to no
         agentConfig['non_local_traffic'] = False
@@ -500,12 +487,12 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
         else:
             agentConfig['graphite_listen_port'] = None
 
-        # Dogstatsd config
-        dogstatsd_defaults = {
-            'dogstatsd_port': 8125,
-            'dogstatsd_target': 'http://' + agentConfig['bind_host'] + ':17123',
+        # Sdstatsd config
+        sdstatsd_defaults = {
+            'sdstatsd_port': 8125,
+            'sdstatsd_target': 'http://' + agentConfig['bind_host'] + ':17124',
         }
-        for key, value in dogstatsd_defaults.iteritems():
+        for key, value in sdstatsd_defaults.iteritems():
             if config.has_option('Main', key):
                 agentConfig[key] = config.get('Main', key)
             else:
@@ -715,7 +702,7 @@ def get_confd_path(osname=None):
     try:
         if Platform.is_windows():
             common_data = _windows_commondata_path()
-            return _confd_path(os.path.join(common_data, 'Datadog'))
+            return _confd_path(os.path.join(common_data, 'Server Density'))
         elif Platform.is_mac():
             return _confd_path(MAC_CONFIG_PATH)
         else:
@@ -804,7 +791,6 @@ def get_win32service_file(osname, filename):
 
 def get_ssl_certificate(osname, filename):
     # The SSL certificate is needed by tornado in case of connection through a proxy
-    # Also used by flare's requests on Windows
     if osname == 'windows':
         if hasattr(sys, 'frozen'):
             # we're frozen - from py2exe
@@ -1102,7 +1088,7 @@ def load_check_directory(agentConfig, hostname):
     checks_places = get_checks_places(osname, agentConfig)
 
     for config_path in _file_configs_paths(osname, agentConfig):
-        # '/etc/dd-agent/checks.d/my_check.py' -> 'my_check'
+        # '/usr/share/python/sd-agent/checks.d/my_check.py' -> 'my_check'
         check_name = _conf_path_to_check_name(config_path)
 
         conf_is_valid, check_config, invalid_check = _load_file_config(config_path, check_name, agentConfig)
@@ -1239,15 +1225,14 @@ def get_logging_config(cfg_path=None):
     if system_os == 'windows':
         logging_config['collector_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'collector.log')
         logging_config['forwarder_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'forwarder.log')
-        logging_config['dogstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'dogstatsd.log')
+        logging_config['sdstatsd_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'sdstatsd.log')
         logging_config['jmxfetch_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'jmxfetch.log')
-        logging_config['service_log_file'] = os.path.join(_windows_commondata_path(),
-'ServerDensity', 'logs', 'service.log')
+        logging_config['service_log_file'] = os.path.join(_windows_commondata_path(), 'ServerDensity', 'logs', 'service.log')
         logging_config['log_to_syslog'] = False
     else:
         logging_config['collector_log_file'] = '/var/log/sd-agent/collector.log'
         logging_config['forwarder_log_file'] = '/var/log/sd-agent/forwarder.log'
-        logging_config['dogstatsd_log_file'] = '/var/log/sd-agent/dogstatsd.log'
+        logging_config['sdstatsd_log_file'] = '/var/log/sd-agent/sdstatsd.log'
         logging_config['jmxfetch_log_file'] = '/var/log/sd-agent/jmxfetch.log'
         logging_config['go-metro_log_file'] = '/var/log/sd-agent/go-metro.log'
         logging_config['trace-agent_log_file'] = '/var/log/sd-agent/trace-agent.log'

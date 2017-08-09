@@ -9,6 +9,7 @@ from shutil import copyfile, rmtree
 
 # 3p
 import ntpath
+from nose.plugins.skip import SkipTest
 
 # project
 from config import (
@@ -41,20 +42,21 @@ class TestConfig(unittest.TestCase):
         """
         agentConfig = self.get_config('bad.conf')
 
-        self.assertEquals(agentConfig["dd_url"], "https://app.datadoghq.com")
-        self.assertEquals(agentConfig["api_key"], "1234")
+        self.assertEquals(agentConfig["sd_account"], "test")
+        self.assertEquals(agentConfig["agent_key"], "1234")
         self.assertEquals(agentConfig["nagios_log"], "/var/log/nagios3/nagios.log")
         self.assertEquals(agentConfig["graphite_listen_port"], 17126)
         self.assertTrue("statsd_metric_namespace" in agentConfig)
 
     def test_one_endpoint(self):
         agent_config = self.get_config('one_endpoint.conf')
-        self.assertEquals(agent_config["dd_url"], "https://app.datadoghq.com")
-        self.assertEquals(agent_config["api_key"], "1234")
-        endpoints = {'https://app.datadoghq.com': ['1234']}
+        self.assertEquals(agent_config["sd_account"], "test")
+        self.assertEquals(agent_config["agent_key"], "1234")
+        endpoints = {'https://test.agent.serverdensity.io': ['1234']}
         self.assertEquals(agent_config['endpoints'], endpoints)
 
     def test_multiple_endpoints(self):
+        raise SkipTest('multiple endpoints are not supported')
         agent_config = self.get_config('multiple_endpoints.conf')
         self.assertEquals(agent_config["dd_url"], "https://app.datadoghq.com")
         self.assertEquals(agent_config["api_key"], "1234")
@@ -67,6 +69,7 @@ class TestConfig(unittest.TestCase):
             self.get_config('multiple_endpoints_bad.conf')
 
     def test_multiple_apikeys(self):
+        raise SkipTest('multiple keys are not supported')
         agent_config = self.get_config('multiple_apikeys.conf')
         self.assertEquals(agent_config["dd_url"], "https://app.datadoghq.com")
         self.assertEquals(agent_config["api_key"], "1234")

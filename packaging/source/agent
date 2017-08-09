@@ -6,7 +6,7 @@ PATH=$(pwd)/venv/bin:$PATH
 
 SUPERVISOR_NOT_RUNNING="Supervisor is not running"
 SUPERVISOR_CONF_FILE='agent/supervisor.conf'
-SOCK_FILE='run/datadog-supervisor.sock'
+SOCK_FILE='run/sd-supervisor.sock'
 PID_FILE='run/supervisord.pid'
 COLLECTOR_PIDFILE='run/sd-agent.pid'
 action=$1
@@ -137,12 +137,6 @@ case $action in
         exit $?
         ;;
 
-
-    flare)
-        shift
-        python agent/agent.py flare $@
-        exit $?
-        ;;
 
     *)
         echo "Usage: $0 {start|stop|restart|info|status|reload|configcheck|check|jmx}"

@@ -144,7 +144,7 @@ class TestCore(unittest.TestCase):
         self.assertEquals(len(check.service_checks), 0, check.service_checks)
 
     def test_no_proxy(self):
-        """ Starting with Agent 5.0.0, there should always be a local forwarder
+        """ Starting with Agent 2.0.0, there should always be a local forwarder
         running and all payloads should go through it. So we should make sure
         that we pass the no_proxy environment variable that will be used by requests
         (See: https://github.com/kennethreitz/requests/pull/945 )
@@ -307,7 +307,7 @@ class TestCollectionInterval(unittest.TestCase):
 
         # Check that we got a timing metric for all checks.
         timing_metrics = [m for m in metrics
-            if m[0] == 'datadog.agent.check_run_time']
+            if m[0] == 'serverdensity.agent.check_run_time']
         all_tags = []
         for metric in timing_metrics:
             all_tags.extend(metric[3]['tags'])

@@ -13,7 +13,7 @@ import yaml
 
 # project
 from aggregator import MetricsAggregator
-from dogstatsd import Server
+from sdstatsd import Server
 from jmxfetch import JMXFetch
 from tests.checks.common import AgentCheckTest
 
@@ -106,7 +106,7 @@ class JMXTestCase(unittest.TestCase):
         self.t1.start()
 
         confd_path = os.path.join(os.environ['VOLATILE_DIR'], 'jmx_yaml')
-        self.jmx_daemon = JMXFetch(confd_path, {'dogstatsd_port': STATSD_PORT})
+        self.jmx_daemon = JMXFetch(confd_path, {'sdstatsd_port': STATSD_PORT})
         self.t2 = threading.Thread(target=self.jmx_daemon.run)
         self.t2.start()
 

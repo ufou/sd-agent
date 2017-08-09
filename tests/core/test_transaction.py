@@ -139,12 +139,14 @@ class TestTransaction(unittest.TestCase):
                         "before = %s after = %s" % (before, after))
 
     def testCustomEndpoint(self):
+        raise SkipTest("This test doesn't apply to Server Density.")
         MetricTransaction._endpoints = []
 
         config = {
+            "endpoints": {"https://foo.bar.com": ["foo"]},
             "sd_url": "https://foo.bar.com",
             "agent_key": "foo",
-            "use_dd": True
+            "use_sd": True
         }
 
         app = Application()
@@ -179,7 +181,7 @@ class TestTransaction(unittest.TestCase):
         config = {
             "sd_url": "https://agent.serverdensity.io",
             "api_key": api_key,
-            "use_dd": True
+            "use_sd": True
         }
 
         app = Application()
@@ -332,7 +334,7 @@ class TestTransaction(unittest.TestCase):
             },
             "dd_url": "https://app.datadoghq.com",
             "api_key": 'api_key',
-            "use_dd": True
+            "use_sd": True
         }
         app = Application()
         app.skip_ssl_validation = False

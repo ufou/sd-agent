@@ -29,8 +29,6 @@ class Transaction(object):
         self._error_count = 0
         self._next_flush = datetime.utcnow()
         self._size = None
-        self._agent_key = self._application._agentConfig.get('agent_key', None)
-        self._sd_account = self._application._agentConfig.get('sd_account', None)
 
     def get_id(self):
         return self._id

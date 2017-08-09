@@ -70,7 +70,7 @@ JMX_LIST_COMMANDS = {
     'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
     JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"}
 
-LINK_TO_DOC = "See http://docs.datadoghq.com/integrations/java/ for more information"
+LINK_TO_DOC = "See https://support.serverdensity.com/hc/en-us/articles/115014942368 for more information"
 
 
 class InvalidJMXConfiguration(Exception):
@@ -233,7 +233,7 @@ class JMXFetch(object):
             if statsd_host == "0.0.0.0":
                 # If statsd is bound to all interfaces, just use localhost for clients
                 statsd_host = "localhost"
-            statsd_port = self.agentConfig.get('dogstatsd_port', "8125")
+            statsd_port = self.agentConfig.get('sdstatsd_port', "8125")
             reporter = "statsd:%s:%s" % (statsd_host, statsd_port)
 
         log.info("Starting jmxfetch:")

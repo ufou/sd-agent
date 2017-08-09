@@ -21,7 +21,7 @@ RANCHER_CONTAINER_NAME = 'io.rancher.container.name'
 RANCHER_CONTAINER_IP = 'io.rancher.container.ip'
 RANCHER_STACK_NAME = 'io.rancher.stack.name'
 RANCHER_SVC_NAME = 'io.rancher.stack_service.name'
-DATADOG_ID = 'com.datadoghq.sd.check.id'
+SD_ID = 'com.serverdensity.sd.check.id'
 
 
 class BogusPIDException(Exception):

@@ -52,7 +52,7 @@ if sys.platform == 'win32':
             self.__dict__.update(kw)
             self.version = get_version()
             self.company_name = 'Server Density, Ltd.'
-            self.copyright = 'Copyright 2015-{} Server Density, Ltd.',format(date.today().year)
+            self.copyright = 'Copyright 2015-{} Server Density, Ltd.'.format(date.today().year)
             self.cmdline_style = 'pywin32'
 
     agent_svc = Target(name='Server Density Agent', modules='win32.service', dest_base='sdagent')

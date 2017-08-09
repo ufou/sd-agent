@@ -1,13 +1,13 @@
 version: '{branch}.{build}'
 shallow_clone: true
 environment:
-  TRAVIS_BUILD_DIR: c:\projects\dd-agent
-  INTEGRATIONS_DIR: c:\projects\dd-agent\embedded
-  CHECKSD_OVERRIDE: c:\projects\dd-agent\tests\checks\fixtures\checks
-  PIP_CACHE: c:\projects\dd-agent\.cache\pip
+  TRAVIS_BUILD_DIR: c:\projects\sd-agent
+  INTEGRATIONS_DIR: c:\projects\sd-agent\embedded
+  CHECKSD_OVERRIDE: c:\projects\sd-agent\tests\checks\fixtures\checks
+  PIP_CACHE: c:\projects\sd-agent\.cache\pip
   VOLATILE_DIR: c:\projects
   NOSE_FILTER: not unix and not fixme
-  PYWIN_PATH: C:\projects\dd-agent\.cache\pywin32-py2.7.exe
+  PYWIN_PATH: C:\projects\sd-agent\.cache\pywin32-py2.7.exe
   SKIP_LINT: true
   matrix:
   - PYTHON: C:\\Python27
@@ -21,9 +21,9 @@ environment:
     PYWIN32_URL: http://sourceforge.net/projects/pywin32/files/pywin32/Build%20219/pywin32-219.win-amd64-py2.7.exe/download
     PYWIN32_INSTALL_DIR: pywin32-219-py2.7-win-amd64.egg
 cache:
-  - C:\projects\dd-agent\.cache
-  - C:\projects\dd-agent\vendor\cache
-  - C:\projects\dd-agent\embedded
+  - C:\projects\sd-agent\.cache
+  - C:\projects\sd-agent\vendor\cache
+  - C:\projects\sd-agent\embedded
 services:
   - iis
   # - mssql2008r2sp2 # FIXME: re-enable when we can launch multiple mssql instances at once
