@@ -1,3 +1,4 @@
+etc/sd-agent/conf.d
 usr/share/python/sd-agent/checks.d
 var/log/sd-agent
 var/run/sd-agent

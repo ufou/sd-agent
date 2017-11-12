@@ -12,6 +12,7 @@ util.py usr/share/python/sd-agent
 checks usr/share/python/sd-agent
 utils usr/share/python/sd-agent
 
+debian/supervisor.conf etc/sd-agent
 debian/build/etc/sd-agent/config.cfg etc/sd-agent
 debian/build/etc/sd-agent/plugins.cfg etc/sd-agent
 

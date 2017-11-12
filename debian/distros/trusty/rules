@@ -7,7 +7,7 @@ JMX_VERSION=0.15.0
 JMX_ARTIFACT=jmxfetch-${JMX_VERSION}-jar-with-dependencies.jar
 
 %:
-	dh $@ --no-test --with systemd
+	dh $@ --no-test
 
 #override_dh_auto_configure:
 

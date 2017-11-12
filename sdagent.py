@@ -256,9 +256,9 @@ class AgentTransaction(Transaction):
                     # See http://stackoverflow.com/questions/8156073/curl-violate-rfc-2616-10-3-2-and-switch-from-post-to-get
                     tornado_client_params['prepare_curl_callback'] = lambda curl: curl.setopt(pycurl.POSTREDIR, pycurl.REDIR_POST_ALL)
 
-        if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
-            ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
-            tornado_client_params['ca_certs'] = ssl_certificate
+        # if (not self._application.use_simple_http_client or force_use_curl) and pycurl is not None:
+        #     ssl_certificate = self._application._agentConfig.get('ssl_certificate', None)
+        #     tornado_client_params['ca_certs'] = ssl_certificate
 
         use_curl = force_use_curl or self._application._agentConfig.get("use_curl_http_client") and not self._application.use_simple_http_client
 
@@ -639,6 +639,7 @@ def main():
             print usage
             return -1
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

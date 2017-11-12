@@ -15,7 +15,6 @@ PATH=$PATH:/sbin # add the location of start-stop-daemon on Debian
 
 AGENTPATH="/usr/share/python/sd-agent/agent.py"
 AGENTCONF="/etc/sd-agent/config.cfg"
-SDSTATSDPATH="/usr/share/python/sd-agent/sdstatsd.py"
 AGENTUSER="sd-agent"
 FORWARDERPATH="/usr/share/python/sd-agent/sdagent.py"
 NAME="sd-agent"
@@ -78,7 +77,6 @@ check_status() {
         supervisor_config_opt_programs=$(grep -E $SD_OPT_PROC_REGEX $SUPERVISOR_FILE |
                                          grep -c '\[program:')
 
-
         if [ "$sd_supervisor_processes" -ne "$supervisor_config_programs" ]; then
             ESSENTIAL=1
         fi
@@ -131,7 +129,7 @@ case "$1" in
             $0 stop > /dev/null 2>&1
         fi
 
-        su $AGENTUSER -c "$AGENTPATH configcheck" > /dev/null 2>&1
+        su $AGENTUSER -c "$AGENTPATH configcheck" > /dev/null
         if [ $? -ne 0 ]; then
             log_daemon_msg "Invalid check configuration. Please run sudo /etc/init.d/sd-agent configtest for more details."
             log_daemon_msg "Resuming starting process."
