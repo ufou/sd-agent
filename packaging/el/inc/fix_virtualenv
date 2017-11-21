@@ -11,6 +11,3 @@ sed -i "s|^set -gx VIRTUAL_ENV.*|set -gx VIRTUAL_ENV %{__dest_venv}|" %{__venv}/
 grep -l -r -e '^#!.*bin/\(env \)\?\(python\|pypy\|ipy\|jython\)' %{__venv}/bin | \
 xargs sed -i 's|^#!.*bin/\(env \)\?.*|#!%{__dest_venv}/bin/python|'
 sed -i 's|^#!.*bin/\(env \)\?.*|#!%{__dest_venv}/bin/python|' agent.py
-
-# fix local symlinks
-symlinks -sc %{__venv}/local
