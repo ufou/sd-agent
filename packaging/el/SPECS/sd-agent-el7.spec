@@ -16,7 +16,7 @@ Name: sd-agent
 BuildArch: x86_64 i386
 %include %{_topdir}/inc/version
 %include %{_topdir}/inc/release
-Requires: python >= 2.6, sysstat, libyaml, initscripts
+Requires: python >= 2.7, sysstat, libyaml, %{name}-forwarder, %{name}-sd-cpu-stats, %{name}-network, %{name}-disk
 BuildRequires: symlinks
 License: Simplified BSD
 Group: System/Monitoring
@@ -30,19 +30,20 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 %{longdescription}
 
 %prep
-curl -LO https://pypi.python.org/packages/source/v/virtualenv/virtualenv-13.1.2.tar.gz
-tar xzf virtualenv-13.1.2.tar.gz
-python virtualenv-13.1.2/virtualenv.py %{__venv}
+curl -LO https://raw.github.com/pypa/virtualenv/1.11.6/virtualenv.py
+python2.7 virtualenv.py --no-site-packages --no-pip --no-setuptools %{__venv}
+curl -LO https://bootstrap.pypa.io/ez_setup.py
+%{__venv}/bin/python ez_setup.py --version="20.9.0"
+curl -LO https://bootstrap.pypa.io/get-pip.py
+%{__venv}/bin/python get-pip.py
 
 %setup -qn sd-agent
 %{__venv}/bin/python %{__venv}/bin/pip install -r requirements.txt
 PYCURL_SSL_LIBRARY=nss %{__venv}/bin/python %{__venv}/bin/pip install -r requirements-opt.txt
 
 %build
-%{__venv}/bin/python setup.py build
-%{__venv}/bin/python setup.py install
 %include %{_topdir}/inc/fix_virtualenv
-
+%include %{_topdir}/inc/download_jmx_fetch
 %include %{_topdir}/inc/install
 
 %clean

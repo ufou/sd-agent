@@ -1,0 +1,2 @@
+conf.d/jmx.yaml.example etc/sd-agent/conf.d
+jmxfetch-*-jar-with-dependencies.jar usr/share/python/sd-agent/checks/libs

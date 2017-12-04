@@ -1,3 +1,15 @@
+sd-agent (2.2.0-3trusty0) trusty; urgency=medium
+
+  * Fixed systemd startup scripts setup.
+
+ -- Server Density <hello@serverdensity.com>  Fri, 20 Nov 2017 10:30:00 +0100
+
+sd-agent (2.2.0-2trusty0) trusty; urgency=medium
+
+  * Added support for JMX, and local StatsD collector.
+
+ -- Server Density <hello@serverdensity.com>  Fri, 10 Nov 2017 18:00:00 +0100
+
 sd-agent (2.1.6-1) precise; urgency=medium
 
   * Updates for ElasticSearch, MySQL and Zookeeper plugins.

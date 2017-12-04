@@ -4,6 +4,7 @@
 
 # stdlib
 import collections
+import locale
 import logging
 import pprint
 import socket
@@ -11,6 +12,11 @@ import sys
 import time
 
 # 3p
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 import simplejson as json
 
 # project
@@ -28,38 +34,21 @@ from config import get_system_stats, get_version
 import checks.system.unix as u
 import checks.system.win32 as w32
 import modules
-from util import (
-    EC2,
-    GCE,
-    get_os,
-    get_uuid,
-    Timer,
-)
+from util import get_uuid
+from utils.cloud_metadata import GCE, EC2, CloudFoundry
 from utils.logger import log_exceptions
 from utils.jmx import JMXFiles
-from utils.platform import Platform
+from utils.platform import Platform, get_os
 from utils.subprocess_output import get_subprocess_output
+from utils.timer import Timer
+from utils.orchestrator import MetadataCollector
 
 log = logging.getLogger(__name__)
 
 
 FLUSH_LOGGING_PERIOD = 10
 FLUSH_LOGGING_INITIAL = 5
-DD_CHECK_TAG = 'dd_check:{0}'
-
-# Description of the format of the `processes` resource check, identical to the legacy check.
-# Sent on the first run of the collector, on subsequent runs the resources payload is sent w/o this desc.
-# The exact behavior of the aggregation functions is defined in the backend
-PROCESSES_FORMAT_DESCRIPTION = [
-    # [format_version, metric_name, type, agg, time_agg, server_agg, server_time_agg, group_on, time_group_on]
-    [2, 'user', 'str', 'append', 'append', 'append', 'append', False, False],
-    [2, 'pct_cpu', 'float', 'sum', 'avg', 'sum', 'avg', False, False],
-    [2, 'pct_mem', 'float', 'sum', 'avg', 'sum', 'avg', False, False],
-    [2, 'vsz', 'int', 'sum', 'avg', 'sum', 'avg', False, False],
-    [2, 'rss', 'int', 'sum', 'avg', 'sum', 'avg', False, False],
-    [2, 'family', 'str', None, None, 'append', 'append', True, True],
-    [2, 'ps_count', 'int', 'sum', 'avg', 'sum', 'avg', False, False],
-]
+SD_CHECK_TAG = 'sd_check:{0}'
 
 
 class AgentPayload(collections.MutableMapping):
@@ -148,7 +137,7 @@ class AgentPayload(collections.MutableMapping):
                 emitter_status = EmitterStatus(name)
                 try:
                     emitter(payload, log, config, endpoint)
-                except Exception, e:
+                except Exception as e:
                     log.exception("Error running emitter: %s"
                                   % emitter.__name__)
                     emitter_status = EmitterStatus(name, e)
@@ -205,6 +194,10 @@ class Collector(object):
         self.initialized_checks_d = []
         self.init_failed_checks_d = {}
 
+        if Platform.is_linux() and psutil is not None:
+            procfs_path = agentConfig.get('procfs_path', '/proc').rstrip('/')
+            psutil.PROCFS_PATH = procfs_path
+
         # Unix System Checks
         self._unix_system_checks = {
             'io': u.IO(log),
@@ -212,7 +205,8 @@ class Collector(object):
             'memory': u.Memory(log),
             'processes': u.Processes(log),
             'cpu': u.Cpu(log),
-            'system': u.System(log)
+            'system': u.System(log),
+            'file_handles': u.FileHandles(log)
         }
 
         # Server Density Checks
@@ -226,13 +220,12 @@ class Collector(object):
             'io': w32.IO(log),
             'proc': w32.Processes(log),
             'memory': w32.Memory(log),
-            'network': w32.Network(log),
             'cpu': w32.Cpu(log),
             'system': w32.System(log)
         }
 
         # Old-style metric checks
-        self._ganglia = Ganglia(log)
+        self._ganglia = Ganglia(log) if self.agentConfig.get('ganglia_host', '') != '' else None
 
         # Agent performance metrics check
         self._agent_metrics = None
@@ -305,15 +298,11 @@ class Collector(object):
         # Run the system checks. Checks will depend on the OS
         if Platform.is_windows():
             # Win32 system checks
-            try:
-                metrics.extend(self._win32_system_checks['memory'].check(self.agentConfig))
-                metrics.extend(self._win32_system_checks['cpu'].check(self.agentConfig))
-                metrics.extend(self._win32_system_checks['network'].check(self.agentConfig))
-                metrics.extend(self._win32_system_checks['io'].check(self.agentConfig))
-                metrics.extend(self._win32_system_checks['proc'].check(self.agentConfig))
-                metrics.extend(self._win32_system_checks['system'].check(self.agentConfig))
-            except Exception:
-                log.exception('Unable to fetch Windows system metrics.')
+            for check_name in ['memory', 'cpu', 'io', 'proc', 'system']:
+                try:
+                    metrics.extend(self._win32_system_checks[check_name].check(self.agentConfig))
+                except Exception:
+                    log.exception('Unable to get %s metrics', check_name)
         else:
 
             sd_checks = self._server_density_checks
@@ -329,69 +318,57 @@ class Collector(object):
             # Unix system checks
             sys_checks = self._unix_system_checks
 
-            load = sys_checks['load'].check(self.agentConfig)
-            payload.update(load)
+            for check_name in ['load', 'system', 'cpu', 'file_handles']:
+                try:
+                    result_check = sys_checks[check_name].check(self.agentConfig)
+                    if result_check:
+                        payload.update(result_check)
+                except Exception:
+                    log.exception('Unable to get %s metrics', check_name)
 
-            system = sys_checks['system'].check(self.agentConfig)
-            payload.update(system)
+            try:
+                memory = sys_checks['memory'].check(self.agentConfig)
+            except Exception:
+                    log.exception('Unable to get memory metrics')
+            else:
+                if memory:
+                    memstats = {
+                        'memPhysUsed': memory.get('physUsed'),
+                        'memPhysPctUsable': memory.get('physPctUsable'),
+                        'memPhysFree': memory.get('physFree'),
+                        'memPhysTotal': memory.get('physTotal'),
+                        'memPhysUsable': memory.get('physUsable'),
+                        'memSwapUsed': memory.get('swapUsed'),
+                        'memSwapFree': memory.get('swapFree'),
+                        'memSwapPctFree': memory.get('swapPctFree'),
+                        'memSwapTotal': memory.get('swapTotal'),
+                        'memCached': memory.get('physCached'),
+                        'memBuffers': memory.get('physBuffers'),
+                        'memShared': memory.get('physShared'),
+                        'memSlab': memory.get('physSlab'),
+                        'memPageTables': memory.get('physPageTables'),
+                        'memSwapCached': memory.get('swapCached')
+                    }
+                    payload.update(memstats)
 
-            memory = sys_checks['memory'].check(self.agentConfig)
+            try:
+                ioStats = sys_checks['io'].check(self.agentConfig)
+            except Exception:
+                    log.exception('Unable to get io metrics')
+            else:
+                if ioStats:
+                    payload['ioStats'] = ioStats
 
-            if memory:
-                memstats = {
-                    'memPhysUsed': memory.get('physUsed'),
-                    'memPhysPctUsable': memory.get('physPctUsable'),
-                    'memPhysFree': memory.get('physFree'),
-                    'memPhysTotal': memory.get('physTotal'),
-                    'memPhysUsable': memory.get('physUsable'),
-                    'memSwapUsed': memory.get('swapUsed'),
-                    'memSwapFree': memory.get('swapFree'),
-                    'memSwapPctFree': memory.get('swapPctFree'),
-                    'memSwapTotal': memory.get('swapTotal'),
-                    'memCached': memory.get('physCached'),
-                    'memBuffers': memory.get('physBuffers'),
-                    'memShared': memory.get('physShared'),
-                    'memSlab': memory.get('physSlab'),
-                    'memPageTables': memory.get('physPageTables'),
-                    'memSwapCached': memory.get('swapCached')
-                }
-                payload.update(memstats)
-
-            ioStats = sys_checks['io'].check(self.agentConfig)
-            if ioStats:
-                payload['ioStats'] = ioStats
-
-            processes = sys_checks['processes'].check(self.agentConfig)
-            payload.update({'processes': processes})
-
-            cpuStats = sys_checks['cpu'].check(self.agentConfig)
-            if cpuStats:
-                payload.update(cpuStats)
+            try:
+                processes = sys_checks['processes'].check(self.agentConfig)
+            except Exception:
+                    log.exception('Unable to get processes metrics')
+            else:
+                payload.update({'processes': processes})
 
         # Run old-style checks
-        gangliaData = self._ganglia.check(self.agentConfig)
-        #dogstreamData = self._dogstream.check(self.agentConfig)
-        dogstreamData = None
-        #ddforwarderData = self._ddforwarder.check(self.agentConfig)
-        ddforwarderData = None
-
-        if gangliaData is not False and gangliaData is not None:
-            payload['ganglia'] = gangliaData
-
-        if dogstreamData:
-            dogstreamEvents = dogstreamData.get('dogstreamEvents', None)
-            if dogstreamEvents:
-                if 'dogstream' in payload['events']:
-                    events['dogstream'].extend(dogstreamEvents)
-                else:
-                    events['dogstream'] = dogstreamEvents
-                del dogstreamData['dogstreamEvents']
-
-            payload.update(dogstreamData)
-
-        # metrics about the forwarder
-        if ddforwarderData:
-            payload['sd'] = ddforwarderData
+        if self._ganglia is not None:
+            payload['ganglia'] = self._ganglia.check(self.agentConfig)
 
         # process collector of gohai (compliant with payload of legacy "resources checks")
         if not Platform.is_windows() and self._should_send_additional_data('processes'):
@@ -399,20 +376,18 @@ class Collector(object):
             if gohai_processes:
                 try:
                     gohai_processes_json = json.loads(gohai_processes)
-                    processes_payload = {
-                        'snaps': [gohai_processes_json.get('processes')],
-                        'format_version': 1
-                    }
-                    if self._is_first_run():
-                        processes_payload['format_description'] = PROCESSES_FORMAT_DESCRIPTION
-
-                    payload['resources'] = {
-                        'processes': processes_payload,
-                        'meta': {
-                            'agent_key': self.agentConfig['agent_key'],
-                            'host': payload['internalHostname'],
+                    processes_snaps = gohai_processes_json.get('processes')
+                    if processes_snaps:
+                        processes_payload = {
+                            'snaps': [processes_snaps]
                         }
-                    }
+
+                        payload['resources'] = {
+                            'processes': processes_payload,
+                            'meta': {
+                                'host': self.hostname,
+                            }
+                        }
                 except Exception:
                     log.exception("Error running gohai processes collection")
 
@@ -422,12 +397,15 @@ class Collector(object):
             if res:
                 metrics.extend(res)
 
+        # Use `info` log level for some messages on the first run only, then `debug`
+        log_at_first_run = log.info if self._is_first_run() else log.debug
+
         # checks.d checks
         check_statuses = []
         for check in self.initialized_checks_d:
             if not self.continue_running:
                 return
-            log.info("Running check %s" % check.name)
+            log_at_first_run("Running check %s", check.name)
             instance_statuses = []
             metric_count = 0
             event_count = 0
@@ -467,7 +445,7 @@ class Collector(object):
                 event_count, service_check_count, service_metadata=current_check_metadata,
                 library_versions=check.get_library_info(),
                 source_type_name=check.SOURCE_TYPE_NAME or check.name,
-                check_stats=check_stats
+                check_stats=check_stats, check_version=check.check_version
             )
 
             # Service check for Agent checks failures
@@ -476,13 +454,14 @@ class Collector(object):
                 status = AgentCheck.OK
             elif check_status.status == STATUS_ERROR:
                 status = AgentCheck.CRITICAL
-            check.service_check('sd.agent.check_status', status, tags=service_check_tags)
+            check.service_check('serverdensity.agent.check_status', status, tags=service_check_tags)
 
             # Collect the service checks and save them in the payload
             current_check_service_checks = check.get_service_checks()
             if current_check_service_checks:
                 service_checks.extend(current_check_service_checks)
-            service_check_count = len(current_check_service_checks)
+            # -1 because the user doesn't care about the service check for check failure
+            service_check_count = len(current_check_service_checks) - 1
 
             # Update the check status with the correct service_check_count
             check_status.service_check_count = service_check_count
@@ -493,7 +472,7 @@ class Collector(object):
 
             # Intrument check run timings if enabled.
             if self.check_timings:
-                metric = 'sd.agent.check_run_time'
+                metric = 'serverdensity.agent.check_run_time'
                 meta = {'tags': ["check:%s" % check.name]}
                 metrics.append((metric, time.time(), check_run_time, meta))
 
@@ -501,12 +480,13 @@ class Collector(object):
             if not self.continue_running:
                 return
             check_status = CheckStatus(check_name, None, None, None, None,
+                                       check_version=info.get('version'),
                                        init_failed_error=info['error'],
                                        init_failed_traceback=info['traceback'])
             check_statuses.append(check_status)
 
         # Add a service check for the agent
-        service_checks.append(create_service_check('sd.agent.up', AgentCheck.OK,
+        service_checks.append(create_service_check('serverdensity.agent.up', AgentCheck.OK,
                               hostname=self.hostname))
 
         # Store the metrics and events in the payload.
@@ -617,7 +597,7 @@ class Collector(object):
             emitter_status = EmitterStatus(name)
             try:
                 emitter(payload, log, self.agentConfig)
-            except Exception, e:
+            except Exception as e:
                 log.exception("Error running emitter: %s" % emitter.__name__)
                 emitter_status = EmitterStatus(name, e)
             statuses.append(emitter_status)
@@ -671,7 +651,9 @@ class Collector(object):
             if gohai_metadata:
                 payload['gohai'] = gohai_metadata
 
-            payload['systemStats'] = get_system_stats()
+            payload['systemStats'] = get_system_stats(
+                proc_path=self.agentConfig.get('procfs_path', '/proc').rstrip('/')
+            )
             payload['meta'] = self._get_hostname_metadata()
 
             self.hostname_metadata_cache = payload['meta']
@@ -684,13 +666,18 @@ class Collector(object):
             if self.agentConfig['collect_ec2_tags']:
                 host_tags.extend(EC2.get_tags(self.agentConfig))
 
+            if self.agentConfig['collect_orchestrator_tags']:
+                host_docker_tags = MetadataCollector().get_host_tags()
+                if host_docker_tags:
+                    host_tags.extend(host_docker_tags)
+
             if host_tags:
                 payload['host-tags']['system'] = host_tags
 
-            # If required by the user, let's create the dd_check:xxx host tags
-            if self.agentConfig['create_dd_check_tags']:
-                app_tags_list = [DD_CHECK_TAG.format(c.name) for c in self.initialized_checks_d]
-                app_tags_list.extend([DD_CHECK_TAG.format(cname) for cname
+            # If required by the user, let's create the sd_check:xxx host tags
+            if self.agentConfig['create_sd_check_tags']:
+                app_tags_list = [SD_CHECK_TAG.format(c.name) for c in self.initialized_checks_d]
+                app_tags_list.extend([SD_CHECK_TAG.format(cname) for cname
                                       in JMXFiles.get_jmx_appnames()])
 
                 if 'system' not in payload['host-tags']:
@@ -768,18 +755,27 @@ class Collector(object):
                 metadata["socket-hostname"] = socket.gethostname()
             except Exception:
                 pass
+
         try:
             metadata["socket-fqdn"] = socket.getfqdn()
         except Exception:
             pass
 
         metadata["hostname"] = self.hostname
-        metadata["timezones"] = sanitize_tzname(time.tzname)
+        metadata["timezones"] = self._decode_tzname(time.tzname)
 
         # Add cloud provider aliases
+        if not metadata.get("host_aliases"):
+            metadata["host_aliases"] = []
+
         host_aliases = GCE.get_host_aliases(self.agentConfig)
         if host_aliases:
-            metadata['host_aliases'] = host_aliases
+            metadata['host_aliases'] += host_aliases
+
+        try:
+            metadata["host_aliases"] += CloudFoundry.get_host_aliases(self.agentConfig)
+        except Exception:
+            pass
 
         return metadata
 
@@ -802,15 +798,14 @@ class Collector(object):
         return self._run_gohai(['--only', 'processes'])
 
     def _run_gohai(self, options):
+        # Gohai is disabled on Mac for now
+        if Platform.is_mac():
+            return None
         output = None
         try:
-            if not Platform.is_windows():
-                command = "gohai"
-            else:
-                command = "gohai\gohai.exe"
-            output, err, _ = get_subprocess_output([command] + options, log)
+            output, err, _ = get_subprocess_output(["gohai"] + options, log)
             if err:
-                log.warning("GOHAI LOG | {0}".format(err))
+                log.debug("GOHAI LOG | %s", err)
         except OSError as e:
             if e.errno == 2:  # file not found, expected when install from source
                 log.info("gohai file not found")
@@ -821,12 +816,16 @@ class Collector(object):
 
         return output
 
+    @staticmethod
+    def _decode_tzname(tzname):
+        """ On Windows, decodes the timezone from the system-preferred encoding
+        """
+        if Platform.is_windows():
+            try:
+                decoded_tzname = map(lambda tz: tz.decode(locale.getpreferredencoding()), tzname)
+            except Exception:
+                log.exception("Failed decoding timezone with encoding %s", locale.getpreferredencoding())
+                return ('', '')
+            return tuple(decoded_tzname)
 
-def sanitize_tzname(tzname):
-    """ Returns the tzname given, and deals with Japanese encoding issue
-    """
-    if tzname[0] == '\x93\x8c\x8b\x9e (\x95W\x8f\x80\x8e\x9e)':
-        log.debug('tzname from TOKYO detected and converted')
-        return ('JST', 'JST')
-    else:
         return tzname

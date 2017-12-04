@@ -23,10 +23,13 @@ import yaml
 # project
 from config import (
     DEFAULT_CHECK_FREQUENCY,
+    SD_PIPE_NAME,
     get_confd_path,
     get_config,
+    get_jmx_pipe_path,
     get_logging_config,
     PathNotFound,
+    _is_affirmative,
 )
 from util import yLoader
 from utils.jmx import JMX_FETCH_JAR_NAME, JMXFiles
@@ -46,6 +49,7 @@ JAVA_LOGGING_LEVEL = {
 }
 
 _JVM_DEFAULT_MAX_MEMORY_ALLOCATION = " -Xmx200m"
+_JVM_DEFAULT_SD_MAX_MEMORY_ALLOCATION = " -Xmx512m"
 _JVM_DEFAULT_INITIAL_MEMORY_ALLOCATION = " -Xms50m"
 JMXFETCH_MAIN_CLASS = "org.datadog.jmxfetch.App"
 JMX_CHECKS = [
@@ -55,6 +59,7 @@ JMX_CHECKS = [
     'jmx',
     'solr',
     'tomcat',
+    'kafka',
 ]
 JMX_COLLECT_COMMAND = 'collect'
 JMX_LIST_COMMANDS = {
@@ -65,7 +70,7 @@ JMX_LIST_COMMANDS = {
     'list_limited_attributes': "List attributes that do match one of your instances configuration but that are not being collected because it would exceed the number of metrics that can be collected",
     JMX_COLLECT_COMMAND: "Start the collection of metrics based on your current configuration and display them in the console"}
 
-LINK_TO_DOC = "See http://docs.datadoghq.com/integrations/java/ for more information"
+LINK_TO_DOC = "See https://support.serverdensity.com/hc/en-us/articles/115014942368 for more information"
 
 
 class InvalidJMXConfiguration(Exception):
@@ -81,6 +86,7 @@ class JMXFetch(object):
         self.agentConfig = agentConfig
         self.logging_config = get_logging_config()
         self.check_frequency = DEFAULT_CHECK_FREQUENCY
+        self.service_discovery = _is_affirmative(self.agentConfig.get('sd_jmx_enable', False))
 
         self.jmx_process = None
         self.jmx_checks = None
@@ -148,7 +154,7 @@ class JMXFetch(object):
                 except Exception:
                     log.exception("Error while writing JMX status file")
 
-            if len(self.jmx_checks) > 0:
+            if len(self.jmx_checks) > 0 or self.service_discovery:
                 return self._start(self.java_bin_path, self.java_options, self.jmx_checks,
                                    command, reporter, self.tools_jar_path, self.custom_jar_paths, redirect_std_streams)
             else:
@@ -194,39 +200,30 @@ class JMXFetch(object):
         custom_jar_paths = []
         invalid_checks = {}
 
-        for conf in glob.glob(os.path.join(confd_path, '*.yaml')):
-            filename = os.path.basename(conf)
-            check_name = filename.split('.')[0]
+        jmx_confd_checks = get_jmx_checks(confd_path, auto_conf=False)
 
-            if os.path.exists(conf):
-                f = open(conf)
-                try:
-                    check_config = yaml.load(f.read(), Loader=yLoader)
-                    assert check_config is not None
-                    f.close()
-                except Exception:
-                    f.close()
-                    log.error("Unable to parse yaml config in %s" % conf)
-                    continue
-
-                try:
-                    is_jmx, check_java_bin_path, check_java_options, check_tools_jar_path, check_custom_jar_paths = \
-                        cls._is_jmx_check(check_config, check_name, checks_list)
-                    if is_jmx:
-                        jmx_checks.append(filename)
-                        if java_bin_path is None and check_java_bin_path is not None:
-                            java_bin_path = check_java_bin_path
-                        if java_options is None and check_java_options is not None:
-                            java_options = check_java_options
-                        if tools_jar_path is None and check_tools_jar_path is not None:
-                            tools_jar_path = check_tools_jar_path
-                        if check_custom_jar_paths:
-                            custom_jar_paths.extend(check_custom_jar_paths)
-                except InvalidJMXConfiguration, e:
-                    log.error("%s check does not have a valid JMX configuration: %s" % (check_name, e))
-                    # Make sure check_name is a string - Fix issues with Windows
-                    check_name = check_name.encode('ascii', 'ignore')
-                    invalid_checks[check_name] = str(e)
+        for check in jmx_confd_checks:
+            check_config = check['check_config']
+            check_name = check['check_name']
+            filename = check['filename']
+            try:
+                is_jmx, check_java_bin_path, check_java_options, check_tools_jar_path, check_custom_jar_paths = \
+                    cls._is_jmx_check(check_config, check_name, checks_list)
+                if is_jmx:
+                    jmx_checks.append(filename)
+                    if java_bin_path is None and check_java_bin_path is not None:
+                        java_bin_path = check_java_bin_path
+                    if java_options is None and check_java_options is not None:
+                        java_options = check_java_options
+                    if tools_jar_path is None and check_tools_jar_path is not None:
+                        tools_jar_path = check_tools_jar_path
+                    if check_custom_jar_paths:
+                        custom_jar_paths.extend(check_custom_jar_paths)
+            except InvalidJMXConfiguration as e:
+                log.error("%s check does not have a valid JMX configuration: %s" % (check_name, e))
+                # Make sure check_name is a string - Fix issues with Windows
+                check_name = check_name.encode('ascii', 'ignore')
+                invalid_checks[check_name] = str(e)
 
         return (jmx_checks, invalid_checks, java_bin_path, java_options, tools_jar_path, custom_jar_paths)
 
@@ -236,7 +233,7 @@ class JMXFetch(object):
             if statsd_host == "0.0.0.0":
                 # If statsd is bound to all interfaces, just use localhost for clients
                 statsd_host = "localhost"
-            statsd_port = self.agentConfig.get('dogstatsd_port', "8125")
+            statsd_port = self.agentConfig.get('sdstatsd_port', "8125")
             reporter = "statsd:%s:%s" % (statsd_host, statsd_port)
 
         log.info("Starting jmxfetch:")
@@ -273,13 +270,22 @@ class JMXFetch(object):
                 subprocess_args.insert(len(subprocess_args) - 1, '--exit_file_location')
                 subprocess_args.insert(len(subprocess_args) - 1, path_to_exit_file)
 
-            subprocess_args.insert(4, '--check')
-            for check in jmx_checks:
-                subprocess_args.insert(5, check)
+            if self.service_discovery:
+                pipe_path = get_jmx_pipe_path()
+                subprocess_args.insert(4, '--tmp_directory')
+                subprocess_args.insert(5, pipe_path)
+                subprocess_args.insert(4, '--sd_pipe')
+                subprocess_args.insert(5, SD_PIPE_NAME)
+                subprocess_args.insert(4, '--sd_enabled')
+
+            if jmx_checks:
+                subprocess_args.insert(4, '--check')
+                for check in jmx_checks:
+                    subprocess_args.insert(5, check)
 
             # Specify a maximum memory allocation pool for the JVM
             if "Xmx" not in java_run_opts and "XX:MaxHeapSize" not in java_run_opts:
-                java_run_opts += _JVM_DEFAULT_MAX_MEMORY_ALLOCATION
+                java_run_opts += _JVM_DEFAULT_SD_MAX_MEMORY_ALLOCATION if self.service_discovery else _JVM_DEFAULT_MAX_MEMORY_ALLOCATION
             # Specify the initial memory allocation pool for the JVM
             if "Xms" not in java_run_opts and "XX:InitialHeapSize" not in java_run_opts:
                 java_run_opts += _JVM_DEFAULT_INITIAL_MEMORY_ALLOCATION
@@ -384,7 +390,7 @@ class JMXFetch(object):
 
                 if conf is None:
                     log.warning("%s doesn't have a 'conf' section. Only basic JVM metrics"
-                                " will be collected. %s" % (inst, LINK_TO_DOC))
+                                " will be collected. %s" % (check_name, LINK_TO_DOC))
                 else:
                     if type(conf) != list or len(conf) == 0:
                         raise InvalidJMXConfiguration("'conf' section should be a list"
@@ -435,6 +441,8 @@ class JMXFetch(object):
 
             if custom_jar_paths:
                 if isinstance(custom_jar_paths, basestring):
+                    log.warn('Using a string when having only one custom jar will be deprecated in future versions' +
+                        ' of the agent. Only the list syntax will be supported. %s', LINK_TO_DOC)
                     custom_jar_paths = [custom_jar_paths]
                 for custom_jar_path in custom_jar_paths:
                     if not os.path.isfile(custom_jar_path):
@@ -443,18 +451,55 @@ class JMXFetch(object):
         return is_jmx, java_bin_path, java_options, tools_jar_path, custom_jar_paths
 
     def _get_path_to_jmxfetch(self):
-        if not Platform.is_windows():
-            return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "checks",
-                                    "libs", JMX_FETCH_JAR_NAME))
-        return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "..",
-                                "jmxfetch", JMX_FETCH_JAR_NAME))
+        return os.path.realpath(os.path.join(os.path.abspath(__file__), "..", "checks",
+            "libs", JMX_FETCH_JAR_NAME))
 
+
+def get_jmx_checks(confd_path=None, auto_conf=False):
+    jmx_checks = []
+
+    if not confd_path:
+        confd_path = get_confd_path()
+
+    if auto_conf:
+        path = confd_path + '/auto_conf'
+    else:
+        path = confd_path
+
+    for conf in glob.glob(os.path.join(path, '*.yaml')):
+        filename = os.path.basename(conf)
+        check_name = filename.split('.')[0]
+        if os.path.exists(conf):
+            with open(conf, 'r') as f:
+                try:
+                    check_config = yaml.load(f.read(), Loader=yLoader)
+                    assert check_config is not None
+                except Exception:
+                    log.error("Unable to parse yaml config in %s" % conf)
+                    continue
+
+        init_config = check_config.get('init_config', {}) or {}
+
+        if init_config.get('is_jmx') or check_name in JMX_CHECKS:
+            # If called by `get_configuration()` we should return the check_config and check_name
+            if auto_conf:
+                jmx_checks.append(check_name)
+            else:
+                jmx_checks.append({'check_config': check_config, 'check_name': check_name, 'filename': filename})
+
+    if auto_conf:
+        # Calls from SD expect all JMX checks, let's add check names in JMX_CHECKS
+        for check in JMX_CHECKS:
+            if check not in jmx_checks:
+                jmx_checks.append(check)
+
+    return jmx_checks
 
 def init(config_path=None):
     agentConfig = get_config(parse_args=False, cfg_path=config_path)
     try:
         confd_path = get_confd_path()
-    except PathNotFound, e:
+    except PathNotFound as e:
         log.error("No conf.d folder found at '%s' or in the directory where"
                   "the Agent is currently deployed.\n" % e.args[0])
 

@@ -5,42 +5,11 @@ require 'rake/clean'
 require 'rubocop/rake_task'
 
 # Flavored Travis CI jobs
-require './ci/apache'
-require './ci/activemq'
-require './ci/cassandra'
 require './ci/checks_mock'
 require './ci/core_integration'
-require './ci/couchdb'
 require './ci/default'
-require './ci/elasticsearch'
-require './ci/etcd'
-require './ci/fluentd'
-require './ci/gearman'
-require './ci/go_expvar'
-require './ci/haproxy'
-require './ci/kong'
-require './ci/lighttpd'
-require './ci/memcache'
-require './ci/mongo'
-require './ci/mysql'
-require './ci/network'
-require './ci/nginx'
-require './ci/pgbouncer'
-require './ci/phpfpm'
-require './ci/postgres'
-require './ci/powerdns_recursor'
-require './ci/rabbitmq'
-require './ci/redis'
-require './ci/riak'
-require './ci/snmpd'
-require './ci/ssh'
-require './ci/supervisord'
-require './ci/sysstat'
-require './ci/tokumx'
-require './ci/tomcat'
-require './ci/varnish'
+require './ci/system'
 require './ci/windows'
-require './ci/zookeeper'
 require './ci/docker_daemon'
 
 CLOBBER.include '**/*.pyc'
@@ -50,18 +19,20 @@ unless ENV['CI']
   rakefile_dir = File.dirname(__FILE__)
   ENV['TRAVIS_BUILD_DIR'] = rakefile_dir
   ENV['INTEGRATIONS_DIR'] = File.join(rakefile_dir, 'embedded')
+  ENV['CHECKSD_OVERRIDE'] = File.join(rakefile_dir, 'tests/checks/fixtures/checks')
   ENV['PIP_CACHE'] = File.join(rakefile_dir, '.cache/pip')
   ENV['VOLATILE_DIR'] = '/tmp/sd-agent-testing'
   ENV['CONCURRENCY'] = ENV['CONCURRENCY'] || '2'
   ENV['NOSE_FILTER'] = 'not windows'
+  ENV['JMXFETCH_URL'] = 'https://dd-jmxfetch.s3.amazonaws.com'
 end
 
 desc 'Setup a development environment for the Agent'
 task 'setup_env' do
   `mkdir -p venv`
   `wget -O venv/virtualenv.py https://raw.github.com/pypa/virtualenv/1.11.6/virtualenv.py`
-  `python venv/virtualenv.py  --no-site-packages --no-pip --no-setuptools venv/`
-  `wget -O venv/ez_setup.py https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py`
+  `python venv/virtualenv.py -p python2 --no-site-packages --no-pip --no-setuptools venv/`
+  `wget -O venv/ez_setup.py https://bootstrap.pypa.io/ez_setup.py`
   `venv/bin/python venv/ez_setup.py --version="20.9.0"`
   `wget -O venv/get-pip.py https://bootstrap.pypa.io/get-pip.py`
   `venv/bin/python venv/get-pip.py`
@@ -72,10 +43,27 @@ task 'setup_env' do
   `./utils/pip-allow-failures.sh requirements-opt.txt`
 end
 
+desc 'Grab libs'
+task 'setup_libs' do
+  in_venv = system "python -c \"import sys ; exit(not hasattr(sys, 'real_prefix'))\""
+  raise 'Not in dev venv/CI environment - bailing out.' if !in_venv && !ENV['CI']
+
+  jmx_version = `python -c "import config ; print config.JMX_VERSION"`
+  jmx_version = jmx_version.delete("\n")
+  puts "jmx-fetch version: #{jmx_version}"
+  jmx_artifact = "jmxfetch-#{jmx_version}-jar-with-dependencies.jar"
+  if File.size?("checks/libs/#{jmx_artifact}")
+    puts "Artifact already in place: #{jmx_artifact}"
+  else
+    # let's use `sh` so we can see on the log if wget fails
+    sh "wget -O checks/libs/#{jmx_artifact} #{ENV['JMXFETCH_URL']}/#{jmx_artifact}"
+  end
+end
+
 namespace :test do
-  desc 'Run dogstatsd tests'
-  task 'dogstatsd' do
-    sh 'nosetests tests/core/test_dogstatsd.py'
+  desc 'Run sdstatsd tests'
+  task 'sdstatsd' do
+    sh 'nosetests tests/core/test_sdstatsd.py'
   end
 
   desc 'Run performance tests'

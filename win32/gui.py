@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=E0401
 #
 # Copyright © 2009-2010 CEA
 # Pierre Raybaut
@@ -11,47 +12,51 @@ import os
 import os.path as osp
 import platform
 # To manage the agent on OSX
-import subprocess
 from subprocess import (
     CalledProcessError,
     check_call,
+    check_output,
 )
 import sys
 import thread  # To manage the windows process asynchronously
+import warnings
 
 # 3p
 # GUI Imports
-from guidata.configtools import (
-    add_image_path,
-    get_family,
-    get_icon,
-    MONOSPACE,
-)
-from guidata.qt.QtCore import (
-    QPoint,
-    QSize,
-    Qt,
-    QTimer,
-    SIGNAL,
-)
-from guidata.qt.QtGui import (
-    QApplication,
-    QFont,
-    QGroupBox,
-    QHBoxLayout,
-    QInputDialog,
-    QLabel,
-    QListWidget,
-    QMenu,
-    QMessageBox,
-    QPushButton,
-    QSplitter,
-    QSystemTrayIcon,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
-)
-from guidata.qthelpers import get_std_icon
+with warnings.catch_warnings():
+    warnings.filterwarnings('ignore', 'guidata is still not fully compatible with PySide')
+    from guidata.configtools import (
+        add_image_path,
+        get_family,
+        get_icon,
+        MONOSPACE,
+    )
+    from guidata.qt.QtCore import (
+        QPoint,
+        QSize,
+        Qt,
+        QTimer,
+        SIGNAL,
+    )
+    from guidata.qt.QtGui import (
+        QApplication,
+        QFont,
+        QGroupBox,
+        QHBoxLayout,
+        QInputDialog,
+        QLabel,
+        QListWidget,
+        QMenu,
+        QMessageBox,
+        QPushButton,
+        QSplitter,
+        QSystemTrayIcon,
+        QTextEdit,
+        QVBoxLayout,
+        QWidget,
+    )
+    from guidata.qthelpers import get_std_icon
+
 
 # small hack to avoid having to patch the spyderlib library
 # Needed because of py2exe bundling not being able to access
@@ -61,6 +66,7 @@ spyderlib.baseconfig.IMG_PATH = [""]
 from spyderlib.widgets.sourcecode.codeeditor import CodeEditor
 
 # 3rd Party others
+import psutil  # psutil is always present on both windows and OS X installs
 import tornado.template as template
 import yaml
 
@@ -79,19 +85,7 @@ from config import (
     get_version
 )
 from util import yLoader
-from utils.flare import Flare
 from utils.platform import Platform
-
-
-def _check_output(args):
-    process = subprocess.Popen(args, stdout=subprocess.PIPE)
-    return process.communicate()[0]
-
-try:
-    check_output = subprocess.check_output
-except AttributeError:
-    check_output = _check_output
-
 
 # Constants describing the agent state
 AGENT_RUNNING = 0
@@ -103,15 +97,11 @@ AGENT_UNKNOWN = 4
 # Windows management
 # Import Windows stuff only on Windows
 if Platform.is_windows():
-    import win32api
-    import win32con
-    import win32process
     import win32serviceutil
     import win32service
 
     # project
     from utils.pidfile import PidFile
-    from utils.process import pid_exists
 
     WIN_STATUS_TO_AGENT = {
         win32service.SERVICE_RUNNING: AGENT_RUNNING,
@@ -138,7 +128,7 @@ EXCLUDED_WINDOWS_CHECKS = [
     'marathon',
     'mcache',
     'mesos',
-    'network',
+    'pgbouncer',
     'postfix',
     'zk',
 ]
@@ -209,7 +199,7 @@ class EditorFile(object):
             f.write(content)
             self.content = content
             info_popup("File saved.")
-        except Exception, e:
+        except Exception as e:
             warning_popup("Unable to save file: \n %s" % str(e))
             raise
 
@@ -425,11 +415,6 @@ class HTMLWindow(QTextEdit):
 
 class MainWindow(QSplitter):
     def __init__(self, parent=None):
-        prefix_conf = ''
-
-        if Platform.is_windows():
-            prefix_conf = 'windows_'
-
         log_conf = get_logging_config()
 
         QSplitter.__init__(self, parent)
@@ -442,7 +427,7 @@ class MainWindow(QSplitter):
 
         checks = get_checks()
         datadog_conf = DatadogConf(get_config_path())
-        self.create_logs_files_windows(log_conf, prefix_conf)
+        self.create_logs_files_windows(log_conf)
 
         listwidget = QListWidget(self)
         listwidget.addItems([osp.basename(check.module_name).replace("_", " ").title() for check in checks])
@@ -462,10 +447,20 @@ class MainWindow(QSplitter):
                 self.show_html(self.properties.group_code, self.properties.html_window, False)]),
             ("JMX Fetch Logs", lambda: [self.properties.set_log_file(self.jmxfetch_log_file),
                 self.show_html(self.properties.group_code, self.properties.html_window, False)]),
+
+        ]
+
+        if Platform.is_windows():
+            self.settings.extend([
+                ("Service Logs", lambda: [self.properties.set_log_file(self.service_log_file),
+                    self.show_html(self.properties.group_code, self.properties.html_window, False)]),
+            ])
+
+        self.settings.extend([
             ("Agent Status", lambda: [self.properties.html_window.setHtml(self.properties.html_window.latest_status()),
                 self.show_html(self.properties.group_code, self.properties.html_window, True),
                 self.properties.set_status()]),
-        ]
+        ])
 
         self.agent_settings = QPushButton(get_icon("edit.png"),
                                           "Settings", self)
@@ -543,23 +538,28 @@ class MainWindow(QSplitter):
             editor.setVisible(True)
             html.setVisible(False)
 
-    def create_logs_files_windows(self, config, prefix):
+    def create_logs_files_windows(self, config):
         self.forwarder_log_file = EditorFile(
-            config.get('%sforwarder_log_file' % prefix),
+            config.get('forwarder_log_file'),
             "Forwarder log file"
         )
         self.collector_log_file = EditorFile(
-            config.get('%scollector_log_file' % prefix),
+            config.get('collector_log_file'),
             "Collector log file"
         )
         self.dogstatsd_log_file = EditorFile(
-            config.get('%sdogstatsd_log_file' % prefix),
+            config.get('dogstatsd_log_file'),
             "Dogstatsd log file"
         )
         self.jmxfetch_log_file = EditorFile(
             config.get('jmxfetch_log_file'),
             "JMX log file"
         )
+        if Platform.is_windows():
+            self.service_log_file = EditorFile(
+                config.get('service_log_file'),
+                "Service log file"
+            )
 
     def show(self):
         QSplitter.show(self)
@@ -571,7 +571,6 @@ class Menu(QMenu):
     START = "Start"
     STOP = "Stop"
     RESTART = "Restart"
-    FLARE = "Flare"
     MAC_LOGIN = '{0} at login'
     EXIT = "Exit"
     SYSTEM_EVENTS_CMD = 'tell application "System Events" to {0}'
@@ -595,8 +594,6 @@ class Menu(QMenu):
         if Platform.is_mac():
             self.add_option(self.MAC_LOGIN.format(self.enable_or_disable_mac()),
                             lambda: self.enable_or_disable_login())
-        elif Platform.is_windows():
-            self.add_option(self.FLARE, lambda: thread.start_new_thread(windows_flare, ()))
 
         # And finally the exit
         self.add_option(self.EXIT, lambda: sys.exit(0))
@@ -613,7 +610,7 @@ class Menu(QMenu):
             output = check_output(['osascript', '-e',
                                    self.SYSTEM_EVENTS_CMD.format('get the path of every login item whose name is "Datadog Agent"')])
             return 'Disable' if 'Datadog' in output else 'Enable'
-        except CalledProcessError, e:
+        except CalledProcessError as e:
             log.warning('Get login item failed with output:{0}'.format(e.output))
             return 'Disable'
 
@@ -630,7 +627,7 @@ class Menu(QMenu):
             self.add_option(self.MAC_LOGIN.format(self.enable_or_disable_mac()),
                             lambda: self.enable_or_disable_login())
             self.add_option(self.EXIT, lambda: sys.exit(0))
-        except Exception, e:
+        except Exception as e:
             log.warning('Exception during Mac item login {0}: {1}'.format(previous, e))
 
     def update_options(self):
@@ -708,7 +705,7 @@ def save_file(properties):
 def check_yaml_syntax(content):
     try:
         yaml.load(content, Loader=yLoader)
-    except Exception, e:
+    except Exception as e:
         warning_popup("Unable to parse yaml: \n %s" % str(e))
         raise
 
@@ -721,7 +718,7 @@ def service_manager(action):
             win32serviceutil.StartService(DATADOG_SERVICE)
         elif action == 'restart':
             win32serviceutil.RestartService(DATADOG_SERVICE)
-    except Exception, e:
+    except Exception as e:
         warning_popup("Couldn't %s service: \n %s" % (action, str(e)))
 
 
@@ -737,7 +734,7 @@ def service_manager_status():
 def osx_manager(action):
     try:
         check_call(['datadog-agent', action])
-    except Exception, e:
+    except Exception as e:
         warning_popup("Couldn't execute datadog-agent %s: \n %s" % (action, str(e)))
 
 
@@ -745,7 +742,7 @@ def osx_manager_status():
     try:
         check_output(['datadog-agent', 'status'])
         return AGENT_RUNNING
-    except CalledProcessError, e:
+    except CalledProcessError as e:
         if 'not running' in e.output:
             return AGENT_STOPPED
         elif 'STARTING' in e.output:
@@ -774,38 +771,6 @@ def agent_manager(action, async=True):
         thread.start_new_thread(manager, (action,))
 
 
-def windows_flare():
-    case_id, ok = QInputDialog.getInteger(
-        None, "Flare",
-        "Your logs and configuration files are going to be collected and "
-        "sent to Datadog Support. Please enter your ticket number if you have one:",
-        value=0, min=0
-    )
-    if not ok:
-        info_popup("Flare cancelled")
-        return
-    case_id = int(case_id) if case_id != 0 else None
-    f = Flare(case_id=case_id)
-    f.collect()
-    email, ok = QInputDialog.getText(
-        None, "Your email",
-        "Logs and configuration files have been collected."
-        " Please enter your email address:"
-    )
-    if not ok:
-        info_popup("Flare cancelled. You can still use {0}".format(f.tar_path))
-        return
-    try:
-        case_id = f.upload(email=str(email))
-        info_popup("Your logs were successfully uploaded. For future reference,"
-                   " your internal case id is {0}".format(case_id))
-    except Exception, e:
-        warning_popup('The upload failed. Please send the following file by email'
-                      ' to support: {0}\n\n{1}'.format(f.tar_path, str(e)))
-    finally:
-        return
-
-
 def warning_popup(message, parent=None):
     QMessageBox.warning(parent, 'Message', message, QMessageBox.Ok)
 
@@ -815,9 +780,9 @@ def info_popup(message, parent=None):
 
 
 def kill_old_process():
-    """ Kills or brings to the foreground (if possible) any other instance of this program. It
-    avoids multiple icons in the Tray on Windows. On OSX, we don't have to do anything: icons
-    don't get duplicated. """
+    """ Kills any other instance of this program. It avoids multiple icons in the Tray on Windows.
+    On OSX, we don't have to do anything: icons don't get duplicated.
+    TODO: If possible, we should bring the running instance in the foreground instead of killing it"""
     # Is there another Agent Manager process running ?
     pidfile = PidFile('agent-manager-gui').get_path()
 
@@ -829,15 +794,15 @@ def kill_old_process():
     except (IOError, ValueError):
         pass
 
-    if old_pid is not None and pid_exists(old_pid):
-        handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, False, old_pid)
-        exe_path = win32process.GetModuleFileNameEx(handle, 0)
-
-        # If (and only if) this process is indeed an instance of the GUI, let's kill it
-        if 'agent-manager.exe' in exe_path:
-            win32api.TerminateProcess(handle, -1)
-
-        win32api.CloseHandle(handle)
+    if old_pid is not None:
+        try:
+            p = psutil.Process(old_pid)
+            if 'agent-manager.exe' in p.name():
+                p.terminate()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            # Either the process doesn't exist anymore or we don't have access to it (so it's probably not an agent-manager process)
+            # In both cases we can consider that the old process isn't running anymore
+            pass
 
     # If we reached that point it means the current process should be the only running
     # agent-manager.exe, let's save its pid
@@ -845,7 +810,7 @@ def kill_old_process():
     try:
         with open(pidfile, 'w+') as fp:
             fp.write(str(pid))
-    except Exception, e:
+    except Exception as e:
         msg = "Unable to write pidfile: %s %s" % (pidfile, str(e))
         log.exception(msg)
         sys.stderr.write(msg + "\n")
@@ -856,6 +821,10 @@ if __name__ == '__main__':
     if Platform.is_windows():
         # Let's kill any other running instance of our GUI/SystemTray before starting a new one.
         kill_old_process()
+        if len(sys.argv) > 1 and "-stop" in sys.argv:
+            # just return.  The kill_old_process() should have terminated the process,
+            # and now we're done.
+            sys.exit(0)
 
     app = QApplication([])
     if Platform.is_mac():

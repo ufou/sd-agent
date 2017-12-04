@@ -46,9 +46,9 @@ class ConsulStore(AbstractConfigStore):
 
     def client_read(self, path, **kwargs):
         """Retrieve a value from a consul key."""
-        recurse = kwargs.get('recursive', False)
+        recurse = kwargs.get('recursive') or kwargs.get('all', False)
         res = self.client.kv.get(path, recurse=recurse)
-        if kwargs.get('watch', False) is True:
+        if kwargs.get('watch', False):
             return res[0]
         else:
             if res[1] is not None:

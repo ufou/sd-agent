@@ -12,7 +12,7 @@ from config import (
     load_check_directory,
     get_confd_path
 )
-from util import get_hostname
+from utils.hostname import get_hostname
 from utils.dockerutil import DockerUtil
 from utils.service_discovery.config_stores import get_config_store, SD_CONFIG_BACKENDS, TRACE_CONFIG
 
@@ -23,7 +23,7 @@ def configcheck():
         basename = os.path.basename(conf_path)
         try:
             check_yaml(conf_path)
-        except Exception, e:
+        except Exception as e:
             all_valid = False
             print "%s contains errors:\n    %s" % (basename, e)
         else:
@@ -32,7 +32,7 @@ def configcheck():
         print "All yaml files passed. You can now run the ServerDensity agent."
         return 0
     else:
-        print("Fix the invalid yaml files above in order to start the Datadog agent. "
+        print("Fix the invalid yaml files above in order to start the sd-agent. "
               "A useful external tool for yaml parsing can be found at "
               "http://yaml-online-parser.appspot.com/")
         return 1
@@ -72,13 +72,14 @@ def get_sd_configcheck(agentConfig, configs):
 
 
 def print_containers():
-    containers = DockerUtil().client.containers()
+    dockerutil = DockerUtil()
+    containers = dockerutil.client.containers()
     print("\nContainers info:\n")
     print("Number of containers found: %s" % len(containers))
     for co in containers:
         c_id = 'ID: %s' % co.get('Id')[:12]
-        c_image = 'image: %s' % co.get('Image')
-        c_name = 'name: %s' % DockerUtil.container_name_extractor(co)[0]
+        c_image = 'image: %s' % dockerutil.image_name_extractor(co)
+        c_name = 'name: %s' % dockerutil.container_name_extractor(co)[0]
         print("\t- %s %s %s" % (c_id, c_image, c_name))
     print('\n')
 
@@ -94,10 +95,10 @@ def print_templates(agentConfig):
         except Exception as ex:
             print("Failed to extract configuration templates from the backend:\n%s" % str(ex))
 
-        for img, tpl in templates.iteritems():
+        for ident, tpl in templates.iteritems():
             print(
-                "- Image %s:\n\tcheck names: %s\n\tinit_configs: %s\n\tinstances: %s" % (
-                    img,
+                "- Identifier %s:\n\tcheck names: %s\n\tinit_configs: %s\n\tinstances: %s" % (
+                    ident,
                     tpl.get('check_names'),
                     tpl.get('init_configs'),
                     tpl.get('instances'),

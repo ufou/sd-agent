@@ -18,7 +18,7 @@ class TestHistogram(unittest.TestCase):
 
         value_by_type = {}
         for k in metrics:
-            value_by_type[k['metric'][len('myhistogram')+1:]] = k['points'][0][1]
+            value_by_type[k[0][len('myhistogram')+1:]] = k[2]
 
         self.assertEquals(
             sorted(value_by_type.keys()),
@@ -53,7 +53,7 @@ class TestHistogram(unittest.TestCase):
 
         value_by_type = {}
         for k in metrics:
-            value_by_type[k['metric'][len('myhistogram')+1:]] = k['points'][0][1]
+            value_by_type[k[0][len('myhistogram')+1:]] = k[2]
 
         self.assertEquals(value_by_type['40percentile'], 7, value_by_type)
 
@@ -79,7 +79,7 @@ class TestHistogram(unittest.TestCase):
 
         value_by_type = {}
         for k in metrics:
-            value_by_type[k['metric'][len('myhistogram')+1:]] = k['points'][0][1]
+            value_by_type[k[0][len('myhistogram')+1:]] = k[2]
 
         self.assertEquals(value_by_type['40percentile'], 7, value_by_type)
         self.assertEquals(value_by_type['65percentile'], 12, value_by_type)
@@ -125,7 +125,7 @@ class TestHistogram(unittest.TestCase):
         )
 
     def test_custom_aggregate(self):
-        configstr = 'median, max'
+        configstr = 'median, max, sum'
         stats = MetricsAggregator(
             'myhost',
             histogram_aggregates=get_histogram_aggregates(configstr)
@@ -133,7 +133,7 @@ class TestHistogram(unittest.TestCase):
 
         self.assertEquals(
             sorted(stats.metric_config[Histogram]['aggregates']),
-            ['max', 'median'],
+            ['max', 'median', 'sum'],
             stats.metric_config[Histogram]
         )
 
@@ -142,12 +142,13 @@ class TestHistogram(unittest.TestCase):
 
         metrics = stats.flush()
 
-        self.assertEquals(len(metrics), 3, metrics)
+        self.assertEquals(len(metrics), 4, metrics)
 
         value_by_type = {}
         for k in metrics:
-            value_by_type[k['metric'][len('myhistogram')+1:]] = k['points'][0][1]
+            value_by_type[k[0][len('myhistogram')+1:]] = k[2]
 
         self.assertEquals(value_by_type['median'], 9, value_by_type)
         self.assertEquals(value_by_type['max'], 19, value_by_type)
+        self.assertEquals(value_by_type['sum'], 190, value_by_type)
         self.assertEquals(value_by_type['95percentile'], 18, value_by_type)

@@ -37,7 +37,7 @@ plugin_directory:
 
 collector_log_file: /tmp/collector.log
 forwarder_log_file: /tmp/forwarder.log
-dogstatsd_log_file: /tmp/dogstatsd.log
+sdstatsd_log_file: /tmp/sdstatsd.log
 jmxfetch_log_file: /tmp/jmxfetch.log
 
 # if syslog is enabled but a host and port are not set, a local domain socket

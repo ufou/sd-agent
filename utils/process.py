@@ -38,7 +38,7 @@ def is_my_process(pid):
             # If we can't communicate with the process,
             # it's not an agent one
             return False
-        # Check that the second arg contains (agent|dogstatsd).py
+        # Check that the second arg contains (agent|sdstatsd).py
         # see http://stackoverflow.com/a/2345265
         exec_name = os.path.basename(inspect.stack()[-1][1]).lower()
         return len(command) > 1 and exec_name in command[1].lower()

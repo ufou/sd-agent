@@ -9,6 +9,7 @@ artifacts/*
 node_modules/*
 .DS_Store
 venv/*
+vendor/
 *.swp
 *.log
 !nagios.log
@@ -20,6 +21,7 @@ dist/*
 *.msi
 *.wixobj
 *.wixpdb
+*.jar
 *.exe
 nosetests*.xml
 stats.dat
@@ -33,5 +35,10 @@ embedded/*
 .pip-cache/*
 .cache
 dump.rdb
-tests/core/fixtures/flare/dd*
 .python-version
+.ropeproject
+.bundle
+tags
+
+checks.d
+conf.d

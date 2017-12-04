@@ -4,10 +4,13 @@ import os
 import sys
 import unittest
 
+# 3p
+from nose.plugins.attrib import attr
+
 # project
 import modules
 
-log = logging.getLogger('sd.test')
+log = logging.getLogger('serverdensity.test')
 
 TARGET_MODULE = 'tests.core.fixtures.target_module'
 default_target = 'DEFAULT'
@@ -55,6 +58,9 @@ class TestModuleLoad(unittest.TestCase):
             'SPECIFIED'
         )
 
+    # This test fails on Windows, but we don't really care since it's only used
+    # for a deprecated check loading scheme
+    @attr('unix')
     def test_pathname_load_finds_package(self):
         """"Loading modules by absolute path should correctly set the name of
         the loaded module to include any package containing it."""

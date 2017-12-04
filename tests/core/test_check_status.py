@@ -1,4 +1,5 @@
-# stdlib
+# 3p
+from nose.plugins.attrib import attr
 import nose.tools as nt
 
 # project
@@ -8,6 +9,7 @@ from checks.check_status import (
     CollectorStatus,
     InstanceStatus,
     STATUS_ERROR,
+    STATUS_WARNING,
     STATUS_OK,
 )
 
@@ -15,6 +17,8 @@ from checks.check_status import (
 class DummyAgentCheck(AgentCheck):
 
     def check(self, instance):
+        if instance.get('warning'):
+            self.warning("warning")
         if not instance['pass']:
             raise Exception("failure")
 
@@ -47,6 +51,22 @@ def test_check_status_pass():
         assert i.status == STATUS_OK
 
 
+def test_check_status_warning():
+    instances = [
+        {'pass': True, 'warning': True},
+        {'pass': False, 'warning': True},
+        {'pass': True, 'warning': False}
+    ]
+
+    check = DummyAgentCheck('dummy_agent_check', {}, {}, instances)
+    instance_statuses = check.run()
+    assert len(instance_statuses) == 3
+    assert instance_statuses[0].status == STATUS_WARNING
+    assert instance_statuses[1].status == STATUS_ERROR
+    assert instance_statuses[2].status == STATUS_OK
+
+
+@attr(requires='core_integration')
 def test_persistence():
     i1 = InstanceStatus(1, STATUS_OK)
     chk1 = CheckStatus("dummy", [i1], 1, 2)
@@ -62,6 +82,7 @@ def test_persistence():
     assert chk2.event_count == 2
 
 
+@attr(requires='core_integration')
 def test_persistence_fail():
 
     # Assert remove doesn't crap out if a file doesn't exist.

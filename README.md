@@ -5,6 +5,7 @@ This is the source code for the Server Density agent (v2). If you're looking to 
 # Release notes
 See [agent release notes](https://support.serverdensity.com/hc/en-us/articles/213513688-Agent-release-notes).
 
+
 # Agent configuration
 
 If you are using packages on Linux, the main configuration file can be found
