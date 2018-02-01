@@ -31,9 +31,11 @@ supervisor_running() {
 
 execute_if_supervisor_running() {
     # Executes `supervisord -c $SUPERVISOR_CONF_FILE $*`
-    # if the supervisor is running.
+    # if the supervisor is running. Then kills the supervisord pid
     if supervisor_running; then
         supervisorctl -c $SUPERVISOR_CONF_FILE "$*"
+        pid=$(cat $PID_FILE)
+        kill $pid
         return $?
     else
         echo $SUPERVISOR_NOT_RUNNING
