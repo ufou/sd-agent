@@ -26,6 +26,7 @@ SUPERVISORCTL_PATH="/usr/share/python/sd-agent/bin/supervisorctl"
 SUPERVISORD_PATH="/usr/share/python/sd-agent/bin/supervisord"
 COLLECTOR_PIDFILE="/var/run/sd-agent/sd-agent.pid"
 SYSTEM_PATH=/usr/share/python/sd-agent/bin:$PATH
+SDSTATSDPATH="/usr/share/python/sd-agent/sdstatsd.py"
 
 # Captures processes in the supervisord group that are 'optional' i.e. not essential for the agent to run
 SD_OPT_PROC_REGEX="sdstatsd|jmxfetch"
@@ -174,8 +175,10 @@ case "$1" in
               # (right now only sd-agent supports additional flags)
         su $AGENTUSER -c "$AGENTPATH info $@"
         COLLECTOR_RETURN=$?
-        su $AGENTUSER -c "$SDSTATSDPATH info"
-        SDSTATSD_RETURN=$?
+        if [ -f "$SDSTATSDPATH" ]; then
+            su $AGENTUSER -c "$SDSTATSDPATH info"
+            SDSTATSD_RETURN=$?
+        fi
         su $AGENTUSER -c "$FORWARDERPATH info"
         FORWARDER_RETURN=$?
         exit $(($COLLECTOR_RETURN+$SDSTATSD_RETURN+$FORWARDER_RETURN))
