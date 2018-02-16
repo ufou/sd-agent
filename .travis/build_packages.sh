@@ -1,10 +1,10 @@
 #!/bin/bash
 
-DOCKERFILE_DIR=".travis/dockerfiles/"
+DEFAULT_DOCKERFILE_DIR=".travis/dockerfiles/"
 PACKAGES_DIR="/packages"
 REPOSITORY_DIR="/archive"
 set -ev
-cd "$DOCKERFILE_DIR"
+cd "${1:-$DEFAULT_DOCKERFILE_DIR}"
 
 #Create required folders if they do not already exist
 if [ ! -d "$PACKAGES_DIR" ]; then
@@ -24,7 +24,7 @@ do
     echo -en "travis_fold:end:build_${distro}_container\\r"
 done
 
-#Run the containers, if container name is precise run with --privileged
+# Run the containers, if container name is precise run with --privileged
 
 for d in * ;
 do
