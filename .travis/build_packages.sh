@@ -14,22 +14,14 @@ if [ ! -d "$CACHE_DIR" ]; then
     sudo mkdir "$CACHE_DIR"
 fi
 
-#If the containers are in cache, load them, else create containers (They should be in cache already)
-for d in * ;
+# Load the containers from cache
+for distro in *;
 do
-    echo -en "travis_fold:start:build_${d}_container\\r"
-    TEMP="\${CACHE_FILE_${d}}"
-    DOCKER_CACHE=$(eval echo "$TEMP")
-    if [ -f "$DOCKER_CACHE"  ]; then
-        gunzip -c "$DOCKER_CACHE" | docker load;
-    else
-        (cd "$d" && docker build -t serverdensity:"${d}" .)
-        if [ ! -f "$DOCKER_CACHE"  ]; then
-            docker save serverdensity:"${d}" | gzip > "$DOCKER_CACHE";
-        fi
-    fi
-
-    echo -en "travis_fold:end:build_${d}_container\\r"
+    echo -en "travis_fold:start:build_${distro}_container\\r"
+    CACHE_FILE_VAR="CACHE_FILE_${distro}"
+    DOCKER_CACHE=${!CACHE_FILE_VAR}
+    gunzip -c "$DOCKER_CACHE" | docker load;
+    echo -en "travis_fold:end:build_${distro}_container\\r"
 done
 
 #Run the containers, if container name is precise run with --privileged

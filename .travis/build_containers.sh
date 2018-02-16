@@ -8,8 +8,8 @@ fi
 for distro in *;
 do
     echo -en "travis_fold:start:build_${distro}_container\\r"
-    TEMP="\${CACHE_FILE_${distro}}"
-    DOCKER_CACHE=$(eval echo "$TEMP")
+    CACHE_FILE_VAR="CACHE_FILE_${distro}"
+    DOCKER_CACHE=${!CACHE_FILE_VAR}
     if [ ! -f "$DOCKER_CACHE"  ]; then
         cd "$distro"
         docker build -t serverdensity:"${distro}" .
