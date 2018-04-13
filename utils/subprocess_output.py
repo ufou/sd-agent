@@ -15,7 +15,7 @@ class SubprocessOutputEmptyError(Exception):
     pass
 
 
-def get_subprocess_output(command, log, raise_on_empty_output=True):
+def get_subprocess_output(command, log, raise_on_empty_output=True, env=None):
     """
     Run the given subprocess command and return its output. Raise an Exception
     if an error occurs.
@@ -25,7 +25,7 @@ def get_subprocess_output(command, log, raise_on_empty_output=True):
     # docs warn that the data read is buffered in memory. They suggest not to
     # use subprocess.PIPE if the data size is large or unlimited.
     with tempfile.TemporaryFile() as stdout_f, tempfile.TemporaryFile() as stderr_f:
-        proc = subprocess.Popen(command, stdout=stdout_f, stderr=stderr_f)
+        proc = subprocess.Popen(command, stdout=stdout_f, stderr=stderr_f, env=env)
         proc.wait()
         stderr_f.seek(0)
         err = stderr_f.read()
