@@ -119,7 +119,8 @@ class IO(Check):
         io = {}
         try:
             if Platform.is_linux():
-                stdout, _, _ = get_subprocess_output(['iostat', '-d', '1', '2', '-x', '-k'], self.logger)
+                agent_env = {'LC_ALL': 'C'}
+                stdout, _, _ = get_subprocess_output(['iostat', '-d', '1', '2', '-x', '-k'], self.logger, env=agent_env)
 
                 #                 Linux 2.6.32-343-ec2 (ip-10-35-95-10)   12/11/2012      _x86_64_        (2 CPU)
                 #
