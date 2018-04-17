@@ -808,7 +808,7 @@ class Collector(object):
                 log.debug("GOHAI LOG | %s", err)
         except OSError as e:
             if e.errno == 2:  # file not found, expected when install from source
-                log.info("gohai file not found")
+                log.debug("gohai file not found")
             else:
                 log.warning("Unexpected OSError when running gohai %s", e)
         except Exception as e:
