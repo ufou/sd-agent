@@ -1,5 +1,22 @@
 FROM serverdensity/centos:6-i386
-RUN linux32 yum -y install yum-utils rpm-build redhat-rpm-config make gcc python-devel wget curl libyaml-devel curl-devel postgresql-devel tar symlinks git epel-release
+RUN yum install -y yum-plugin-ovl && yum clean all
+RUN rpm -Uvh http://www.city-fan.org/ftp/contrib/yum-repo/rhel6/i386/city-fan.org-release-2-1.rhel6.noarch.rpm
+RUN yum install epel-release -y
+RUN linux32 yum -y  --enablerepo=city-fan.org install yum-utils \
+    rpm-build \
+    redhat-rpm-config \
+    make \
+    gcc \
+    python-devel \
+    wget \
+    curl \
+    libyaml-devel \
+    curl-devel \
+    postgresql-devel \
+    tar \
+    symlinks \
+    git \
+    ca-certificates
 RUN wget https://centos6.iuscommunity.org/ius-release.rpm
 RUN rpm -Uvh ius-release*.rpm
 RUN linux32 yum -y install python27 python27-devel

@@ -1,11 +1,10 @@
 #!/bin/bash -xe
+
 cat > $HOME/.rpmmacros << EOF_MACROS
 %_topdir /root/el
 %_tmppath %{_topdir}/tmp
-%_signature gpg
-%_gpg_name hello@serverdensity.com
-%_gpg_path ~/.gnupg
 EOF_MACROS
+
 mkdir /root/el
 cd /root/el
 for dir in SOURCES BUILD RPMS SRPMS; do

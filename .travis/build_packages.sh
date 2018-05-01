@@ -1,93 +1,58 @@
 #!/bin/bash
-
+echo "${RELEASE}"
 DEFAULT_DOCKERFILE_DIR=".travis/dockerfiles/"
-PACKAGES_DIR="/packages"
-REPOSITORY_DIR="/archive"
+if [[ "$TRAVIS_TAG" ]]; then
+    PACKAGES_DIR="/${TRAVIS_REPO_SLUG}/${TRAVIS_TAG}/"
+else
+    PACKAGES_DIR="/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_ID}/"
+fi
+
+deb=(bionic xenial trusty jessie stretch)
+CONTAINER="$RELEASE"
+echo "$CONTAINER"
 set -ev
-cd "${1:-$DEFAULT_DOCKERFILE_DIR}"
+
+if [ -f "${TRAVIS_BUILD_DIR}/config.py" ]; then
+   AGENT_VERSION=$(awk -F'"' '/^AGENT_VERSION/ {print $2}' ${TRAVIS_BUILD_DIR}/config.py)
+elif [[ -z "${AGENT_VERSION}" ]]; then
+   echo "Cannot establish AGENT_VERSION. Exiting"
+   exit 1
+fi
+
+echo "Agent Version: ${AGENT_VERSION}"
+
+#cd "${1:-$DEFAULT_DOCKERFILE_DIR}"
 
 #Create required folders if they do not already exist
 if [ ! -d "$PACKAGES_DIR" ]; then
-    sudo mkdir "$PACKAGES_DIR"
+    sudo mkdir -p "$PACKAGES_DIR"
 fi
 if [ ! -d "$CACHE_DIR" ]; then
     sudo mkdir "$CACHE_DIR"
 fi
 
 # Load the containers from cache
-for distro in *;
-do
-    echo -en "travis_fold:start:build_${distro}_container\\r"
-    CACHE_FILE_VAR="CACHE_FILE_${distro}"
-    DOCKER_CACHE=${!CACHE_FILE_VAR}
-    gunzip -c "$DOCKER_CACHE" | docker load;
-    echo -en "travis_fold:end:build_${distro}_container\\r"
-done
 
-# Run the containers, if container name is precise run with --privileged
+echo -en "travis_fold:start:build_${CONTAINER}_container\\r"
+CACHE_FILE_VAR="CACHE_FILE_${CONTAINER}"
+DOCKER_CACHE=${!CACHE_FILE_VAR}
+echo "$DOCKER_CACHE"
+find "$CACHE_DIR"
+gunzip -c "$DOCKER_CACHE" | docker load;
+echo -en "travis_fold:end:build_${CONTAINER}_container\\r"
 
-for d in * ;
-do
-    echo "$d"
-    if [[ "$d" == "precise" ]]; then
-        echo -en "travis_fold:start:run_${d}_container\\r"
-        sudo docker run --volume="${TRAVIS_BUILD_DIR}":/sd-agent:rw --volume=/packages:/packages:rw --privileged serverdensity:"${d}"
-        echo -en "travis_fold:end:run_${d}_container\\r"
-    else
-        echo -en "travis_fold:start:run_${d}_container\\r"
-        sudo docker run --volume="${TRAVIS_BUILD_DIR}":/sd-agent:rw --volume=/packages:/packages:rw serverdensity:"${d}"
-        echo -en "travis_fold:end:run_${d}_container\\r"
-    fi
-done
 
-# Prepare folder to be come the repository
-if [ ! -d "$REPOSITORY_DIR" ]; then
-    sudo mkdir "$REPOSITORY_DIR"
+# Run the containers, if container name is bionic run with --privileged
+echo "$CONTAINER"
+echo "$RELEASE"
+if [[ ${deb[*]} =~ "$RELEASE" ]]; then
+    echo -en "travis_fold:start:run_${CONTAINER}_container\\r"
+    sudo docker run --volume="${TRAVIS_BUILD_DIR}":/sd-agent:rw --volume="${PACKAGES_DIR}":/packages:rw -e RELEASE="${RELEASE}" --privileged serverdensity:"${CONTAINER}"
+    echo -en "travis_fold:end:run_${CONTAINER}_container\\r"
+else
+    echo -en "travis_fold:start:run_${CONTAINER}_container\\r"
+    sudo docker run --volume="${TRAVIS_BUILD_DIR}":/sd-agent:rw --volume="${PACKAGES_DIR}":/packages:rw -e sd_agent_version="${AGENT_VERSION}" serverdensity:"${CONTAINER}"
+    echo -en "travis_fold:end:run_${CONTAINER}_container\\r"
 fi
 
-if [ ! -d "$REPOSITORY_DIR"/el ]; then
-    sudo mkdir "$REPOSITORY_DIR"/el
-fi
-
-if [ ! -d "$REPOSITORY_DIR"/el/5 ]; then
-    sudo mkdir "$REPOSITORY_DIR"/el/5
-    sudo mkdir "$REPOSITORY_DIR"/el/5/x86_64
-    sudo mkdir "$REPOSITORY_DIR"/el/5/i386
-    sudo mkdir "$REPOSITORY_DIR"/el/5/repodata
-fi
-
-if [ ! -d "$REPOSITORY_DIR"/ubuntu ]; then
-    sudo mkdir "$REPOSITORY_DIR"/ubuntu
-fi
-
-sudo cp -a "$TRAVIS_BUILD_DIR"/packaging/ubuntu/conf/. "$REPOSITORY_DIR"/ubuntu/conf
-
-# Prepare el packages as repo
-find "$PACKAGES_DIR"
-sudo cp -a "$PACKAGES_DIR"/el/. "$REPOSITORY_DIR"/el
-cd "$REPOSITORY_DIR"/el
-
-sudo createrepo 6
-sudo createrepo 7
-#cat << EOF > ~/.rpmmacros
-#%_topdir /tmp/el
-#%_tmppath %{_topdir}/tmp
-#%_signature gpg
-#%_gpg_name hello@serverdensity.com
-#%_gpg_path ~/.gnupg
-#EOF
-#LC_ALL=C rpm --addsign 6/*/*.rpm 7/*/*.rpm
-
-# Prepare deb packages as repo
-cd "$REPOSITORY_DIR"/ubuntu
-#FOR TESTING
-sed -i '/SignWith: 131EFC09/d' "$REPOSITORY_DIR"/ubuntu/conf/distributions
-sed -i '/ask-passphrase/d' "$REPOSITORY_DIR"/ubuntu/conf/options
-
-sudo reprepro includedeb all "$PACKAGES_DIR"/precise/amd64/sd-agent*.deb "$PACKAGES_DIR"/precise/i386/sd-agent*i386*.deb
-
-find "$REPOSITORY_DIR"
-
-find /tmp
-
-tar -zcvf "$CACHE_FILE_PACKAGES_LINUX" -C "$REPOSITORY_DIR" .
+sudo find "$PACKAGES_DIR"
