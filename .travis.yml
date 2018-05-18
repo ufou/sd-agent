@@ -61,8 +61,8 @@ after_failure:
 
 notifications:
   slack:
-    secure: N7WQuQNLn4wJqGHnLmTOZL18NGdr7vKNyHSV0TnXcgijnoqt+yxOq7mEu+h/KLgflAQObyKF8A3ChmbTB99xL6fR8xYVvxLSPk7+g9PU6Vf7absN9yY0rUQfXcPLVyYsZ11R1UqkizYbxc9B2A588S48/TMP2KB6LnII+PNajyg=
-
+    secure: EIK5M4WH0/ZnwgCyd6T4801Ll9g9pQuxmkL5PVCCzUHeT2ouwxFepEA/2olb74DYUc1DiDbhlKyevxZVw9l6G2vwZY670N9ZAhbivyDjK6hOduIt8+YicJNtFs3PzilRpu9yPrpDFlrOeuT8MT1TMP8xTCfvDa6WDic2Nfen4L0=
+    
 deploy:
   - provider: releases
     api_key:
