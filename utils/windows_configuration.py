@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 
-WINDOWS_REG_PATH = 'SOFTWARE\\Datadog\\Datadog Agent'
+WINDOWS_REG_PATH = 'SOFTWARE\\ServerDensity\\Server Densisty Agent'
 SDK_REG_PATH = WINDOWS_REG_PATH + '\\Integrations\\'
 
 
@@ -23,7 +23,7 @@ def get_registry_conf(agentConfig):
     try:
         with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
                              WINDOWS_REG_PATH) as reg_key:
-            for attribute in ['api_key', 'tags', 'hostname']:
+            for attribute in ['agent_key', 'tags', 'hostname']:
                 option = _winreg.QueryValueEx(reg_key, attribute)[0]
                 if option != '':
                     registry_conf[attribute] = option
@@ -77,13 +77,13 @@ def get_sdk_integration_paths():
 
 def update_conf_file(registry_conf, config_path):
     config_dir = os.path.dirname(config_path)
-    config_bkp = os.path.join(config_dir, 'datadog.conf.bkp')
+    config_bkp = os.path.join(config_dir, 'config.cfg.bkp')
     try:
         if os.path.exists(config_bkp):
             os.remove(config_bkp)
         shutil.copy(config_path, config_bkp)
     except OSError as e:
-        log.debug('Unable to back up datadog.conf: %s', e)
+        log.debug('Unable to back up config.cfg: %s', e)
     temp_config, temp_config_path = tempfile.mkstemp(prefix='config-', text=True)
     temp_config = os.fdopen(temp_config, 'w')
     log.debug('Temporary conf path: %s', temp_config_path)
@@ -98,6 +98,6 @@ def update_conf_file(registry_conf, config_path):
         os.remove(config_path)
         os.rename(temp_config_path, config_path)
     except OSError as e:
-        log.exception('Unable to save new datadog.conf')
+        log.exception('Unable to save new config.cfg')
     else:
-        log.debug('Successfully saved the new datadog.conf')
+        log.debug('Successfully saved the new config.cfg')

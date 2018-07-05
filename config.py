@@ -603,7 +603,7 @@ def get_config(parse_args=True, cfg_path=None, options=None, can_query_registry=
 
     # On Windows, check for api key in registry if default api key
     # this code should never be used and is only a failsafe
-    if Platform.is_windows() and agentConfig['api_key'] == 'APIKEYHERE' and can_query_registry:
+    if Platform.is_windows() and agentConfig['agent_key'] == 'AGENTKEYHERE' and can_query_registry:
         registry_conf = get_registry_conf(config)
         agentConfig.update(registry_conf)
 
