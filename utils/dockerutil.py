@@ -91,7 +91,7 @@ class DockerUtil:
                     self._is_rancher = True
                     break
         except Exception as e:
-            log.warning("Error while detecting orchestrator: %s" % e)
+            log.debug("Error while detecting orchestrator: %s" % e)
             pass
 
         try:
