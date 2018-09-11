@@ -32,7 +32,7 @@ env:
     - PIP_CACHE=$HOME/.cache/pip
     - VOLATILE_DIR=/tmp
     - DD_CASHER_DIR=/tmp/casher
-    - AGENT_VERSION=2.2.0
+    - AGENT_VERSION=2.2.1
   matrix:
     - TRAVIS_FLAVOR=default
     - TRAVIS_FLAVOR=checks_mock

@@ -1,4 +1,7 @@
 %changelog
+* Mon Apr 16 2018 Server Density <hello@serverdensity.com> 2.2.1-1
+- Fixed io stat collection for certain locales.
+- Adds support for macOS CPU metrics.
 * Tue Nov 21 2017 Server Density <hello@serverdensity.com> 2.2.0-1
 - Added support for JMX, and local StatsD collector.
 * Mon May 15 2017 Server Density <hello@serverdensity.com> 2.1.6-1

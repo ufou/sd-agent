@@ -1,3 +1,10 @@
+sd-agent (2.2.1-1trusty0) trusty; urgency=medium
+
+  * Fixed io stat collection for certain locales.
+  * Adds support for macOS CPU metrics.
+
+ -- Server Density <hello@serverdensity.com>  Mon, 16 Apr 2018 10:30:00 +0100
+
 sd-agent (2.2.0-3trusty0) trusty; urgency=medium
 
   * Fixed systemd startup scripts setup.
