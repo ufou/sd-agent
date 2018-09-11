@@ -20,17 +20,23 @@ agent_key:
 # Force the hostname to whatever you want.
 #hostname: mymachine.mydomain
 
-#
+# ========================================================================== #
 # Plugins
-#
+# See https://support.serverdensity.com/hc/en-us/articles/360001082746
+# ========================================================================== #
 # Leave blank to ignore.
-# See https://support.serverdensity.com/hc/en-us/articles/213074438-Information-about-Custom-Plugins
+# This setting is used for legacy custom plugins, is deprecated and will soon be removed.
+# We recommend using the v2 custom plugin format for all new plugins.
+# For more information please see: https://support.serverdensity.com/hc/en-us/articles/360001082746
 #
-plugin_directory:
+# plugin_directory:
+
+# For v2 custom plugins, configure an additional checks.d dir for your custom plugins.
+# additional_checksd: /etc/sd-agent/checks.d/
 
 # ========================================================================== #
 # Logging
-# See https://support.serverdensity.com/hc/en-us/articles/213093038-Log-levels-agent-debug-mode
+# See https://support.serverdensity.com/hc/en-us/articles/360001065503
 # ========================================================================== #
 
 # log_level: INFO
@@ -44,3 +50,34 @@ plugin_directory:
 # log_to_syslog: yes
 # syslog_host:
 # syslog_port:
+
+
+# ========================================================================== #
+# SdStats
+# See https://support.serverdensity.com/hc/en-us/articles/360001082706
+# ========================================================================== #
+# To make use of these settings the sd-agent-sdstatsd package must be installed
+# If you don't want to enable the SdStatsd server, set this option to no
+# use_sdstatsd: yes
+
+#  Make sure your client is sending to the same port.
+# sdstatsd_port: 8125
+
+# you may want all statsd metrics coming from this host to be namespaced
+# in some way; if so, configure your namespace here. a metric that looks
+# like `metric.name` will instead become `namespace.metric.name`
+# statsd_metric_namespace:
+
+# By default, sdstatsd supports only plain ASCII packets. However, most
+# (sd)statsd client support UTF8 by encoding packets before sending them
+# this option enables UTF8 decoding in case you need it.
+# However, it comes with a performance overhead of ~10% in the sdstatsd
+# server.
+# utf8_decoding: false
+
+# The number of bytes allocated to the statsd socket receive buffer. By default,
+# this value is set to the value of `/proc/sys/net/core/rmem_default`. If you
+# need to increase the size of this buffer but keep the OS default value the
+# same, you can set sdstats's receive buffer size here. The maximum allowed
+# value is the value of `/proc/sys/net/core/rmem_max`.
+# statsd_so_rcvbuf:
