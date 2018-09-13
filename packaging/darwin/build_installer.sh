@@ -26,7 +26,11 @@ VENV_PIP_CMD="${BUILD_DIR}/bin/pip"
 mkdir -p ${BUILD_DIR}
 curl -LO https://pypi.python.org/packages/source/v/virtualenv/virtualenv-15.2.0.tar.gz
 tar xzf virtualenv-15.2.0.tar.gz
-python virtualenv-15.2.0/virtualenv.py ${BUILD_DIR}
+/usr/bin/python2.7 virtualenv-15.2.0/virtualenv.py --no-site-packages --no-pip --no-setuptools ${BUILD_DIR}
+curl -LO https://bootstrap.pypa.io/ez_setup.py
+${VENV_PYTHON_CMD} ez_setup.py
+curl -LO https://bootstrap.pypa.io/get-pip.py
+${VENV_PYTHON_CMD} get-pip.py
 
 $VENV_PIP_CMD install -r requirements.txt
 PIP_COMMAND=${VENV_PIP_CMD} ./utils/pip-allow-failures.sh requirements-opt.txt
