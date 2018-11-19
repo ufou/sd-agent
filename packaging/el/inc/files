@@ -56,6 +56,9 @@
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/urllib3*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/websocket*
 /usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/yaml
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/chardet*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/certifi*
+/usr/share/python/sd-agent/lib/python%{__sd_python_version}/site-packages/idna*
 
 /etc/init.d/sd-agent
 /usr/share/python/sd-agent/lib64
