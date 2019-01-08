@@ -6,7 +6,7 @@
 from hashlib import md5
 import logging
 import re
-#import zlib
+import zlib
 import unicodedata
 
 # 3p
@@ -99,8 +99,7 @@ def post_payload(url, message, agentConfig, log):
         log.error('http_emitter: unknown exception processing message %s', e)
         return
 
-    #zipped = zlib.compress(payload)
-    zipped = payload
+    zipped = zlib.compress(payload)
 
     log.debug("payload_size=%d, compressed_size=%d, compression_ratio=%.3f"
               % (len(payload), len(zipped), float(len(payload))/float(len(zipped))))
@@ -170,7 +169,7 @@ def get_post_headers(agentConfig, payload):
     return {
         'User-Agent': 'Server Density Agent/%s' % agentConfig['version'],
         'Content-Type': 'application/json',
-        #'Content-Encoding': 'deflate',
+        'Content-Encoding': 'deflate',
         'Accept': 'text/html, */*',
         'Content-MD5': md5(payload).hexdigest(),
         'SD-Collector-Version': get_version()
