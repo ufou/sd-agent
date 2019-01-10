@@ -1,5 +1,8 @@
 %changelog
-* Mon Nov 19 2018 Server Density <hello@serverdensity.com> 2.2.1-1
+* Thu Jan 10 2019 Server Density <hello@serverdensity.com> 2.2.3-1
+- Security Update: Updates python pyyaml library to address CVE-2017-18342.
+- Enables postback payload compression
+* Mon Nov 19 2018 Server Density <hello@serverdensity.com> 2.2.2-1
 - Security Update: Updates python requests library to address CVE-2018-18074.
 * Mon Apr 16 2018 Server Density <hello@serverdensity.com> 2.2.1-1
 - Fixed io stat collection for certain locales.

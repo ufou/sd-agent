@@ -1,3 +1,10 @@
+sd-agent (2.2.3-1trusty0) trusty; urgency=medium
+
+  * Security Update: Updates python pyyaml library to address CVE-2017-18342.
+  * Enables postback payload compression
+
+ -- Server Density <hello@serverdensity.com>  Thu, 10 Jan 2019 10:30:00 +0100
+
 sd-agent (2.2.2-1trusty0) trusty; urgency=medium
 
   * Security Update: Updates python requests library to address CVE-2018-18074.
