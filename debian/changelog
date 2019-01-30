@@ -1,3 +1,10 @@
+sd-agent (2.2.4-1trusty0) trusty; urgency=medium
+
+  * Minor packaging update for systemd enabled OS
+  * Fixed an issue which prevented disabling logging to syslog on systemd enabled OS
+
+ -- Server Density <hello@serverdensity.com>  Thu, 31 Jan 2019 10:30:00 +0100
+
 sd-agent (2.2.3-1trusty0) trusty; urgency=medium
 
   * Security Update: Updates python pyyaml library to address CVE-2017-18342.
