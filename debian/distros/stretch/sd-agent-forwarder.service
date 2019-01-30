@@ -10,6 +10,8 @@ User=sd-agent
 Restart=always
 RestartSec=5
 Environment="PYTHONPATH=/usr/share/python/sd-agent,LANG=POSIX"
+StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=sd-agent.service
