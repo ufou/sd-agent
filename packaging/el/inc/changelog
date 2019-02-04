@@ -1,4 +1,7 @@
 %changelog
+* Thu Jan 31 2019 Server Density <hello@serverdensity.com> 2.2.4-1
+- Minor packaging update for systemd enabled OS
+- Fixed an issue which prevented disabling logging to syslog on systemd enabled OS
 * Thu Jan 10 2019 Server Density <hello@serverdensity.com> 2.2.3-1
 - Security Update: Updates python pyyaml library to address CVE-2017-18342.
 - Enables postback payload compression

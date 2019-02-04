@@ -29,7 +29,7 @@ Architecture: all
 Breaks: sd-agent (<<2.2.0)
 Replaces: sd-agent (<<2.2.0)
 Pre-Depends: dpkg (>= 1.15.12), python2.7, ${misc:Pre-Depends}
-Depends: ${python:Depends}, ${misc:Depends}, libcurl3-gnutls
+Depends: ${python:Depends}, ${misc:Depends}, libcurl3-gnutls, sd-agent (>=2.2.0)
 Description: The Server Density monitoring agent
  The Server Density monitoring agent is a lightweight process that monitors
  system processes and services, and sends information back to your Server
