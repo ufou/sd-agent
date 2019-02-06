@@ -40,9 +40,9 @@ SERVICE_SLEEP_INTERVAL = 1
 
 
 class AgentSvc(win32serviceutil.ServiceFramework):
-    _svc_name_ = "DatadogAgent"
-    _svc_display_name_ = "Datadog Agent"
-    _svc_description_ = "Sends metrics to Datadog"
+    _svc_name_ = "SDAgent"
+    _svc_display_name_ = "Server Density Agent"
+    _svc_description_ = "Sends metrics to Server Density"
     _MAX_JMXFETCH_RESTARTS = 3
     devnull = None
 
@@ -52,38 +52,38 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         AgentSvc.devnull = open(os.devnull, 'w')
 
         config = get_config(parse_args=False, can_query_registry=False)
-        if config['api_key'] == 'APIKEYHERE':
+        if config['agent_key'] == 'AGENTKEYHERE':
             self._update_config_file(config)
 
         # Let's have an uptime counter
         self.start_ts = None
 
-        # find the main agent dir, for instance C:\Program Files\Datadog\Datadog Agent
-        dd_dir = self._find_dd_dir()
+        # find the main agent dir, for instance C:\Program Files\ServerDensity\Server Density Agent
+        sd_dir = self._find_sd_dir()
         # clean the env vars
-        agent_env = self._prepare_agent_env(dd_dir)
+        agent_env = self._prepare_agent_env(sd_dir)
         # cd to the agent dir to easily launch the 4 components
-        os.chdir(os.path.join(dd_dir, 'agent'))
+        os.chdir(os.path.join(sd_dir, 'agent'))
 
-        embedded_python = os.path.join(dd_dir, 'embedded', 'python.exe')
+        embedded_python = os.path.join(sd_dir, 'embedded', 'python.exe')
         # Keep a list of running processes so we can start/end as needed.
         # Processes will start started in order and stopped in reverse order.
         self.procs = {
-            'forwarder': DDProcess(
+            'forwarder': SDProcess(
                 "forwarder",
-                [embedded_python, "ddagent.py"],
+                [embedded_python, "sdagent.py"],
                 agent_env
             ),
-            'collector': DDProcess(
+            'collector': SDProcess(
                 "collector",
                 [embedded_python, "agent.py", "foreground", "--use-local-forwarder"],
                 agent_env
             ),
-            'dogstatsd': DDProcess(
+            'dogstatsd': SDProcess(
                 "dogstatsd",
-                [embedded_python, "dogstatsd.py", "--use-local-forwarder"],
+                [embedded_python, "sdstatsd.py", "--use-local-forwarder"],
                 agent_env,
-                enabled=config.get("use_dogstatsd", True)
+                enabled=config.get("use_sdstatsd", True)
             ),
             'jmxfetch': JMXFetchProcess(
                 "jmxfetch",
@@ -94,21 +94,21 @@ class AgentSvc(win32serviceutil.ServiceFramework):
             ),
         }
 
-    def _find_dd_dir(self):
+    def _find_sd_dir(self):
         # This file is somewhere in the dist directory of the agent
         file_dir = os.path.dirname(os.path.realpath(__file__))
         search_dir, current_dir = os.path.split(file_dir)
         # So we go all the way up to the dist directory to find the actual agent dir
         while current_dir and current_dir != 'dist':
             search_dir, current_dir = os.path.split(search_dir)
-        dd_dir = search_dir
+        sd_dir = search_dir
         # If we don't find it, we use the default
         if not current_dir:
-            dd_dir = os.path.join('C:\\', 'Program Files', 'Datadog', 'Datadog Agent')
+            sd_dir = os.path.join('C:\\', 'Program Files', 'ServerDensity', 'Server Density Agent')
 
-        return dd_dir
+        return sd_dir
 
-    def _prepare_agent_env(self, dd_dir):
+    def _prepare_agent_env(self, sd_dir):
         # preparing a clean env for the agent processes
         env = os.environ.copy()
         if env.get('PYTHONPATH'):
@@ -117,7 +117,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
             del env['PYTHONHOME']
         if env['PATH'][-1] != ';':
             env['PATH'] += ';'
-        env['PATH'] += "{};{};".format(os.path.join(dd_dir, 'bin'), os.path.join(dd_dir, 'embedded'))
+        env['PATH'] += "{};{};".format(os.path.join(sd_dir, 'bin'), os.path.join(sd_dir, 'embedded'))
         log.debug('env: %s', env)
 
         return env
@@ -168,7 +168,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         for proc in self.procs.values():
             proc.start()
 
-        # Loop to keep the service running since all DD services are
+        # Loop to keep the service running since all SD services are
         # running in separate processes
         self.running = True
         while self.running:
@@ -188,7 +188,7 @@ class AgentSvc(win32serviceutil.ServiceFramework):
         log.info("Service stopped.")
 
 
-class DDProcess(object):
+class SDProcess(object):
     """
     Starts and monitors a Datadog process.
     Restarts when it exits until the limit set is reached.
@@ -275,7 +275,7 @@ class DDProcess(object):
         self.start()
 
 
-class JMXFetchProcess(DDProcess):
+class JMXFetchProcess(SDProcess):
     # It's an entire JMXFetch run, because JMXFetch only checks that the exit
     # file exists at the beginning of each run
     _JMX_STOP_TIMEOUT = 20
