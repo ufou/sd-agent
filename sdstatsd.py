@@ -227,7 +227,7 @@ class Reporter(threading.Thread):
     server.
     """
 
-    def __init__(self, interval, metrics_aggregator, api_host, api_key=None,
+    def __init__(self, interval, metrics_aggregator, sd_url, agent_key=None,
                  use_watchdog=False, event_chunk_size=None, hostname=None):
         threading.Thread.__init__(self)
         self.interval = int(interval)
@@ -549,7 +549,7 @@ class Sdstatsd6(ProcessRunner):
                 message = sdsd6_status.render(alt_title)
                 exit_code = 0
             else:
-                message = SdtatsdStatus._sdstatsd6_unavailable_message(alt_title)
+                message = SdstatsdStatus._sdstatsd6_unavailable_message(alt_title)
                 exit_code = -1
 
         sys.stdout.write(message)
